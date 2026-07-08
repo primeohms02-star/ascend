@@ -1,11 +1,11 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-
 import { questions } from "../questions";
+import { saveCompassAnswer } from "../actions";
 
 import ProgressBar from "@/app/components/ProgressBar";
-import QuestionCard from "@/app//components/QuestionCard";
+import QuestionCard from "@/app/components/QuestionCard";
 import OptionButton from "@/app/components/OptionButton";
 
 export default function CompassStepPage() {
@@ -26,13 +26,20 @@ export default function CompassStepPage() {
     );
   }
 
-  function handleOptionClick(option: string) {
-    console.log("Selected:", option);
+  async function handleOptionClick(answer: string) {
+    try {
+      await saveCompassAnswer(step, answer);
 
-    if (step < questions.length) {
-      router.push(`/compass/${step + 1}`);
-    } else {
-      router.push("/dashboard");
+      console.log("✅ Answer saved!");
+
+      if (step < questions.length) {
+        router.push(`/compass/${step + 1}`);
+      } else {
+        router.push("/dashboard");
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Something went wrong while saving your answer.");
     }
   }
 
