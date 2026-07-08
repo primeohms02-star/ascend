@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 
@@ -11,7 +12,15 @@ export default async function DashboardPage() {
   return (
     <main className="min-h-screen bg-slate-50">
       <div className="mx-auto max-w-6xl px-6 py-12">
-        <p className="text-sm uppercase tracking-[0.3em] text-slate-500">
+        {/* Back Button */}
+        <Link
+          href="/"
+          className="inline-flex items-center rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-100"
+        >
+          ← Back to Home
+        </Link>
+
+        <p className="mt-8 text-sm uppercase tracking-[0.3em] text-slate-500">
           ASCEND Dashboard
         </p>
 
@@ -31,7 +40,7 @@ export default async function DashboardPage() {
               🧭 Your North Star
             </h2>
 
-            <p className="mt-4 text-slate-600 leading-7">
+            <p className="mt-4 leading-7 text-slate-600">
               Build a life where your skills create value, your work creates
               freedom, and your decisions are intentional.
             </p>
@@ -43,7 +52,7 @@ export default async function DashboardPage() {
               🎯 Today's Next Step
             </h2>
 
-            <p className="mt-4 text-slate-600 leading-7">
+            <p className="mt-4 leading-7 text-slate-600">
               Spend one focused hour moving toward your biggest goal today.
             </p>
           </div>
@@ -69,7 +78,7 @@ export default async function DashboardPage() {
               🚀 Continue Journey
             </h2>
 
-            <p className="mt-4 text-slate-600 leading-7">
+            <p className="mt-4 leading-7 text-slate-600">
               Soon your personalized roadmap, AI Coach and weekly missions will
               appear here.
             </p>
