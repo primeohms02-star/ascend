@@ -25,7 +25,7 @@ export default async function DashboardPage() {
         </p>
 
         <h1 className="mt-4 text-5xl font-bold">
-          Welcome back, Traveler 👋
+          Welcome, Traveler 👋
         </h1>
 
         <p className="mt-4 max-w-2xl text-lg text-slate-600">
