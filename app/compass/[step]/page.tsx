@@ -35,7 +35,7 @@ export default function CompassStepPage() {
       if (step < questions.length) {
         router.push(`/compass/${step + 1}`);
       } else {
-        router.push("/dashboard");
+        router.push("/finding-your-star");
       }
     } catch (error) {
       console.error(error);
