@@ -8,7 +8,7 @@ export default function FindingYourStarPage() {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-        router.push("/dashboard");
+        router.push("/welcome");
     }, 4000);
 
     return () => clearTimeout(timer);
