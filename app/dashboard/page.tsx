@@ -7,10 +7,12 @@ import { getGreeting } from "@/lib/utils/greeting";
 import { getRecommendations } from "@/lib/engine/recommendations";
 
 import GreetingCard from "@/app/dashboard/GreetingCard";
-import NorthStarCard from "@/app/dashboard/NorthStarCard";
+import CompassCard from "@/app/dashboard/CompassCard";
 import MissionCard from "@/app/dashboard/MissionCard";
 import ProgressCard from "@/app/dashboard/ProgressCard";
 import RecommendationCard from "@/app/dashboard/RecommendationCard";
+import OracleCard from "@/app/dashboard/OracleCard";
+
 export default async function DashboardPage() {
   const { userId } = await auth();
 
@@ -33,15 +35,24 @@ export default async function DashboardPage() {
           ← Back to Home
         </Link>
 
+        {/* Greeting */}
+
         <div className="mt-8">
           <GreetingCard greeting={getGreeting()} />
         </div>
 
-        <div className="mt-12 grid gap-6 md:grid-cols-2">
+        {/* Atlas */}
 
-          <NorthStarCard
+        <div className="mt-10">
+          <CompassCard
             northStar={brain.northStar}
+            alignment={brain.progress}
           />
+        </div>
+
+        {/* Dashboard Cards */}
+
+        <div className="mt-12 grid gap-6 md:grid-cols-2">
 
           <MissionCard
             title={brain.missionTitle}
@@ -58,6 +69,10 @@ export default async function DashboardPage() {
             recommendation={recommendations[0]}
           />
 
+<OracleCard
+  title="Today's Insight"
+  message="Consistency compounds. Focus on completing today's mission before chasing tomorrow's goals."
+/>
         </div>
 
       </div>
