@@ -1,6 +1,6 @@
 type ProgressCardProps = {
   progress: number;
-  momentum: number;
+  momentum: string;
   message: string;
 };
 
