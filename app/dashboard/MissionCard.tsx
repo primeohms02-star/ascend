@@ -1,12 +1,16 @@
-type Props = {
+import CompleteMissionButton from "./CompleteMissionButton";
+
+type MissionCardProps = {
   title: string;
   description: string;
+  missionId: string;
 };
 
 export default function MissionCard({
   title,
   description,
-}: Props) {
+  missionId,
+}: MissionCardProps) {
   return (
     <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-lg">
       <div className="flex items-center justify-between">
@@ -15,7 +19,7 @@ export default function MissionCard({
             Today's Mission
           </p>
 
-          <h2 className="mt-2 text-xl font-bold text-slate-900">
+          <h2 className="mt-2 text-2xl font-bold text-slate-900">
             {title}
           </h2>
         </div>
@@ -25,13 +29,13 @@ export default function MissionCard({
         </div>
       </div>
 
-      <p className="mt-5 text-slate-600">
+      <p className="mt-5 leading-7 text-slate-600">
         {description}
       </p>
 
-      <button className="mt-6 w-full rounded-xl bg-orange-500 py-3 font-semibold text-white transition hover:bg-orange-600">
-        Start Mission
-      </button>
+      <CompleteMissionButton
+        missionId={missionId}
+      />
     </section>
   );
 }

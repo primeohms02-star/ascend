@@ -4,11 +4,16 @@ export async function createProfile(userId: string) {
   const { data, error } = await supabase
     .from("profiles")
     .insert({
-      id: userId,
+      clerk_id: userId,
+      full_name: "",
+      email: "",
+
       journey: "Explorer",
       north_star: "Discover my purpose",
+
       progress: 0,
       completed_steps: 0,
+
       current_streak: 0,
       longest_streak: 0,
     })

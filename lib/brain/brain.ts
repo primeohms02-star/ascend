@@ -25,7 +25,14 @@ export function think(
   brain: BrainContext
 ): BrainDecision {
 
-  const { memory, identity } = brain;
+  const memory = brain.memory ?? {
+    currentStreak: 0,
+    longestStreak: 0,
+    missionsCompleted: 0,
+    missionsMissed: 0,
+  };
+
+  const identity = brain.identity;
 
   let identityTitle = identity.title;
   let identityLevel = identity.level;

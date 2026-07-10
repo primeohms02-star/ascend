@@ -27,10 +27,8 @@ export default async function DashboardPage() {
 
   const brain = await getCurrentUserBrain();
 
-  // Brain makes all decisions
   const decision = think(brain);
 
-  // Oracle displays the Brain's guidance
   const oracle = consultOracle(decision);
 
   return (
@@ -38,6 +36,7 @@ export default async function DashboardPage() {
       <div className="mx-auto max-w-7xl px-6 py-8">
 
         {/* Header */}
+
         <div className="mb-6 flex items-center justify-between">
           <GreetingCard greeting={getGreeting()} />
 
@@ -50,6 +49,7 @@ export default async function DashboardPage() {
         </div>
 
         {/* Atlas */}
+
         <div className="mb-6">
           <CompassCard
             northStar={brain.northStar}
@@ -58,11 +58,13 @@ export default async function DashboardPage() {
         </div>
 
         {/* Main Grid */}
+
         <div className="grid gap-6 lg:grid-cols-2">
 
           <MissionCard
             title={decision.nextMissionTitle}
             description={decision.nextMissionDescription}
+            missionId={brain.missions[0]?.id ?? ""}
           />
 
           <IdentityCard
@@ -87,12 +89,14 @@ export default async function DashboardPage() {
 
         </div>
 
-        {/* Journey */}
+        {/* Timeline */}
+
         <div className="mt-6">
           <Timeline />
         </div>
 
         {/* Recommendation */}
+
         <div className="mt-6">
           <RecommendationCard
             recommendation={brain.recommendations[0]}
