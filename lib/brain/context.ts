@@ -2,8 +2,9 @@ import { getJourneyProfile } from "@/lib/engine/journey";
 import { getDailyMission } from "@/lib/engine/mission";
 import { getRoadmap } from "@/lib/engine/roadmap";
 import { getMomentum } from "./momentum";
-import { getUserMemory } from "@/lib/engine/memory";
 import { getOpportunities } from "@/lib/engine/opportunities";
+import { getRecommendations } from "@/lib/engine/recommendations";
+import { createMemory } from "./memory";
 
 export type BrainContext = {
   journey: string;
@@ -19,9 +20,11 @@ export type BrainContext = {
   momentum: string;
   momentumMessage: string;
 
-  memory: ReturnType<typeof getUserMemory>;
+  memory: ReturnType<typeof createMemory>;
 
   opportunities: ReturnType<typeof getOpportunities>;
+
+  recommendations: ReturnType<typeof getRecommendations>;
 };
 
 export function buildBrainContext(
@@ -37,7 +40,11 @@ export function buildBrainContext(
     journey.title
   );
 
-  const memory = getUserMemory();
+  const recommendations = getRecommendations(
+    journey.title
+  );
+
+  const memory = createMemory();
 
   const completedSteps = roadmap.filter(
     (step) => step.completed
@@ -71,5 +78,7 @@ export function buildBrainContext(
     memory,
 
     opportunities,
+
+    recommendations,
   };
 }

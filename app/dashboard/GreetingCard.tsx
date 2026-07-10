@@ -6,18 +6,18 @@ export default function GreetingCard({
   greeting,
 }: GreetingCardProps) {
   return (
-    <>
-      <p className="text-sm uppercase tracking-[0.3em] text-slate-500">
-        ASCEND Mission Control
+    <section>
+      <p className="text-sm font-semibold uppercase tracking-[0.2em] text-orange-600">
+        ASCEND
       </p>
 
-      <h1 className="mt-4 text-5xl font-bold">
-        {greeting}, Traveler 👋
+      <h1 className="mt-2 text-4xl font-bold text-slate-900">
+        {greeting}
       </h1>
 
-      <p className="mt-4 max-w-2xl text-lg text-slate-600">
-        Every day is another opportunity to move closer to your North Star.
+      <p className="mt-3 max-w-2xl text-slate-600">
+        Every decision you make today shapes the person you become tomorrow.
       </p>
-    </>
+    </section>
   );
 }

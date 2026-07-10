@@ -4,14 +4,18 @@ import { redirect } from "next/navigation";
 
 import { getCurrentUserBrain } from "@/lib/services/user";
 import { getGreeting } from "@/lib/utils/greeting";
-import { getRecommendations } from "@/lib/engine/recommendations";
+
+import { think } from "@/lib/brain/brain";
+import { consultOracle } from "@/lib/engine/oracle";
 
 import GreetingCard from "@/app/dashboard/GreetingCard";
 import CompassCard from "@/app/dashboard/CompassCard";
 import MissionCard from "@/app/dashboard/MissionCard";
 import ProgressCard from "@/app/dashboard/ProgressCard";
-import RecommendationCard from "@/app/dashboard/RecommendationCard";
 import OracleCard from "@/app/dashboard/OracleCard";
+import RecommendationCard from "@/app/dashboard/RecommendationCard";
+import OpportunityRadar from "@/app/dashboard/opportunities/OpportunityRadar";
+import Timeline from "@/app/dashboard/timeline/Timeline";
 
 export default async function DashboardPage() {
   const { userId } = await auth();
@@ -22,41 +26,47 @@ export default async function DashboardPage() {
 
   const brain = await getCurrentUserBrain();
 
-  const recommendations = getRecommendations(brain.journey);
+  // Brain makes all decisions
+  const decision = think(brain);
+
+  // Oracle displays the Brain's guidance
+  const oracle = consultOracle(decision);
 
   return (
     <main className="min-h-screen bg-slate-50">
-      <div className="mx-auto max-w-6xl px-6 py-12">
+      <div className="mx-auto max-w-7xl px-6 py-8">
 
-        <Link
-          href="/"
-          className="inline-flex items-center rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-100"
-        >
-          ← Back to Home
-        </Link>
-
-        {/* Greeting */}
-
-        <div className="mt-8">
+        {/* Header */}
+        <div className="mb-6 flex items-center justify-between">
           <GreetingCard greeting={getGreeting()} />
+
+          <Link
+            href="/"
+            className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-medium shadow-sm transition hover:bg-slate-100"
+          >
+            Home
+          </Link>
         </div>
 
         {/* Atlas */}
-
-        <div className="mt-10">
+        <div className="mb-6">
           <CompassCard
             northStar={brain.northStar}
-            alignment={brain.progress}
+            alignment={decision.northStarAlignment}
           />
         </div>
 
-        {/* Dashboard Cards */}
-
-        <div className="mt-12 grid gap-6 md:grid-cols-2">
+        {/* Main Grid */}
+        <div className="grid gap-6 lg:grid-cols-2">
 
           <MissionCard
-            title={brain.missionTitle}
-            description={brain.missionDescription}
+            title={decision.nextMissionTitle}
+            description={decision.nextMissionDescription}
+          />
+
+          <OracleCard
+            title={oracle.title}
+            message={oracle.message}
           />
 
           <ProgressCard
@@ -65,14 +75,22 @@ export default async function DashboardPage() {
             message={brain.momentumMessage}
           />
 
-          <RecommendationCard
-            recommendation={recommendations[0]}
+          <OpportunityRadar
+            opportunities={brain.opportunities}
           />
 
-<OracleCard
-  title="Today's Insight"
-  message="Consistency compounds. Focus on completing today's mission before chasing tomorrow's goals."
-/>
+        </div>
+
+        {/* Journey */}
+        <div className="mt-6">
+          <Timeline />
+        </div>
+
+        {/* Recommendation */}
+        <div className="mt-6">
+          <RecommendationCard
+            recommendation={brain.recommendations[0]}
+          />
         </div>
 
       </div>

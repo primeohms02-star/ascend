@@ -32,54 +32,56 @@ export default function CompassCard({
       className="relative overflow-hidden rounded-3xl border border-slate-700 bg-slate-950 shadow-2xl"
     >
       {/* Animated Night Sky */}
-
       <NightSky />
 
       {/* Content */}
-
-      <div className="relative z-10 p-8">
+      <div className="relative z-10 p-6 lg:p-8">
 
         <NorthStar />
 
-        <div className="pt-20">
+        <div className="grid items-center gap-10 pt-10 lg:grid-cols-2">
 
-          <p className="text-sm font-semibold uppercase tracking-[0.25em] text-orange-300">
-            Atlas
-          </p>
+          {/* Left Side */}
 
-          <h2 className="mt-3 text-4xl font-bold text-white">
-            Stay True to Your North
-          </h2>
+          <div>
 
-          <p className="mt-5 text-slate-300">
-            Your North Star
-          </p>
+            <p className="text-sm font-semibold uppercase tracking-[0.25em] text-orange-300">
+              Atlas
+            </p>
 
-          <p className="mt-2 text-2xl font-semibold text-orange-300">
-            {northStar}
-          </p>
+            <h2 className="mt-2 text-3xl font-bold text-white lg:text-4xl">
+              Stay True to Your North
+            </h2>
+
+            <p className="mt-5 text-slate-400">
+              Your North Star
+            </p>
+
+            <p className="mt-2 text-xl font-semibold text-orange-300 lg:text-2xl">
+              {northStar}
+            </p>
+
+            <div className="mt-8">
+              <AlignmentBar alignment={alignment} />
+            </div>
+
+          </div>
+
+          {/* Right Side */}
+
+          <div className="flex justify-center lg:justify-end">
+
+            <CompassNeedle
+              alignment={alignment}
+            />
+
+          </div>
 
         </div>
 
-        <div className="mt-12 flex justify-center">
+        <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 px-5 py-4 backdrop-blur-sm">
 
-          <CompassNeedle
-            alignment={alignment}
-          />
-
-        </div>
-
-        <div className="mt-12">
-
-          <AlignmentBar
-            alignment={alignment}
-          />
-
-        </div>
-
-        <div className="mt-10 rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm">
-
-          <p className="text-center text-sm italic leading-7 text-slate-300">
+          <p className="text-center text-sm italic leading-6 text-slate-300">
             "The Compass never chooses your direction.
             <br />
             It only helps you remain faithful to it."
@@ -88,6 +90,7 @@ export default function CompassCard({
         </div>
 
       </div>
+
     </motion.section>
   );
 }
