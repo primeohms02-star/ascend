@@ -1,8 +1,14 @@
 import { auth } from "@clerk/nextjs/server";
-
 import { redirect } from "next/navigation";
 
-import { getUserProfile } from "@/lib/engine/profile";
+import { getProfile } from "@/lib/supabase/profiles";
+import { getMemory } from "@/lib/supabase/memory";
+import { getMissions } from "@/lib/supabase/missions";
+
+import { createProfile } from "@/lib/supabase/createProfile";
+import { createMemory } from "@/lib/supabase/createMemory";
+import { createMission } from "@/lib/supabase/createMission";
+
 import { buildBrainContext } from "@/lib/brain/context";
 
 export async function getCurrentUserBrain() {
@@ -12,12 +18,31 @@ export async function getCurrentUserBrain() {
     redirect("/sign-in");
   }
 
-  const profile = await getUserProfile(userId);
+  // Check if this user already has a profile
+  let profile = await getProfile(userId);
+
+  // First login → initialize ASCEND
+  if (!profile) {
+    profile = await createProfile(userId);
+
+    await createMemory(userId);
+
+    await createMission(userId);
+  }
+
+  const memory = await getMemory(userId);
+  const missions = await getMissions(userId);
 
   const firstAnswer =
-    profile.answers.find(
-      (answer) => answer.questionId === 1
-    )?.answer ?? "I'm Not Sure Yet";
+    profile?.journey ?? "I'm Not Sure Yet";
 
-  return buildBrainContext(firstAnswer);
+  const brain = buildBrainContext(firstAnswer);
+
+  return {
+    ...brain,
+
+    profile,
+    memory,
+    missions,
+  };
 }

@@ -16,13 +16,39 @@ export type BrainDecision = {
     | "Job"
     | "Scholarship"
     | "Accelerator";
+
+  identityTitle: string;
+  identityLevel: number;
 };
 
 export function think(
   brain: BrainContext
 ): BrainDecision {
 
-  const { memory } = brain;
+  const { memory, identity } = brain;
+
+  let identityTitle = identity.title;
+  let identityLevel = identity.level;
+
+  if (brain.progress >= 25) {
+    identityTitle = "Builder";
+    identityLevel = 2;
+  }
+
+  if (brain.progress >= 50) {
+    identityTitle = "Creator";
+    identityLevel = 3;
+  }
+
+  if (brain.progress >= 75) {
+    identityTitle = "Leader";
+    identityLevel = 4;
+  }
+
+  if (brain.progress >= 100) {
+    identityTitle = "Ascendant";
+    identityLevel = 5;
+  }
 
   if (memory.currentStreak >= 30) {
     return {
@@ -41,6 +67,9 @@ export function think(
         "Your habits are becoming who you are. Keep showing up.",
 
       opportunityPriority: "Accelerator",
+
+      identityTitle,
+      identityLevel,
     };
   }
 
@@ -61,6 +90,9 @@ export function think(
         "Forget perfection. Win today. One completed mission is better than ten unfinished plans.",
 
       opportunityPriority: "Course",
+
+      identityTitle,
+      identityLevel,
     };
   }
 
@@ -81,6 +113,9 @@ export function think(
         "You've proven you can move. Keep building skills that compound.",
 
       opportunityPriority: "Course",
+
+      identityTitle,
+      identityLevel,
     };
   }
 
@@ -101,6 +136,9 @@ export function think(
         "The next stage isn't more learning. It's doing.",
 
       opportunityPriority: "Job",
+
+      identityTitle,
+      identityLevel,
     };
   }
 
@@ -120,5 +158,8 @@ export function think(
       "Your growth now has the power to help other people grow.",
 
     opportunityPriority: "Accelerator",
+
+    identityTitle,
+    identityLevel,
   };
 }

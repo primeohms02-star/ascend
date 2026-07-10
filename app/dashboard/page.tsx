@@ -11,6 +11,7 @@ import { consultOracle } from "@/lib/engine/oracle";
 import GreetingCard from "@/app/dashboard/GreetingCard";
 import CompassCard from "@/app/dashboard/CompassCard";
 import MissionCard from "@/app/dashboard/MissionCard";
+import IdentityCard from "@/app/dashboard/IdentityCard";
 import ProgressCard from "@/app/dashboard/ProgressCard";
 import OracleCard from "@/app/dashboard/OracleCard";
 import RecommendationCard from "@/app/dashboard/RecommendationCard";
@@ -62,6 +63,11 @@ export default async function DashboardPage() {
           <MissionCard
             title={decision.nextMissionTitle}
             description={decision.nextMissionDescription}
+          />
+
+          <IdentityCard
+            title={decision.identityTitle}
+            level={decision.identityLevel}
           />
 
           <OracleCard
