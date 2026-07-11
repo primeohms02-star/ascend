@@ -18,20 +18,27 @@ export async function getCurrentUserBrain() {
     redirect("/sign-in");
   }
 
-  // Check if the user already exists
+  // Ensure profile exists
   let profile = await getProfile(userId);
 
-  // First login → initialize ASCEND
   if (!profile) {
     profile = await createProfile(userId);
-
-    await createMemory(userId);
-
-    await createMission(userId);
   }
 
-  const memory = await getMemory(userId);
-  const missions = await getMissions(userId);
+  // Ensure memory exists
+  let memory = await getMemory(userId);
+
+  if (!memory) {
+    memory = await createMemory(userId);
+  }
+
+  // Ensure at least one mission exists
+  let missions = await getMissions(userId);
+
+  if (missions.length === 0) {
+    await createMission(userId);
+    missions = await getMissions(userId);
+  }
 
   const firstAnswer =
     profile?.journey ?? "I'm Not Sure Yet";
@@ -40,7 +47,6 @@ export async function getCurrentUserBrain() {
 
   return {
     ...brain,
-
     profile,
     memory,
     missions,

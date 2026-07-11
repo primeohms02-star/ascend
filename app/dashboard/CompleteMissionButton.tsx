@@ -1,28 +1,50 @@
 "use client";
 
-import { useTransition } from "react";
-import { completeMissionAction } from "@/app/actions/completeMission";
+import { useState } from "react";
 
-type CompleteMissionButtonProps = {
+type Props = {
   missionId: string;
 };
 
 export default function CompleteMissionButton({
   missionId,
-}: CompleteMissionButtonProps) {
-  const [isPending, startTransition] = useTransition();
+}: Props) {
+  const [loading, setLoading] = useState(false);
+  const [completed, setCompleted] = useState(false);
+
+  async function completeMission() {
+    setLoading(true);
+
+    const res = await fetch("/api/missions/complete", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        missionId,
+      }),
+    });
+
+    if (res.ok) {
+      setCompleted(true);
+    } else {
+      console.error(await res.json());
+    }
+
+    setLoading(false);
+  }
 
   return (
     <button
-      onClick={() =>
-        startTransition(() => {
-          completeMissionAction(missionId);
-        })
-      }
-      disabled={isPending}
-      className="mt-6 w-full rounded-xl bg-orange-500 px-4 py-3 font-semibold text-white transition hover:bg-orange-600 disabled:opacity-50"
+      onClick={completeMission}
+      disabled={loading || completed}
+      className="rounded-xl bg-orange-500 px-6 py-3 font-semibold text-white hover:bg-orange-600 disabled:opacity-50"
     >
-      {isPending ? "Completing..." : "Complete Mission"}
+      {completed
+        ? "Mission Completed ✓"
+        : loading
+        ? "Completing..."
+        : "Complete Mission"}
     </button>
   );
 }

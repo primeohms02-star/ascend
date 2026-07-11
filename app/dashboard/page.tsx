@@ -20,7 +20,7 @@ import Timeline from "@/app/dashboard/timeline/Timeline";
 
 export default async function DashboardPage() {
   const { userId } = await auth();
-
+console.log("Current Clerk User:", userId);
   if (!userId) {
     redirect("/sign-in");
   }
@@ -30,6 +30,10 @@ export default async function DashboardPage() {
   const decision = think(brain);
 
   const oracle = consultOracle(decision);
+
+  console.log("Brain missions:", brain.missions);
+console.log("FIRST MISSION:", brain.missions[0]);
+console.log("MISSION ID:", brain.missions[0]?.id);
 
   return (
     <main className="min-h-screen bg-slate-50">

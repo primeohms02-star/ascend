@@ -25,10 +25,11 @@ export default function CompleteMissionButton({
           missionId,
         }),
       });
+if (res.ok) {
+  setCompleted(true);
 
-      if (res.ok) {
-        setCompleted(true);
-      }
+  window.location.reload();
+}
     } finally {
       setLoading(false);
     }
