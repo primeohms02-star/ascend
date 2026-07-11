@@ -11,6 +11,6 @@ export async function buildAtlasContext() {
     mission:
       brain.missions?.[0]?.title ??
       "No mission assigned",
-    momentum: Number(brain.momentum ?? 0),
+    momentum: brain.momentum,
   };
 }
