@@ -18,7 +18,7 @@ export async function getCurrentUserBrain() {
     redirect("/sign-in");
   }
 
-  // Check if this user already has a profile
+  // Check if the user already exists
   let profile = await getProfile(userId);
 
   // First login → initialize ASCEND

@@ -40,15 +40,24 @@ export default async function DashboardPage() {
         <div className="mb-6 flex items-center justify-between">
           <GreetingCard greeting={getGreeting()} />
 
-          <Link
-            href="/"
-            className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-medium shadow-sm transition hover:bg-slate-100"
-          >
-            Home
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/atlas"
+              className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-slate-800"
+            >
+              Atlas
+            </Link>
+
+            <Link
+              href="/"
+              className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-medium shadow-sm transition hover:bg-slate-100"
+            >
+              Home
+            </Link>
+          </div>
         </div>
 
-        {/* Atlas */}
+        {/* Atlas Compass */}
 
         <div className="mb-6">
           <CompassCard

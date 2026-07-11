@@ -1,4 +1,4 @@
-import CompleteMissionButton from "./CompleteMissionButton";
+import CompleteMissionButton from "@/app/components/dashboard/CompleteMissionButton";
 
 type MissionCardProps = {
   title: string;
@@ -33,9 +33,9 @@ export default function MissionCard({
         {description}
       </p>
 
-      <CompleteMissionButton
-        missionId={missionId}
-      />
+      <div className="mt-6">
+        <CompleteMissionButton missionId={missionId} />
+      </div>
     </section>
   );
 }
