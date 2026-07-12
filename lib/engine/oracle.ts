@@ -1,4 +1,4 @@
-import { BrainDecision } from "@/lib/brain/brain";
+import { CortexDecision } from "@/lib/cortex";
 
 export type OracleMessage = {
   title: string;
@@ -6,7 +6,7 @@ export type OracleMessage = {
 };
 
 export function consultOracle(
-  decision: BrainDecision
+  decision: CortexDecision
 ): OracleMessage {
   return {
     title: decision.oracleTitle,
