@@ -1,9 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 
-import { askAtlas } from "@/lib/services/atlas";
-import { askGroq } from "@/lib/groq/chat";
-import { saveAtlasMemory } from "@/lib/supabase/atlasMemory";
+import { Atlas } from "@/lib/atlas";
 
 export async function POST(req: Request) {
   const { question } = await req.json();
@@ -17,28 +15,9 @@ export async function POST(req: Request) {
     );
   }
 
-  // Save the user's message
-  await saveAtlasMemory(
-    userId,
-    "user",
-    question
-  );
+  const atlas = new Atlas(userId);
 
-  // Build Atlas prompt
-  const atlas = await askAtlas(question);
+  const result = await atlas.chat(question);
 
-  // Ask Groq
-  const answer = await askGroq(atlas.prompt);
-
-  // Save Atlas's response
-  await saveAtlasMemory(
-    userId,
-    "atlas",
-    answer
-  );
-
-  return NextResponse.json({
-    answer,
-    context: atlas.context,
-  });
+  return NextResponse.json(result);
 }

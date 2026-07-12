@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { getCurrentUserBrain } from "@/lib/services/user";
 import { getGreeting } from "@/lib/utils/greeting";
 
-import { think } from "@/lib/brain/brain";
+import { think } from "@/lib/cortex";
 import { consultOracle } from "@/lib/engine/oracle";
 
 import GreetingCard from "@/app/dashboard/GreetingCard";
