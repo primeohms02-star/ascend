@@ -8,11 +8,13 @@ import { getGreeting } from "@/lib/utils/greeting";
 import { think } from "@/lib/cortex";
 import { consultOracle } from "@/lib/engine/oracle";
 
+import DailyBriefingCard from "@/app/dashboard/DailyBriefingCard";
 import GreetingCard from "@/app/dashboard/GreetingCard";
 import CompassCard from "@/app/dashboard/CompassCard";
 import MissionCard from "@/app/dashboard/MissionCard";
 import IdentityCard from "@/app/dashboard/IdentityCard";
 import ProgressCard from "@/app/dashboard/ProgressCard";
+import AscensionProgress from "@/app/dashboard/AscensionProgress";
 import OracleCard from "@/app/dashboard/OracleCard";
 import RecommendationCard from "@/app/dashboard/RecommendationCard";
 import OpportunityRadar from "@/app/dashboard/opportunities/OpportunityRadar";
@@ -20,7 +22,7 @@ import Timeline from "@/app/dashboard/timeline/Timeline";
 
 export default async function DashboardPage() {
   const { userId } = await auth();
-console.log("Current Clerk User:", userId);
+
   if (!userId) {
     redirect("/sign-in");
   }
@@ -31,20 +33,33 @@ console.log("Current Clerk User:", userId);
 
   const oracle = consultOracle(decision);
 
-  console.log("Brain missions:", brain.missions);
-console.log("FIRST MISSION:", brain.missions[0]);
-console.log("MISSION ID:", brain.missions[0]?.id);
-
   return (
     <main className="min-h-screen bg-slate-50">
       <div className="mx-auto max-w-7xl px-6 py-8">
 
+        {/* Daily Briefing */}
+
+        <DailyBriefingCard
+          greeting={brain.dailyBriefing.greeting}
+          summary={brain.dailyBriefing.summary}
+          focus={brain.dailyBriefing.focus}
+          oracle={brain.dailyBriefing.oracle}
+        />
+
         {/* Header */}
 
         <div className="mb-6 flex items-center justify-between">
-          <GreetingCard greeting={getGreeting()} />
+
+          <GreetingCard
+            greeting={getGreeting()}
+            identity={
+              brain.identity?.identity_title ?? "Explorer"
+            }
+            score={brain.atlasProgress.ascension_score}
+          />
 
           <div className="flex items-center gap-3">
+
             <Link
               href="/atlas"
               className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-slate-800"
@@ -58,10 +73,12 @@ console.log("MISSION ID:", brain.missions[0]?.id);
             >
               Home
             </Link>
+
           </div>
+
         </div>
 
-        {/* Atlas Compass */}
+        {/* Compass */}
 
         <div className="mb-6">
           <CompassCard
@@ -70,7 +87,7 @@ console.log("MISSION ID:", brain.missions[0]?.id);
           />
         </div>
 
-        {/* Main Grid */}
+        {/* Dashboard Grid */}
 
         <div className="grid gap-6 lg:grid-cols-2">
 
@@ -94,6 +111,11 @@ console.log("MISSION ID:", brain.missions[0]?.id);
             progress={brain.progress}
             momentum={brain.momentum}
             message={brain.momentumMessage}
+          />
+
+          <AscensionProgress
+            score={brain.atlasProgress.ascension_score}
+            level={brain.atlasProgress.level}
           />
 
           <OpportunityRadar

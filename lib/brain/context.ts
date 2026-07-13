@@ -7,6 +7,8 @@ import { getRecommendations } from "@/lib/engine/recommendations";
 import { createMemory } from "./memory";
 import { createIdentity } from "./identity";
 
+import type { AdaptiveMission } from "@/lib/atlas/adaptiveMission";
+
 export type BrainContext = {
   journey: string;
   northStar: string;
@@ -31,29 +33,34 @@ export type BrainContext = {
 };
 
 export function buildBrainContext(
-  firstAnswer: string
+  firstAnswer: string,
+  adaptiveMission?: AdaptiveMission
 ): BrainContext {
   const journey = getJourneyProfile(firstAnswer);
 
-  const mission = getDailyMission(journey.title);
+  const defaultMission =
+    getDailyMission(journey.title);
 
-  const roadmap = getRoadmap(journey.title);
+  const mission =
+    adaptiveMission ?? defaultMission;
 
-  const opportunities = getOpportunities(
-    journey.title
-  );
+  const roadmap =
+    getRoadmap(journey.title);
 
-  const recommendations = getRecommendations(
-    journey.title
-  );
+  const opportunities =
+    getOpportunities(journey.title);
+
+  const recommendations =
+    getRecommendations(journey.title);
 
   const memory = createMemory();
 
   const identity = createIdentity();
 
-  const completedSteps = roadmap.filter(
-    (step) => step.completed
-  ).length;
+  const completedSteps =
+    roadmap.filter(
+      (step) => step.completed
+    ).length;
 
   const progress = Math.round(
     (completedSteps / roadmap.length) * 100
@@ -70,15 +77,19 @@ export function buildBrainContext(
     northStar: journey.northStar,
 
     missionTitle: mission.title,
-    missionDescription: mission.description,
+    missionDescription:
+      mission.description,
 
     roadmapSteps: roadmap.length,
+
     completedSteps,
 
     progress,
 
     momentum: momentum.status,
-    momentumMessage: momentum.message,
+
+    momentumMessage:
+      momentum.message,
 
     memory,
 
