@@ -45,7 +45,7 @@ export default function CTA() {
         <div className="mt-14 flex flex-col items-center justify-center gap-5 sm:flex-row">
 
           <Link
-            href="/sign-up"
+            href="/onboarding"
             className="rounded-2xl bg-blue-600 px-10 py-4 text-lg font-semibold text-white transition hover:bg-blue-500"
           >
             Start Your Journey →
