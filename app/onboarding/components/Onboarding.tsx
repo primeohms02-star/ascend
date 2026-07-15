@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { ArrowLeft } from "lucide-react";
 
 import ProgressBar from "./ProgressBar";
 import StepWelcome from "./StepWelcome";
@@ -16,8 +17,27 @@ export default function Onboarding() {
 
   const next = () => setStep((prev) => Math.min(prev + 1, 7));
 
+  const back = () => {
+    if (step === 1) {
+      window.location.href = "/";
+    } else {
+      setStep((prev) => Math.max(prev - 1, 1));
+    }
+  };
+
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[#05070B] px-6">
+    <main className="relative flex min-h-screen items-center justify-center bg-[#05070B] px-6">
+
+      {/* Back Button */}
+
+      <button
+        onClick={back}
+        className="absolute left-8 top-8 flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-5 py-3 text-slate-300 backdrop-blur-md transition hover:border-blue-500/30 hover:bg-white/10 hover:text-white"
+      >
+        <ArrowLeft size={18} />
+        <span className="font-medium">Back</span>
+      </button>
+
       <div className="w-full max-w-4xl">
 
         <ProgressBar
@@ -44,6 +64,7 @@ export default function Onboarding() {
         </div>
 
       </div>
+
     </main>
   );
 }

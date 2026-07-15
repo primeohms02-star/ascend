@@ -1,47 +1,85 @@
-import Link from "next/link";
-import AtlasChat from "@/app/components/atlas/AtlasChat";
+import AtlasBackground from "./components/AtlasBackground";
+import NorthStar from "./components/NorthStar";
+import JourneyNode from "./components/JourneyNode";
+import EnergyPulse from "./components/EnergyPulse";
+import ConstellationPath from "./components/ConstellationPath";
+import { atlasData } from "@/lib/atlas/data";
 
 export default function AtlasPage() {
   return (
-    <main className="min-h-screen bg-slate-950 text-white">
-      <div className="mx-auto flex min-h-screen max-w-6xl flex-col px-6 py-8">
+    <main className="relative min-h-screen overflow-hidden bg-[#020611] text-white">
 
-        {/* Header */}
+      {/* Background */}
+      <AtlasBackground />
 
-        <div className="mb-8 flex items-center justify-between">
+      <div className="relative z-10 flex min-h-screen items-center justify-center">
 
-          <div>
-            <p className="text-sm uppercase tracking-[0.3em] text-orange-400">
-              ASCEND AI
-            </p>
+    {/* North Star Label */}
+<div className="absolute top-2 left-1/2 -translate-x-1/2 text-center">
+  <h1 className="text-2xl font-bold tracking-tight text-white">
+    Your North Star
+  </h1>
 
-            <h1 className="mt-2 text-5xl font-bold">
-              Atlas
-            </h1>
+  <p className="mt-1 text-sm text-slate-400">
+    Build a Global Company
+  </p>
+</div>
 
-            <p className="mt-3 text-slate-400">
-              Your personal strategic advisor.
-            </p>
-          </div>
+{/* North Star */}
+<div className="absolute top-16 left-1/2 -translate-x-1/2">
+  <NorthStar />
+</div>
 
-          <Link
+  
+
+        {/* Journey Path */}
+       <ConstellationPath />
+
+
+
+        {/* Current Mission */}
+        <div className="absolute top-[33%] -translate-x-48">
+          <JourneyNode
+            icon="🎯"
+            title={atlasData.currentMission.title}
+            subtitle={`${atlasData.currentMission.progress}% Complete`}
             href="/dashboard"
-            className="rounded-xl border border-slate-700 px-4 py-2 transition hover:bg-slate-900"
-          >
-            Dashboard
-          </Link>
-
+          />
         </div>
 
-        {/* Chat Card */}
+        {/* Skill Growth */}
+        <div className="absolute top-[52%] translate-x-48">
+          <JourneyNode
+            icon="📚"
+            title="Skill Growth"
+            subtitle={atlasData.skills.join(" • ")}
+            href="/dashboard"
+          />
+        </div>
 
-        <div className="flex-1 rounded-3xl border border-slate-800 bg-slate-900 p-8">
+        {/* Opportunity */}
+        <div className="absolute top-[72%] -translate-x-48">
+          <JourneyNode
+            icon="🌍"
+            title={atlasData.opportunity.title}
+            subtitle={`Deadline • ${atlasData.opportunity.deadline}`}
+            href="/dashboard"
+          />
+        </div>
 
-          <AtlasChat />
+        {/* Current Position */}
+        <div className="absolute bottom-1 flex flex-col items-center">
+
+          <div className="h-8 w-8 rounded-full bg-blue-500 shadow-[0_0_45px_12px_rgba(59,130,246,0.9)]" />
+
+          <p className="mt-8 text-xl font-bold tracking-[0.25em] text-blue-300">
+            YOU ARE HERE
+          </p>
 
         </div>
 
       </div>
+
     </main>
   );
 }

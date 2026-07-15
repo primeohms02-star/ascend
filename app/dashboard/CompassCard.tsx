@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { motion } from "framer-motion";
 
 import NightSky from "./compass/NightSky";
@@ -18,73 +19,79 @@ export default function CompassCard({
 }: CompassCardProps) {
   return (
     <motion.section
-      initial={{
-        opacity: 0,
-        y: 30,
-      }}
-      animate={{
-        opacity: 1,
-        y: 0,
-      }}
-      transition={{
-        duration: 0.8,
-      }}
-      className="relative overflow-hidden rounded-3xl border border-slate-700 bg-slate-950 shadow-2xl"
+      initial={{ opacity: 0, y: 30 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.8 }}
+      className="relative overflow-hidden rounded-3xl border border-blue-500/20 bg-gradient-to-br from-[#05070B] via-[#0B1220] to-[#111827] shadow-2xl"
     >
-      {/* Animated Night Sky */}
+      {/* Ambient Glow */}
+      <div className="absolute -top-32 -right-32 h-80 w-80 rounded-full bg-blue-500/10 blur-3xl" />
+
+      {/* Animated Background */}
       <NightSky />
 
       {/* Content */}
-      <div className="relative z-10 p-6 lg:p-8">
+      <div className="relative z-10 p-8 lg:p-10">
 
         <NorthStar />
 
-        <div className="grid items-center gap-10 pt-10 lg:grid-cols-2">
+        <div className="grid items-center gap-12 lg:grid-cols-2">
 
           {/* Left Side */}
 
           <div>
 
-            <p className="text-sm font-semibold uppercase tracking-[0.25em] text-orange-300">
-              Atlas
+            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-blue-400">
+              North Star
             </p>
 
-            <h2 className="mt-2 text-3xl font-bold text-white lg:text-4xl">
-              Stay True to Your North
+            <h2 className="mt-3 text-4xl font-bold leading-tight text-white">
+              This Is Who
+              <br />
+              You're Becoming
             </h2>
 
-            <p className="mt-5 text-slate-400">
-              Your North Star
+            <p className="mt-8 text-sm uppercase tracking-[0.2em] text-slate-500">
+              Your Vision
             </p>
 
-            <p className="mt-2 text-xl font-semibold text-orange-300 lg:text-2xl">
+            <p className="mt-3 text-3xl font-bold leading-relaxed text-blue-300">
               {northStar}
             </p>
 
-            <div className="mt-8">
+            <div className="mt-10">
               <AlignmentBar alignment={alignment} />
             </div>
+
+            <Link href="/atlas">
+              <button className="mt-10 rounded-2xl bg-blue-600 px-6 py-3 font-semibold text-white transition hover:bg-blue-500">
+                Open Atlas →
+              </button>
+            </Link>
 
           </div>
 
           {/* Right Side */}
 
-          <div className="flex justify-center lg:justify-end">
+          <div className="flex justify-center lg:justify-center">
 
-            <CompassNeedle
-              alignment={alignment}
-            />
+            <div className="scale-110 lg:scale-125">
+              <CompassNeedle
+                alignment={alignment}
+              />
+            </div>
 
           </div>
 
         </div>
 
-        <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 px-5 py-4 backdrop-blur-sm">
+        {/* Quote */}
 
-          <p className="text-center text-sm italic leading-6 text-slate-300">
-            "The Compass never chooses your direction.
-            <br />
-            It only helps you remain faithful to it."
+        <div className="mt-10 rounded-2xl border border-blue-500/20 bg-blue-500/5 p-6 backdrop-blur-sm">
+
+          <p className="text-center text-lg italic leading-8 text-slate-300">
+            "Every decision today shapes the person
+            you'll become tomorrow."
           </p>
 
         </div>

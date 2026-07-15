@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 import Compass from "@/app/components/compass/";
 
 import HeroBackground from "./HeroBackground";
@@ -35,13 +37,17 @@ export default function Hero() {
 
           <div className="mt-12 flex flex-col gap-5 sm:flex-row">
 
-            <button className="rounded-2xl bg-blue-600 px-8 py-4 text-lg font-semibold text-white transition hover:bg-blue-500">
-              Start Your Journey →
-            </button>
+            <Link href="/onboarding">
+              <button className="rounded-2xl bg-blue-600 px-8 py-4 text-lg font-semibold text-white transition hover:bg-blue-500">
+                Start Your Journey →
+              </button>
+            </Link>
 
-            <button className="rounded-2xl border border-white/15 bg-white/5 px-8 py-4 text-lg font-medium text-white backdrop-blur-md transition hover:bg-white/10">
-              Explore Work →
-            </button>
+            <a href="#how-it-works">
+              <button className="rounded-2xl border border-white/15 bg-white/5 px-8 py-4 text-lg font-medium text-white backdrop-blur-md transition hover:bg-white/10">
+                Explore How It Works →
+              </button>
+            </a>
 
           </div>
 

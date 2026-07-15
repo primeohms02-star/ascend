@@ -8,22 +8,56 @@ export default function RecommendationCard({
   recommendation,
 }: Props) {
   return (
-    <div className="rounded-3xl bg-white p-8 shadow-lg">
-      <h2 className="text-2xl font-semibold">
-        ✨ Recommended Next
-      </h2>
+    <section className="relative overflow-hidden rounded-3xl border border-blue-500/20 bg-gradient-to-br from-[#0B1220] via-[#111827] to-[#0B1220] p-5 shadow-2xl">
 
-      <h3 className="mt-4 text-xl font-semibold">
-        {recommendation.title}
-      </h3>
+      {/* Ambient Glow */}
 
-      <p className="mt-3 text-slate-600">
-        {recommendation.description}
-      </p>
+      <div className="absolute -bottom-24 -right-24 h-80 w-80 rounded-full bg-blue-500/10 blur-3xl" />
 
-      <button className="mt-6 rounded-xl bg-black px-5 py-3 font-medium text-white transition hover:opacity-90">
-        {recommendation.action}
-      </button>
-    </div>
+      <div className="relative z-10">
+
+        <div className="flex items-start justify-between">
+
+          <div>
+
+            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-blue-400">
+              Recommended Next
+            </p>
+
+            <h2 className="mt-3 text-3xl font-bold leading-tight text-white">
+              {recommendation.title}
+            </h2>
+
+          </div>
+
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-blue-500/20 bg-blue-500/10 text-2xl">
+            ✨
+          </div>
+
+        </div>
+
+        <p className="mt-5 text-lg leading-8 text-slate-300">
+          {recommendation.description}
+        </p>
+
+        <div className="mt-6 rounded-2xl border border-blue-500/20 bg-blue-500/5 p-5">
+
+          <p className="text-xs uppercase tracking-[0.3em] text-blue-400">
+            Cortex Recommendation
+          </p>
+
+          <p className="mt-3 text-slate-200 italic leading-7">
+            Small, consistent actions create extraordinary long-term results.
+          </p>
+
+        </div>
+
+        <button className="mt-6 rounded-2xl bg-blue-600 px-7 py-3.5 text-base font-semibold text-white transition duration-300 hover:bg-blue-500 hover:shadow-lg hover:shadow-blue-500/30">
+          {recommendation.action} →
+        </button>
+
+      </div>
+
+    </section>
   );
 }
