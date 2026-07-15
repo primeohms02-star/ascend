@@ -68,7 +68,7 @@ export default function AtlasPage() {
         </div>
 
         {/* Current Position */}
-        <div className="absolute bottom-1 flex flex-col items-center">
+        <div className="absolute bottom-0s flex flex-col items-center">
 
           <div className="h-8 w-8 rounded-full bg-blue-500 shadow-[0_0_45px_12px_rgba(59,130,246,0.9)]" />
 

@@ -40,11 +40,13 @@ export function think(
     missionsMissed: 0,
   };
 
-  const identity = brain.identity;
+ const identity = brain.identity ?? {
+  title: "Explorer",
+  level: 1,
+};
 
-  let identityTitle = identity.title;
-  let identityLevel = identity.level;
-
+let identityTitle = identity.title;
+let identityLevel = identity.level;
   if (brain.progress >= 25) {
     identityTitle = "Builder";
     identityLevel = 2;

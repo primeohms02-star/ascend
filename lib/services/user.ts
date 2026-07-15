@@ -24,6 +24,7 @@ import { buildFutureSelf } from "@/lib/atlas/futureSelf";
 import { buildDailyBriefing } from "@/lib/atlas/dailyBriefing";
 
 import { buildBrainContext } from "@/lib/brain/context";
+import { createIdentity } from "../brain/identity";
 
 export async function getCurrentUserBrain() {
   const { userId } = await auth();
@@ -55,7 +56,17 @@ export async function getCurrentUserBrain() {
   }
 
   // Identity
-  const identity = await getIdentity(userId);
+ let identity = await getIdentity(userId);
+
+if (!identity) {
+  identity = createIdentity();
+} else {
+  identity = {
+    title: identity.identity_title ?? "Explorer",
+    level: 1,
+    confidence: identity.confidence ?? 0,
+  };
+}
 
   // Progress
   const progress = await getProgress(userId);

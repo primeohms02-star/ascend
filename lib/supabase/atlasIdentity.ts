@@ -7,7 +7,14 @@ export async function getIdentity(userId: string) {
     .eq("user_id", userId)
     .single();
 
-  if (error) return null;
+  if (error || !data) {
+    return {
+      identity_title: "Explorer",
+      identity_description:
+        "A person discovering their path and building momentum.",
+      confidence: 0,
+    };
+  }
 
   return data;
 }
