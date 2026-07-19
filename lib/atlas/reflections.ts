@@ -6,7 +6,7 @@ export async function saveReflection(
   confidence: number
 ) {
   return await supabaseServer
-    .from("atlas_reflection")
+    .from("atlas_reflections")
     .insert({
       user_id: userId,
       reflection,
@@ -18,7 +18,7 @@ export async function loadLatestReflection(
   userId: string
 ) {
   return await supabaseServer
-    .from("atlas_reflection")
+    .from("atlas_reflections")
     .select("*")
     .eq("user_id", userId)
     .order("created_at", {

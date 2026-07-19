@@ -21,12 +21,23 @@ export async function getUserProfile(
     throw error;
   }
 
-  return {
-    clerkId,
-    answers:
-      data?.map((item) => ({
+ return {
+  clerkId,
+  answers:
+    (data ?? [])
+      .filter(
+  (
+    item
+  ): item is {
+    question_id: number;
+    answer: string;
+  } =>
+    item.question_id !== null &&
+    item.answer !== null
+)
+      .map((item) => ({
         questionId: item.question_id,
         answer: item.answer,
-      })) ?? [],
-  };
+      })),
+};
 }

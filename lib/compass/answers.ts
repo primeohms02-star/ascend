@@ -14,7 +14,7 @@ export async function loadCompassAnswers(
 
 export async function saveCompassAnswer(
   clerkId: string,
-  questionId: string,
+  questionId: number,
   answer: string
 ) {
   return await supabaseServer
@@ -22,7 +22,7 @@ export async function saveCompassAnswer(
     .upsert(
       {
         clerk_id: clerkId,
-        question_id: questionId,
+        question_id: Number(questionId),
         answer,
       },
       {

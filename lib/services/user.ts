@@ -31,43 +31,52 @@ export async function getCurrentUserBrain() {
   if (!userId) {
     redirect("/sign-in");
   }
+  const clerkId = userId!;
 
-  let profile = await getProfile(userId);
+  let profile = await getProfile(clerkId);
 
   if (!profile) {
-    profile = await createProfile(userId);
+    profile = await createProfile(clerkId);
   }
 
-  let memory = await getMemory(userId);
+  let memory = await getMemory(clerkId);
 
   if (!memory) {
-    memory = await createMemory(userId);
+    memory = await createMemory(clerkId);
   }
 
-  let missions = await getMissions(userId);
+  let missions = await getMissions(clerkId);
 
   if (missions.length === 0) {
-    await createMission(userId);
-    missions = await getMissions(userId);
+    await createMission(clerkId);
+    missions = await getMissions(clerkId);
   }
 
-  let identity = await getIdentity(userId);
+const identityRecord = await getIdentity(clerkId);
 
-  if (!identity) {
-    identity = createIdentity();
-  } else {
-    identity = {
-      title: identity.identity_title ?? "Explorer",
+const identity = identityRecord
+  ? {
+      title: identityRecord.identity_title ?? "Explorer",
       level: 1,
-      confidence: identity.confidence ?? 0,
-    };
-  }
+      discipline: 0,
+      execution: 0,
+      learning: 0,
+      leadership: 0,
+      confidence: identityRecord.confidence ?? 0,
+      badges: [],
+    }
+  : createIdentity();
+    const progress = await getProgress(clerkId);
 
-  const progress = await getProgress(userId);
 
-  const reflections = await getReflections(userId);
+  const reflections = await getReflections(clerkId);
 
-  const patterns = analyzePatterns(reflections);
+  const patterns = analyzePatterns(
+  reflections.map((r) => ({
+    reflection: r.reflection ?? "",
+    mood: r.mood ?? 3,
+  }))
+);
 
   const adaptive = buildAdaptiveState(patterns);
 
@@ -76,14 +85,14 @@ export async function getCurrentUserBrain() {
   const adaptiveOracle = buildAdaptiveOracle(adaptive);
 
   const prediction = buildPrediction(
-    patterns,
-    memory.current_streak ?? 0
-  );
+  patterns,
+  memory?.current_streak ?? 0
+);
 
-  const weeklyReview = buildWeeklyReview(
-    patterns,
-    memory.current_streak ?? 0
-  );
+const weeklyReview = buildWeeklyReview(
+  patterns,
+  memory?.current_streak ?? 0
+);
 
   const brain = {
     journey: profile?.journey ?? "Purpose Discovery",
@@ -92,18 +101,14 @@ export async function getCurrentUserBrain() {
       profile?.north_star ??
       "Discover your purpose",
 
-    progress:
-      progress.progress_percentage ?? 0,
+  progress:
+  progress?.ascension_score ?? 0,
 
-    missionTitle:
-      adaptiveMission.title,
+momentum:
+  `Level ${progress?.level ?? 1}`,
 
-    momentum:
-      progress.momentum_status ?? "Building",
-
-    momentumMessage:
-      progress.momentum_message ??
-      "Keep moving forward.",
+momentumMessage:
+  "Keep moving toward your North Star.",
   };
 
   return {
@@ -132,12 +137,24 @@ export async function getCurrentUserBrain() {
     weeklyReview,
 
     futureSelf: buildFutureSelf(
-      patterns,
-      memory.current_streak ?? 0,
-      progress.progress_percentage ?? 0
-    ),
+  patterns,
+  memory?.current_streak ?? 0,
+  progress?.ascension_score ?? 0
+),
 
-    dailyBriefing: buildDailyBriefing(brain),
+    dailyBriefing: buildDailyBriefing({
+  journey: profile?.journey ?? "Purpose Discovery",
+
+  northStar:
+    profile?.north_star ??
+    "Discover your purpose",
+
+  missionTitle:
+    adaptiveMission.title,
+
+  progress:
+    progress?.ascension_score ?? 0,
+}),
 
     opportunities: rankOpportunities(
       [],
@@ -145,7 +162,7 @@ export async function getCurrentUserBrain() {
     ),
 
     recommendations: [],
-
+missionTitle:adaptiveMission.title,
     ...brain,
   };
 }

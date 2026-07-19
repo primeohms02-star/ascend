@@ -312,7 +312,7 @@ const fact =
 
 const mission = await generateMission(
   currentMission?.mission ?? null,
-  profile.north_star,
+  profile.north_star ?? "Discover your purpose",
   message
 );
 

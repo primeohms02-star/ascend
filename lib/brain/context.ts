@@ -31,15 +31,18 @@ export type BrainContext = {
 
   recommendations: ReturnType<typeof getRecommendations>;
 };
-
-export function buildBrainContext(
+export async function buildBrainContext(
   firstAnswer: string,
+  userId: string,
   adaptiveMission?: AdaptiveMission
-): BrainContext {
+): Promise<BrainContext> {
   const journey = getJourneyProfile(firstAnswer);
 
   const defaultMission =
-    getDailyMission(journey.title);
+  await getDailyMission(
+    journey.title,
+    userId
+  );
 
   const mission =
     adaptiveMission ?? defaultMission;
@@ -66,11 +69,8 @@ export function buildBrainContext(
     (completedSteps / roadmap.length) * 100
   );
 
-  const momentum = loadMomentum(
-    completedSteps,
-    roadmap.length
-  );
-
+  const { data: momentum } =
+  await loadMomentum(userId);
   return {
     journey: journey.title,
 
@@ -85,12 +85,11 @@ export function buildBrainContext(
     completedSteps,
 
     progress,
+momentum:
+  `${momentum?.current_streak ?? 0} day streak`,
 
-    momentum: momentum.status,
-
-    momentumMessage:
-      momentum.message,
-
+momentumMessage:
+  "Keep moving toward your North Star.",
     memory,
 
     identity,

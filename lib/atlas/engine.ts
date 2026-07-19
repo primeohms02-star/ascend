@@ -1,4 +1,4 @@
-import { askAtlas } from "@/lib/services/atlas";
+
 import { askGroq } from "@/lib/groq/chat";
 
 import { saveAtlasMemory } from "@/lib/supabase/atlasMemory";
@@ -81,14 +81,7 @@ export async function runAtlas(
     cognition.identity.title,
     cognition.identity.description
   );
-
-  // Build Atlas prompt
-  const atlas = await askAtlas(question);
-
-  // Ask Groq for response
-  const answer =
-    await askGroq(atlas.prompt);
-
+const answer = await askGroq(question);
   // Save Atlas reply
   await saveAtlasMemory(
     userId,
@@ -97,7 +90,6 @@ export async function runAtlas(
   );
 
   return {
-    answer,
-    context: atlas.context,
-  };
+  answer,
+};
 }

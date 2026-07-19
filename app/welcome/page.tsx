@@ -66,7 +66,7 @@ export default async function WelcomePage() {
         </h3>
 
         <p className="mt-3 text-slate-600">
-          {brain.missionDescription}
+          {brain.missionTitle}
         </p>
 
         <Link

@@ -1,39 +1,20 @@
 import { supabaseServer } from "@/lib/supabase-server";
 
-export async function loadJourney(
-  clerkId: string
-) {
+export async function loadJourney(clerkId: string) {
   return await supabaseServer
-    .from("journey")
+    .from("profiles")
     .select("*")
     .eq("clerk_id", clerkId)
-    .order("created_at", {
-      ascending: true,
-    });
+    .maybeSingle();
 }
 
-export async function addJourneyStep(
-  clerkId: string,
-  title: string,
-  description: string
-) {
-  return await supabaseServer
-    .from("journey")
-    .insert({
-      clerk_id: clerkId,
-      title,
-      description,
-      completed: false,
-    });
+// Legacy functions retained so imports don't break.
+// Journey steps are now handled by atlas_missions instead.
+
+export async function addJourneyStep() {
+  return null;
 }
 
-export async function completeJourneyStep(
-  id: string
-) {
-  return await supabaseServer
-    .from("journey")
-    .update({
-      completed: true,
-    })
-    .eq("id", id);
+export async function completeJourneyStep() {
+  return null;
 }

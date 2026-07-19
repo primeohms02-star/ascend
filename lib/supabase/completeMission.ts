@@ -5,10 +5,10 @@ export async function completeMission(
 ) {
   const { data, error } = await supabase
     .from("atlas_missions")
-    .update({
-      completed: true,
-      completed_at: new Date().toISOString(),
-    })
+   .update({
+  status: "completed",
+  completed_at: new Date().toISOString(),
+})
     .eq("id", missionId)
     .select()
     .single();

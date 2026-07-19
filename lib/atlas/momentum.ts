@@ -15,16 +15,15 @@ export async function completeMission(
       ascension_score: 0,
     };
 
-  const streak =
-    current.current_streak + 1;
+  const streak = (current.current_streak ?? 0) + 1;
 
-  const longest = Math.max(
-    streak,
-    current.longest_streak
-  );
+const longest = Math.max(
+  streak,
+  current.longest_streak ?? 0
+);
 
   const completed =
-    current.completed_missions + 1;
+  (current.completed_missions ?? 0) + 1;
 
   // Initial scoring algorithm
   const score =
@@ -36,7 +35,7 @@ export async function completeMission(
     longest_streak: longest,
     completed_missions: completed,
     skipped_missions:
-      current.skipped_missions,
+      current.skipped_missions ?? 0,
     ascension_score: score,
   });
 
