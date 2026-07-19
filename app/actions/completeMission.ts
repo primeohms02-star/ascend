@@ -23,17 +23,16 @@ export async function completeMissionAction(
   if (!memory) {
     return;
   }
+const currentStreak =
+  (memory.current_streak ?? 0) + 1;
 
-  const currentStreak = memory.current_streak + 1;
+const longestStreak = Math.max(
+  currentStreak,
+  memory.longest_streak ?? 0
+);
 
-  const longestStreak = Math.max(
-    currentStreak,
-    memory.longest_streak
-  );
-
-  const missionsCompleted =
-    memory.missions_completed + 1;
-
+const missionsCompleted =
+  (memory.missions_completed ?? 0) + 1;
   await updateMemory(
     userId,
     currentStreak,
