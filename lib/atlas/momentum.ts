@@ -42,3 +42,8 @@ export async function completeMission(
 
   return await getMomentum(userId);
 }
+export async function loadMomentum(
+  userId: string
+) {
+  return await getMomentum(userId);
+}

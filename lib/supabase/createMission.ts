@@ -6,7 +6,7 @@ export async function createMission(
   description?: string
 ) {
   const { data, error } = await supabase
-    .from("missions")
+    .from("atlas_missions")
     .insert({
       user_id: userId,
       title: title ?? "Discover Your North Star",

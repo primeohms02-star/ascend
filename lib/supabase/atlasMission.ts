@@ -7,11 +7,12 @@ export async function saveMission(
 ) {
   const { error } = await supabase
     .from("atlas_missions")
-    .insert({
-      user_id: userId,
-      mission,
-      reason,
-    });
+   .insert({
+  user_id: userId,
+  mission,
+  reason,
+  status: "active",
+});
 
   if (error) {
     console.error("Mission save error:", error);
@@ -46,7 +47,7 @@ export async function completeLatestMission(
     .from("atlas_missions")
     .select("id")
     .eq("user_id", userId)
-    .eq("status", "pending")
+    .eq("status", "active")
     .order("created_at", {
       ascending: false,
     })
@@ -81,7 +82,7 @@ export async function skipLatestMission(
     .from("atlas_missions")
     .select("id")
     .eq("user_id", userId)
-    .eq("status", "pending")
+    .eq("status", "active")
     .order("created_at", {
       ascending: false,
     })
@@ -106,4 +107,19 @@ export async function skipLatestMission(
     );
     throw updateError;
   }
+}
+export async function getCompletedMissionTitles(
+  userId: string
+) {
+  const { data, error } = await supabase
+    .from("atlas_missions")
+    .select("mission")
+    .eq("user_id", userId)
+    .eq("status", "completed");
+
+  if (error) {
+    return [];
+  }
+
+  return data.map((m) => m.mission);
 }

@@ -4,7 +4,7 @@ export async function completeMission(
   missionId: string
 ) {
   const { data, error } = await supabase
-    .from("missions")
+    .from("atlas_missions")
     .update({
       completed: true,
       completed_at: new Date().toISOString(),

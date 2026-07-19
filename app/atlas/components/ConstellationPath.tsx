@@ -2,49 +2,14 @@
 
 export default function ConstellationPath() {
   return (
-    <svg
-      className="absolute inset-0 h-full w-full"
-      viewBox="0 0 1000 1000"
-      preserveAspectRatio="none"
-    >
-      <defs>
-        <filter id="glow">
-          <feGaussianBlur stdDeviation="6" result="blur" />
-          <feMerge>
-            <feMergeNode in="blur" />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
-        </filter>
-      </defs>
+    <div className="absolute left-1/2 top-20 h-[700px] w-[4px] -translate-x-1/2">
 
-      <path
-        id="atlasPath"
-     d="M500 180
-   C430 300 610 360 500 490
-   S390 680 500 800
-   S600 900 500 910"
-        fill="none"
-        stroke="rgba(96,165,250,.45)"
-        strokeWidth="4"
-        strokeLinecap="round"
-      />
+      {/* Main glowing line */}
+      <div className="absolute inset-0 w-[2px] rounded-full bg-gradient-to-b from-white via-sky-300 to-blue-500" />
 
-      <circle
-        r="7"
-        fill="#38BDF8"
-        filter="url(#glow)"
-      >
-        <animateMotion
-          dur="6s"
-          repeatCount="indefinite"
-          rotate="auto"
-          keyPoints="1;0"
-          keyTimes="0;1"
-          calcMode="linear"
-        >
-          <mpath href="#atlasPath" />
-        </animateMotion>
-      </circle>
-    </svg>
+      {/* Animated energy orb */}
+      <div className="absolute left-1/2 h-4 w-4 -translate-x-1/2 rounded-full bg-cyan-300 shadow-[0_0_30px_10px_rgba(56,189,248,0.9)] animate-atlas-orb" />
+
+    </div>
   );
 }

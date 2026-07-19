@@ -1,7 +1,7 @@
 import { getJourneyProfile } from "@/lib/engine/journey";
 import { getDailyMission } from "@/lib/engine/mission";
 import { getRoadmap } from "@/lib/engine/roadmap";
-import { getMomentum } from "./momentum";
+import { loadMomentum } from "./momentum";
 import { getOpportunities } from "@/lib/engine/opportunities";
 import { getRecommendations } from "@/lib/engine/recommendations";
 import { createMemory } from "./memory";
@@ -66,7 +66,7 @@ export function buildBrainContext(
     (completedSteps / roadmap.length) * 100
   );
 
-  const momentum = getMomentum(
+  const momentum = loadMomentum(
     completedSteps,
     roadmap.length
   );

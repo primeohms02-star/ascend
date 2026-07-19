@@ -1,43 +1,32 @@
-export type Momentum = {
-  status: string;
-  message: string;
-};
+import { supabaseServer } from "@/lib/supabase-server";
 
-export function getMomentum(
-  completedSteps: number,
-  totalSteps: number
-): Momentum {
-  const percent = Math.round(
-    (completedSteps / totalSteps) * 100
-  );
+export async function loadMomentum(
+  userId: string
+) {
+  return await supabaseServer
+    .from("atlas_momentum")
+    .select("*")
+    .eq("user_id", userId)
+    .single();
+}
 
-  if (percent >= 75) {
-    return {
-      status: "🚀 High",
-      message:
-        "You're making excellent progress. Keep the momentum alive.",
-    };
+export async function updateMomentum(
+  userId: string,
+  data: {
+    current_streak: number;
+    longest_streak: number;
+    completed_missions: number;
+    ascension_score: number;
   }
-
-  if (percent >= 40) {
-    return {
-      status: "⚡ Building",
-      message:
-        "You're gaining momentum. Stay consistent.",
-    };
-  }
-
-  if (percent >= 10) {
-    return {
-      status: "🌱 Growing",
-      message:
-        "Every small step matters. Keep moving forward.",
-    };
-  }
-
-  return {
-    status: "🧭 Beginning",
-    message:
-      "Every great journey starts with the first step.",
-  };
+) {
+  return await supabaseServer
+    .from("atlas_momentum")
+    .update({
+      current_streak: data.current_streak,
+      longest_streak: data.longest_streak,
+      completed_missions: data.completed_missions,
+      ascension_score: data.ascension_score,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("user_id", userId);
 }

@@ -23,7 +23,6 @@ import { buildWeeklyReview } from "@/lib/atlas/weeklyReview";
 import { buildFutureSelf } from "@/lib/atlas/futureSelf";
 import { buildDailyBriefing } from "@/lib/atlas/dailyBriefing";
 
-import { buildBrainContext } from "@/lib/brain/context";
 import { createIdentity } from "../brain/identity";
 
 export async function getCurrentUserBrain() {
@@ -33,21 +32,18 @@ export async function getCurrentUserBrain() {
     redirect("/sign-in");
   }
 
-  // Profile
   let profile = await getProfile(userId);
 
   if (!profile) {
     profile = await createProfile(userId);
   }
 
-  // Memory
   let memory = await getMemory(userId);
 
   if (!memory) {
     memory = await createMemory(userId);
   }
 
-  // Missions
   let missions = await getMissions(userId);
 
   if (missions.length === 0) {
@@ -55,92 +51,71 @@ export async function getCurrentUserBrain() {
     missions = await getMissions(userId);
   }
 
-  // Identity
- let identity = await getIdentity(userId);
+  let identity = await getIdentity(userId);
 
-if (!identity) {
-  identity = createIdentity();
-} else {
-  identity = {
-    title: identity.identity_title ?? "Explorer",
-    level: 1,
-    confidence: identity.confidence ?? 0,
-  };
-}
+  if (!identity) {
+    identity = createIdentity();
+  } else {
+    identity = {
+      title: identity.identity_title ?? "Explorer",
+      level: 1,
+      confidence: identity.confidence ?? 0,
+    };
+  }
 
-  // Progress
   const progress = await getProgress(userId);
 
-  // Reflections
   const reflections = await getReflections(userId);
 
-  // Pattern Recognition
   const patterns = analyzePatterns(reflections);
 
-  // Adaptive Intelligence
   const adaptive = buildAdaptiveState(patterns);
 
-  const adaptiveMission =
-    buildAdaptiveMission(adaptive);
+  const adaptiveMission = buildAdaptiveMission(adaptive);
 
-  const adaptiveOracle =
-    buildAdaptiveOracle(adaptive);
+  const adaptiveOracle = buildAdaptiveOracle(adaptive);
 
-  // Prediction
-  const prediction =
-    buildPrediction(
-      patterns,
-      memory.current_streak ?? 0
-    );
+  const prediction = buildPrediction(
+    patterns,
+    memory.current_streak ?? 0
+  );
 
-  // Weekly Review
-  const weeklyReview =
-    buildWeeklyReview(
-      patterns,
-      memory.current_streak ?? 0
-    );
+  const weeklyReview = buildWeeklyReview(
+    patterns,
+    memory.current_streak ?? 0
+  );
 
-  const firstAnswer =
-    profile?.journey ??
-    "I'm Not Sure Yet";
+  const brain = {
+    journey: profile?.journey ?? "Purpose Discovery",
 
-  const brain =
-    buildBrainContext(
-      firstAnswer,
-      adaptiveMission
-    );
+    northStar:
+      profile?.north_star ??
+      "Discover your purpose",
 
-  // Daily Briefing
-  const dailyBriefing =
-    buildDailyBriefing(brain);
+    progress:
+      progress.progress_percentage ?? 0,
 
-  // Ranked Opportunities
-  const rankedOpportunities =
-    rankOpportunities(
-      brain.opportunities,
-      adaptive
-    );
+    missionTitle:
+      adaptiveMission.title,
 
-  // Future Self
-  const futureSelf =
-    buildFutureSelf(
-      patterns,
-      memory.current_streak ?? 0,
-      brain.progress
-    );
+    momentum:
+      progress.momentum_status ?? "Building",
+
+    momentumMessage:
+      progress.momentum_message ??
+      "Keep moving forward.",
+  };
 
   return {
-    ...brain,
-
-    opportunities: rankedOpportunities,
-
     profile,
-    memory,
-    missions,
 
     identity,
 
     atlasProgress: progress,
+
+    memory,
+
+    missions,
 
     reflections,
 
@@ -148,14 +123,29 @@ if (!identity) {
 
     adaptive,
 
+    adaptiveMission,
+
     adaptiveOracle,
 
     prediction,
 
     weeklyReview,
 
-    futureSelf,
+    futureSelf: buildFutureSelf(
+      patterns,
+      memory.current_streak ?? 0,
+      progress.progress_percentage ?? 0
+    ),
 
-    dailyBriefing,
+    dailyBriefing: buildDailyBriefing(brain),
+
+    opportunities: rankOpportunities(
+      [],
+      adaptive
+    ),
+
+    recommendations: [],
+
+    ...brain,
   };
 }

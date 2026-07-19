@@ -1,5 +1,3 @@
-import { BrainContext } from "@/lib/brain/context";
-
 export type DailyBriefing = {
   greeting: string;
   summary: string;
@@ -7,8 +5,15 @@ export type DailyBriefing = {
   oracle: string;
 };
 
+type DailyBriefingInput = {
+  journey: string;
+  northStar: string;
+  missionTitle: string;
+  progress: number;
+};
+
 export function buildDailyBriefing(
-  brain: BrainContext
+  brain: DailyBriefingInput
 ): DailyBriefing {
   let greeting = "Good morning.";
 

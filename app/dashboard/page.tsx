@@ -1,12 +1,10 @@
 import Link from "next/link";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-
-import { getCurrentUserBrain } from "@/lib/services/user";
-
+import { getAtlasDashboard } from "@/lib/atlas/dashboard";
 import { think } from "@/lib/cortex";
 import { consultOracle } from "@/lib/engine/oracle";
-
+import AtlasTimeline from "@/app/components/dashboard/AtlasTimeline";
 import DailyBriefingCard from "@/app/dashboard/DailyBriefingCard";
 import CompassCard from "@/app/dashboard/CompassCard";
 import MissionCard from "@/app/dashboard/MissionCard";
@@ -16,20 +14,20 @@ import AscensionProgress from "@/app/dashboard/AscensionProgress";
 import OracleCard from "@/app/dashboard/OracleCard";
 import RecommendationCard from "@/app/dashboard/RecommendationCard";
 import OpportunityRadar from "@/app/dashboard/opportunities/OpportunityRadar";
-import Timeline from "@/app/dashboard/timeline/Timeline";
+
+import { Brain } from "lucide-react";
 
 export default async function DashboardPage() {
-  const { userId } = await auth();
+ const { userId } = await auth();
 
-  if (!userId) {
-    redirect("/sign-in");
-  }
+if (!userId) {
+  redirect("/sign-in");
+}
 
-  const brain = await getCurrentUserBrain();
+const dashboard = await getAtlasDashboard(userId);
+  //const decision = think(brain);
 
-  const decision = think(brain);
-
-  const oracle = consultOracle(decision);
+  //const oracle = consultOracle(decision);
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-[#020617] via-[#08111f] to-[#0f172a]">
@@ -52,19 +50,19 @@ export default async function DashboardPage() {
 
         <div className="mb-6">
           <DailyBriefingCard
-            greeting={brain.dailyBriefing.greeting}
-            summary={brain.dailyBriefing.summary}
-            focus={brain.dailyBriefing.focus}
-            oracle={brain.dailyBriefing.oracle}
+            greeting={dashboard.dailyBriefing.greeting}
+            summary={dashboard.dailyBriefing.summary}
+            focus={dashboard.dailyBriefing.focus}
+            oracle={dashboard.dailyBriefing.oracle}
           />
         </div>
 
         {/* Compass */}
 
-        <div className="mb-6">
+        <div id="compass" className="mb-6">
           <CompassCard
-            northStar={brain.northStar}
-            alignment={decision.northStarAlignment}
+            northStar={dashboard.compass.northStar}
+            alignment={dashboard.compass.alignment}
           />
         </div>
 
@@ -72,62 +70,69 @@ export default async function DashboardPage() {
 
         <div className="columns-1 gap-6 lg:columns-2">
 
-          <div className="mb-6 break-inside-avoid">
+         <div
+  id="mission"
+  className="mb-6 break-inside-avoid"
+>
             <MissionCard
-              title={decision.nextMissionTitle}
-              description={decision.nextMissionDescription}
-              missionId={brain.missions[0]?.id ?? ""}
+              title={dashboard.mission.title}
+              description={dashboard.mission.description}
+              missionId={dashboard.mission.missionId}
             />
           </div>
 
           <div className="mb-6 break-inside-avoid">
-            <OracleCard
-              title={oracle.title}
-              message={oracle.message}
-            />
+          <OracleCard
+  title="ATLAS Oracle"
+  message="Your future is built by the decisions you make today."
+/>
           </div>
 
           <div className="mb-6 break-inside-avoid">
-            <IdentityCard
-              title={decision.identityTitle}
-              level={decision.identityLevel}
-            />
+           <IdentityCard
+  title={dashboard.identity.title}
+  level={dashboard.identity.level}
+/>
           </div>
 
           <div className="mb-6 break-inside-avoid">
             <ProgressCard
-              progress={brain.progress}
-              momentum={brain.momentum}
-              message={brain.momentumMessage}
+              progress={dashboard.progress.progress}
+              momentum={dashboard.progress.momentum}
+              message={dashboard.progress.message}
             />
           </div>
 
           <div className="mb-6 break-inside-avoid">
-            <AscensionProgress
-              score={brain.atlasProgress.ascension_score}
-              level={brain.atlasProgress.level}
-            />
+          <AscensionProgress
+  score={Number(dashboard.atlasProgress?.ascension_score ?? 0)}
+  level={Number(dashboard.atlasProgress?.level ?? 1)}
+/>
           </div>
 
-          <div className="mb-6 break-inside-avoid">
+         <div
+  id="opportunities"
+  className="mb-6 break-inside-avoid"
+>
             <OpportunityRadar
-              opportunities={brain.opportunities}
+              opportunities={dashboard.opportunities}
             />
           </div>
 
         </div>
 
-        {/* Timeline */}
+       {/* Atlas Timeline */}
 
-        <div className="mt-6">
-          <Timeline />
-        </div>
-
+<div className="mt-6">
+  <AtlasTimeline
+    timeline={dashboard.timeline}
+  />
+</div>
         {/* Recommendation */}
 
         <div className="mt-6">
           <RecommendationCard
-            recommendation={brain.recommendations[0]}
+            recommendation={dashboard.recommendations[0]}
           />
         </div>
 

@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 
+
+
 import { saveReflection } from "@/lib/supabase/reflections";
+import { recordMemory } from "@/lib/atlas/recordMemory";
 
 export async function POST(
   request: NextRequest
@@ -35,6 +38,22 @@ export async function POST(
       reflection,
       mood
     );
+
+    await recordMemory(
+  userId,
+  "reflection",
+  "Reflection Saved",
+  reflection,
+  {
+    missionId,
+    mood,
+    confidence:
+      mood ?? null,
+
+    created_at:
+      new Date().toISOString(),
+  }
+);
 
     return NextResponse.json(saved);
   } catch (error) {

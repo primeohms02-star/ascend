@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Recommendation } from "@/lib/engine/recommendations";
 
 type Props = {
@@ -10,7 +11,7 @@ export default function RecommendationCard({
   if (!recommendation) {
     return (
       <section className="rounded-3xl border border-blue-500/20 bg-[#0B1220] p-6">
-        <p className="text-blue-400 uppercase tracking-[0.3em] text-sm">
+        <p className="text-sm uppercase tracking-[0.3em] text-blue-400">
           Recommended Next
         </p>
 
@@ -55,14 +56,18 @@ export default function RecommendationCard({
             Cortex Recommendation
           </p>
 
-          <p className="mt-3 text-slate-200 italic leading-7">
+          <p className="mt-3 italic leading-7 text-slate-200">
             Small, consistent actions create extraordinary long-term results.
           </p>
         </div>
 
-        <button className="mt-6 rounded-2xl bg-blue-600 px-7 py-3.5 text-base font-semibold text-white transition duration-300 hover:bg-blue-500 hover:shadow-lg hover:shadow-blue-500/30">
-          {recommendation.action} →
-        </button>
+        <Link
+          href={recommendation.href}
+          className="mt-6 inline-flex items-center rounded-2xl bg-blue-600 px-7 py-3.5 text-base font-semibold text-white transition duration-300 hover:bg-blue-500 hover:shadow-lg hover:shadow-blue-500/30"
+        >
+          {recommendation.action}
+          <span className="ml-2">→</span>
+        </Link>
       </div>
     </section>
   );

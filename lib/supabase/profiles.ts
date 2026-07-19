@@ -10,6 +10,6 @@ export async function getProfile(userId: string) {
   if (error) {
     throw error;
   }
-
+console.log("USER JOURNEY:", data?.journey);
   return data;
 }
