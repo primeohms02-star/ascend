@@ -3,15 +3,18 @@ import { loadAtlasContext } from "./brain";
 export async function getAtlasDashboard(
   clerkId: string
 ) {
-  const atlas = await loadAtlasContext(clerkId);
+ const atlas = await loadAtlasContext(clerkId);
 
-  const currentMission = atlas.mission;
+const currentMission =
+  atlas.missions?.find((m: any) => m.status === "active") ??
+  atlas.missions?.[0] ??
+  null;
 
   return {
-   dailyBriefing: {
+ dailyBriefing: {
   ...atlas.dailyBriefing,
   focus:
-    atlas.mission?.mission ??
+    currentMission?.mission ??
     atlas.dailyBriefing.focus,
 },
    compass: {
@@ -38,9 +41,9 @@ progress: {
 
   momentum: `${atlas.momentum?.current_streak ?? 0} Day Streak`,
 
-  message:
-    atlas.progress?.momentumMessage ??
-    "Keep moving toward your North Star.",
+ message:
+  atlas.momentumMessage ??
+  "Keep moving toward your North Star.",
 },
 
    identity: {

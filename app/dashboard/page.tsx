@@ -14,7 +14,7 @@ import AscensionProgress from "@/app/dashboard/AscensionProgress";
 import OracleCard from "@/app/dashboard/OracleCard";
 import RecommendationCard from "@/app/dashboard/RecommendationCard";
 import OpportunityRadar from "@/app/dashboard/opportunities/OpportunityRadar";
-
+import { getGreeting } from "@/lib/utils/greeting";
 import { Brain } from "lucide-react";
 
 export default async function DashboardPage() {

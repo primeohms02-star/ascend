@@ -1,4 +1,4 @@
-
+import { getGreeting } from "@/lib/utils/greeting";
 import {
   hasSeenNotification,
   saveNotification,
@@ -19,30 +19,34 @@ export async function GET() {
 
   const atlas = await loadAtlasContext(userId);
 
-  const notificationId = `mission-${atlas.mission?.id ?? "none"}`;
-
   const mission =
-    atlas.mission?.mission ?? "No active mission";
+  atlas.missions?.find((m: any) => m.status === "active") ??
+  atlas.missions?.[0] ??
+  null;
+
+ const notificationId = `mission-${mission?.id ?? "none"}`;
+
+const missionTitle =
+  mission?.mission ?? "No active mission";
 
   const streak =
     atlas.momentum?.current_streak ?? 0;
 
-  const greeting =
-    streak === 0
-      ? `Welcome back.
+const greeting = `${getGreeting()}.
 
-Your mission is "${mission}".
+${
+  streak === 0
+    ? `Your mission is "${missionTitle}".
 
 Let's rebuild your momentum today.`
-      : `Welcome back.
+    : `Current mission:
 
-Current mission:
-
-${mission}
+${missionTitle}
 
 You're on a ${streak}-day streak.
 
-Keep climbing toward your North Star.`;
+Keep climbing toward your North Star.`
+}`;
 
 const notification = buildNotification(atlas);
 

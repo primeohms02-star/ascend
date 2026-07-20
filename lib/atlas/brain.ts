@@ -1,5 +1,5 @@
 
-
+import { getCurrentUserBrain } from "@/lib/services/user";
 import { analyzePatterns } from "@/lib/atlas/patterns";
 import { buildAdaptiveState } from "@/lib/atlas/adaptive";
 import { buildAdaptiveMission } from "@/lib/atlas/adaptiveMission";
@@ -73,17 +73,10 @@ import {
 export async function loadAtlasContext(
   clerkId: string
 ) {
-  const { data: profile, error } =
-    await loadProfile(clerkId);
-
-  if (error || !profile) {
-    throw new Error("Profile not found.");
-  }
+  // Build the unified Atlas brain first.
+  const brain = await getCurrentUserBrain();
 
   const [
-    mission,
-    memory,
-    atlasMemories,
     strategy,
     knowledge,
     facts,
@@ -92,13 +85,9 @@ export async function loadAtlasContext(
     journey,
     compassAnswers,
     compassResults,
+    memory,
+    atlasMemories,
   ] = await Promise.all([
-
-
-    
-    loadCurrentMission(clerkId),
-    loadConversation(clerkId),
-    loadAtlasMemories(clerkId),
     loadStrategy(clerkId),
     loadKnowledge(clerkId),
     loadFacts(clerkId),
@@ -107,158 +96,33 @@ export async function loadAtlasContext(
     loadJourney(clerkId),
     loadCompassAnswers(clerkId),
     loadCompassResults(clerkId),
+    loadConversation(clerkId),
+    loadAtlasMemories(clerkId),
   ]);
 
-  const patterns = analyzePatterns(
-  reflection ? [reflection as any] : []
-);
-
-const adaptive = buildAdaptiveState(patterns);
-
-const adaptiveMission =
-  buildAdaptiveMission(adaptive);
-
-const adaptiveOracle =
-  buildAdaptiveOracle(adaptive);
-
-const ascension =
-  calculateAscension(
-    profile.progress ?? 0
-  );
-const identity = {
-  title: ascension.title,
-  level: ascension.level,
-};
-
-const prediction = buildPrediction(
-  patterns,
-  momentum?.current_streak ?? 0
-);
-
-const weeklyReview =
-  buildWeeklyReview(
-    patterns,
-    momentum?.current_streak ?? 0
-  );
-
-const futureSelf =
-  buildFutureSelf(
-    patterns,
-    momentum?.current_streak ?? 0,
-    profile.progress ?? 0
-  );
-
-const dailyBriefing =
-  buildDailyBriefing({
-    journey:
-      profile.journey ?? "Explorer",
-
-    northStar:
-      profile.north_star ??
-      "Discover your purpose",
-
-    missionTitle:
-      adaptiveMission.title,
-
-    progress:
-      profile.progress ?? 0,
-  });
-
-const opportunities =
-  rankOpportunities([], adaptive);
-
-const recommendations = [
-  ascension.level < 5
-    ? {
-        id: "complete-mission",
-        title: "Complete Today's Mission",
-        description:
-          "Build momentum by finishing today's mission.",
-        priority: "high" as const,
-        category: "Mission",
-        action: "Go to Mission",
-        href: "#mission",
-      }
-
-    : ascension.level < 10
-    ? {
-        id: "explore-opportunities",
-        title: "Explore Opportunities",
-        description:
-          "Push yourself toward bigger opportunities.",
-        priority: "medium" as const,
-        category: "Growth",
-        action: "Open Opportunities",
-        href: "#opportunities",
-      }
-
-    : {
-        id: "refine-north-star",
-        title: "Refine Your North Star",
-        description:
-          "Review your long-term vision and future direction.",
-        priority: "high" as const,
-        category: "Vision",
-        action: "Open Compass",
-        href: "#compass",
-      },
-];
-
-
-const timeline =
-  buildTimeline(
-    atlasMemories as any
-  );
-
   return {
-  profile,
-  mission,
-  memory,
-  atlasMemories,
-  strategy,
-  knowledge,
-  facts,
-  reflection,
-  momentum,
-  journey,
-  compassAnswers,
-  compassResults,
+    ...brain,
 
-  patterns,
-  adaptive,
-  adaptiveMission,
-  adaptiveOracle,
+    strategy,
+    knowledge,
+    facts,
+    reflection,
+    momentum,
+    journey,
 
-  identity,
+    compassAnswers,
+    compassResults,
 
-  prediction,
-  weeklyReview,
-  futureSelf,
+    memory,
+    atlasMemories,
 
-  dailyBriefing,
-
-  opportunities,
-  recommendations,
-  timeline,
-
-  progress: {
-    progress: profile.progress ?? 0,
-   momentumMessage:
-  "Keep moving forward.",
-     
-  },
-
-  atlasProgress: {
-  ascension_score:
-    ascension.score,
-
-  level:
-    ascension.level,
-},
-
-};
-
+    timeline: buildTimeline(
+      atlasMemories as any
+    ),
+  };
 }
+  
+ 
 /*
 |--------------------------------------------------------------------------
 | BUILD COMPLETE SYSTEM PROMPT
@@ -270,6 +134,11 @@ export async function buildAtlasContext(
 ) {
   const atlas =
     await loadAtlasContext(clerkId);
+
+    const mission =
+  atlas.missions?.find((m: any) => m.status === "active") ??
+  atlas.missions?.[0] ??
+  null;
 
   const systemPrompt = `
 You are the AI strategist inside ASCEND.
@@ -317,10 +186,10 @@ CURRENT MISSION (LIVE)
 =============================
 
 Mission:
-${atlas.mission?.mission ?? "None"}
+${mission?.mission ?? "None"}
 
 Reason:
-${atlas.mission?.reason ?? "None"}
+${mission?.reason ?? "None"}
 
 IMPORTANT:
 
@@ -439,14 +308,19 @@ export async function runAtlasBrain({
     completion.choices[0]?.message?.content ??
     "I'm thinking...";
 
-  return {
-    reply,
-    profile: atlas.profile,
-    mission: atlas.mission,
-    momentum: atlas.momentum,
-    strategy: atlas.strategy,
-    compassResults: atlas.compassResults,
-  };
+ const mission =
+  atlas.missions?.find((m: any) => m.status === "active") ??
+  atlas.missions?.[0] ??
+  null;
+
+return {
+  reply,
+  profile: atlas.profile,
+  mission,
+  momentum: atlas.momentum,
+  strategy: atlas.strategy,
+  compassResults: atlas.compassResults,
+};
 }
 /*
 |--------------------------------------------------------------------------

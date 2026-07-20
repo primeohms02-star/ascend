@@ -254,32 +254,7 @@ Keep responses practical.
 Avoid generic advice.
 `;
 
-    const conversation = [
-      {
-        role: "system" as const,
-        content: context,
-      },
-
-      ...(memories ?? [])
-        .filter(
-          (m) =>
-            m.role === "user" ||
-            m.role === "assistant" ||
-            m.role === "atlas"
-        )
-        .map((m) => ({
-          role:
-            m.role === "atlas"
-              ? "assistant"
-              : m.role,
-          content: m.message,
-        })),
-
-      {
-        role: "user" as const,
-        content: message,
-      },
-    ];
+   
     // ---------------------------------
     // Ask ATLAS
     // ---------------------------------

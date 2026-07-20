@@ -1,3 +1,5 @@
+import { getGreeting } from "../utils/greeting";
+
 export type DailyBriefing = {
   greeting: string;
   summary: string;
@@ -15,21 +17,26 @@ type DailyBriefingInput = {
 export function buildDailyBriefing(
   brain: DailyBriefingInput
 ): DailyBriefing {
-  let greeting = "Good morning.";
+  let greeting = getGreeting();
 
-  if (brain.progress >= 80) {
-    greeting =
-      "Good morning. You're operating at a high level today.";
-  } else if (brain.progress >= 50) {
-    greeting =
-      "Good morning. You're building real momentum.";
-  } else if (brain.progress >= 20) {
-    greeting =
-      "Good morning. Every completed mission moves you forward.";
-  } else {
-    greeting =
-      "Good morning. Today is another chance to begin.";
-  }
+ const baseGreeting = getGreeting();
+
+let message = "Today is another chance to begin.";
+
+if (brain.progress >= 80) {
+  message = "You're operating at a high level today.";
+} else if (brain.progress >= 50) {
+  message = "You're building real momentum.";
+} else if (brain.progress >= 20) {
+  message = "Every completed mission moves you forward.";
+}
+
+return {
+  greeting: `${baseGreeting}. ${message}`,
+  summary: `You are currently following the ${brain.journey} journey and are ${brain.progress}% aligned with your North Star.`,
+  focus: `Today's mission is "${brain.missionTitle}". Finish it before the day ends.`,
+  oracle: "Consistency is the bridge between intention and transformation.",
+};
 
   return {
     greeting,

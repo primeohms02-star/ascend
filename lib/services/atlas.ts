@@ -1,6 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-
+import { getGreeting } from "@/lib/utils/greeting";
 import { loadAtlasContext } from "@/lib/atlas/brain";
 
 export async function getAtlasDashboard() {
@@ -11,6 +11,11 @@ export async function getAtlasDashboard() {
   }
 
   const atlas = await loadAtlasContext(userId);
+
+  const activeMission =
+  atlas.missions?.find((m: any) => m.status === "active") ??
+  atlas.missions?.[0] ??
+  null;
 
   return {
     // Existing Dashboard Fields
@@ -24,10 +29,9 @@ export async function getAtlasDashboard() {
     momentumMessage:
       "Keep moving toward your North Star.",
 
-    missions: atlas.mission
-      ? [atlas.mission]
-      : [],
-
+    missions:
+  atlas.missions ??
+  [],
     atlasProgress:
       atlas.momentum ?? {
         ascension_score: 0,
@@ -44,21 +48,18 @@ export async function getAtlasDashboard() {
     recommendations: [],
 
     dailyBriefing: {
-      greeting: `Welcome back ${atlas.profile.full_name || "Explorer"}.`,
+    greeting: `${getGreeting()}, ${atlas.profile.full_name}.`,
       summary:
         "Atlas has analyzed your current trajectory.",
 
-      focus:
-        atlas.mission?.mission ??
-        "No mission available.",
-
+     
       oracle:
         "Small consistent actions create extraordinary futures.",
     },
 
     // Raw Atlas Data
     profile: atlas.profile,
-    mission: atlas.mission,
+    mission: activeMission.mission,
     strategy: atlas.strategy,
     knowledge: atlas.knowledge,
     facts: atlas.facts,

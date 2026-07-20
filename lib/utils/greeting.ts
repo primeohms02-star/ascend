@@ -1,13 +1,16 @@
 export function getGreeting() {
-  const hour = new Date().getHours();
+  const now = new Date();
 
-  if (hour < 12) {
-    return "☀️ Good Morning";
+  // Nigeria (UTC+1)
+  const nigeriaHour = (now.getUTCHours() + 1) % 24;
+
+  if (nigeriaHour < 12) {
+    return "Good morning";
   }
 
-  if (hour < 18) {
-    return "🌤️ Good Afternoon";
+  if (nigeriaHour < 17) {
+    return "Good afternoon";
   }
 
-  return "🌙 Good Evening";
+  return "Good evening";
 }
