@@ -92,51 +92,48 @@ export type Database = {
         }
         Relationships: []
       }
-     atlas_memory: {
-  Row: {
-    id: string
-    user_id: string
-    role: string
-    message: string
-    memory_type: string | null
-    title: string | null
-    metadata: Json | null
-    created_at: string | null
-    current_streak: number | null
-    longest_streak: number | null
-    last_mission_date: string | null
-  }
-
-  Insert: {
-    id?: string
-    user_id: string
-    role: string
-    message: string
-    memory_type?: string | null
-    title?: string | null
-    metadata?: Json | null
-    created_at?: string | null
-    current_streak?: number | null
-    longest_streak?: number | null
-    last_mission_date?: string | null
-  }
-
-  Update: {
-    id?: string
-    user_id?: string
-    role?: string
-    message?: string
-    memory_type?: string | null
-    title?: string | null
-    metadata?: Json | null
-    created_at?: string | null
-    current_streak?: number | null
-    longest_streak?: number | null
-    last_mission_date?: string | null
-  }
-
-  Relationships: []
-}
+      atlas_memory: {
+        Row: {
+          created_at: string | null
+          current_streak: number | null
+          id: string
+          last_mission_date: string | null
+          longest_streak: number | null
+          memory_type: string | null
+          message: string
+          metadata: Json | null
+          role: string
+          title: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          current_streak?: number | null
+          id?: string
+          last_mission_date?: string | null
+          longest_streak?: number | null
+          memory_type?: string | null
+          message: string
+          metadata?: Json | null
+          role: string
+          title?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          current_streak?: number | null
+          id?: string
+          last_mission_date?: string | null
+          longest_streak?: number | null
+          memory_type?: string | null
+          message?: string
+          metadata?: Json | null
+          role?: string
+          title?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       atlas_missions: {
         Row: {
           completed_at: string | null
@@ -167,29 +164,6 @@ export type Database = {
         }
         Relationships: []
       }
-
-      atlas_notifications: {
-  Row: {
-    created_at: string | null
-    id: string
-    notification_id: string
-    user_id: string
-  }
-  Insert: {
-    created_at?: string | null
-    id?: string
-    notification_id: string
-    user_id: string
-  }
-  Update: {
-    created_at?: string | null
-    id?: string
-    notification_id?: string
-    user_id?: string
-  }
-  Relationships: []
-}
-
       atlas_momentum: {
         Row: {
           ascension_score: number | null
@@ -223,6 +197,120 @@ export type Database = {
         }
         Relationships: []
       }
+      atlas_notifications: {
+        Row: {
+          created_at: string | null
+          id: string
+          notification_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          notification_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          notification_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      atlas_opportunity_impressions: {
+        Row: {
+          applied: boolean | null
+          clerk_id: string
+          clicked: boolean | null
+          id: string
+          impressions: number | null
+          last_seen: string | null
+          opportunity_id: string
+          saved: boolean | null
+        }
+        Insert: {
+          applied?: boolean | null
+          clerk_id: string
+          clicked?: boolean | null
+          id?: string
+          impressions?: number | null
+          last_seen?: string | null
+          opportunity_id: string
+          saved?: boolean | null
+        }
+        Update: {
+          applied?: boolean | null
+          clerk_id?: string
+          clicked?: boolean | null
+          id?: string
+          impressions?: number | null
+          last_seen?: string | null
+          opportunity_id?: string
+          saved?: boolean | null
+        }
+        Relationships: []
+      }
+      atlas_opportunity_memory: {
+        Row: {
+          company: string | null
+          created_at: string | null
+          id: string
+          opportunity_id: string
+          source: string | null
+          status: string
+          title: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          company?: string | null
+          created_at?: string | null
+          id?: string
+          opportunity_id: string
+          source?: string | null
+          status?: string
+          title?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          company?: string | null
+          created_at?: string | null
+          id?: string
+          opportunity_id?: string
+          source?: string | null
+          status?: string
+          title?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      atlas_preferences: {
+        Row: {
+          category: string
+          clerk_id: string
+          id: string
+          score: number
+          updated_at: string | null
+        }
+        Insert: {
+          category: string
+          clerk_id: string
+          id?: string
+          score?: number
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string
+          clerk_id?: string
+          id?: string
+          score?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       atlas_progress: {
         Row: {
           ascension_score: number
@@ -250,39 +338,36 @@ export type Database = {
         }
         Relationships: []
       }
-    atlas_reflections: {
-  Row: {
-    id: string
-    user_id: string
-    mission_id: string | null
-    reflection: string
-    mood: number | null
-    confidence: number | null
-    created_at: string | null
-  }
-
-  Insert: {
-    id?: string
-    user_id: string
-    mission_id?: string | null
-    reflection: string
-    mood?: number | null
-    confidence?: number | null
-    created_at?: string | null
-  }
-
-  Update: {
-    id?: string
-    user_id?: string
-    mission_id?: string | null
-    reflection?: string
-    mood?: number | null
-    confidence?: number | null
-    created_at?: string | null
-  }
-
-  Relationships: []
-}
+      atlas_reflections: {
+        Row: {
+          confidence: number | null
+          created_at: string | null
+          id: string
+          mission_id: string | null
+          mood: number | null
+          reflection: string
+          user_id: string
+        }
+        Insert: {
+          confidence?: number | null
+          created_at?: string | null
+          id?: string
+          mission_id?: string | null
+          mood?: number | null
+          reflection: string
+          user_id: string
+        }
+        Update: {
+          confidence?: number | null
+          created_at?: string | null
+          id?: string
+          mission_id?: string | null
+          mood?: number | null
+          reflection?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       atlas_strategy: {
         Row: {
           id: string

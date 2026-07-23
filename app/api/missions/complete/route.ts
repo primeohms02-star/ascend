@@ -12,6 +12,8 @@ import { completeLatestMission } from "@/lib/supabase/atlasMission";
 import { completeMission } from "@/lib/atlas/momentum";
 import { addAscensionScore } from "@/lib/supabase/atlasProgress";
 import { updateStreak } from "@/lib/atlas/streak";
+import { updatePreference } from "@/lib/atlas/opportunities/preferences";
+
 
 export async function POST() {
   const { userId } = await auth();
@@ -26,6 +28,16 @@ export async function POST() {
   // Complete today's mission
   await completeLatestMission(userId);
 
+const missionProfile = await getProfile(userId);
+
+if (missionProfile) {
+await updatePreference(
+  userId,
+  missionProfile.journey ?? "General Growth",
+  3
+);
+}
+  
 const profileResult = await loadProfile(userId);
 
 if (profileResult.data) {

@@ -109,15 +109,31 @@ const dashboard = await getAtlasDashboard(userId);
   level={Number(dashboard.atlasProgress?.level ?? 1)}
 />
           </div>
-
-         <div
+<div
   id="opportunities"
   className="mb-6 break-inside-avoid"
 >
-            <OpportunityRadar
-              opportunities={dashboard.opportunities}
-            />
-          </div>
+  <div className="mt-6">
+  <Link
+    href="/opportunities"
+    className="flex items-center justify-between rounded-2xl border border-cyan-500/20 bg-slate-800/40 p-5 transition hover:border-cyan-400 hover:bg-slate-800/60"
+  >
+    <div>
+      <h3 className="text-lg font-semibold text-white">
+        🌍 Explore Opportunities
+      </h3>
+
+      <p className="mt-1 text-sm text-slate-400">
+        View your personalized opportunity workspace powered by Atlas.
+      </p>
+    </div>
+
+    <span className="rounded-xl bg-cyan-500 px-4 py-2 font-medium text-slate-900">
+      Open →
+    </span>
+  </Link>
+</div>
+</div>
 
         </div>
 
