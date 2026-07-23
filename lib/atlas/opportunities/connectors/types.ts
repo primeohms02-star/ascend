@@ -1,31 +1,7 @@
-export interface Opportunity {
-  id: string;
+import { Opportunity } from "../types";
 
-  title: string;
+export interface OpportunityConnector {
+  name: string;
 
-  company: string;
-
-  description?: string;
-
-  category?: string;
-
-  source?: string;
-
-  location?: string;
-
-  remote?: boolean;
-
-  salary?: string;
-
-  deadline?: string;
-
-  url?: string;
-
-  tags: string[];
-
-  score?: number;
-}
-
-export interface RankedOpportunity extends Opportunity {
-  score: number;
+  fetch(profile?: unknown): Promise<Opportunity[]>;
 }
