@@ -2,8 +2,12 @@ import { Opportunity } from "./types";
 import { OpportunityProfile } from "./profile";
 import { matchOpportunities } from "./matcher";
 import { recommend } from "./recommender";
-import { fetchAllSources } from "./connectors";
+import { fetchAllSources } from "./connector";
 import { filterOpportunities } from "./filter";
+import { cacheOpportunities } from "./cache";
+
+import { rankOpportunities } from "./intelligence";
+
 
 export async function discoverOpportunities(
   profile: OpportunityProfile
@@ -14,22 +18,32 @@ export async function discoverOpportunities(
     profile.careerGoal
   );
 
-  // Fetch every opportunity from every source
-  const opportunities = await fetchAllSources();
+const opportunities = await fetchAllSources();
+console.log("Fetched:", opportunities.length);
 
-  // Filter them using the user's North Star
-  const filtered = filterOpportunities(
-    opportunities,
-    profile.careerGoal
+const filtered = filterOpportunities(opportunities, profile.careerGoal);
+
+console.log("Remote Only:", profile.remoteOnly);
+console.log(
+  "Remote jobs:",
+  filtered.filter(o => o.remote).length
+);
+
+console.log("Filtered:", filtered.length);
+
+const matched = matchOpportunities(filtered, profile);
+console.log("Matched:", matched.length);
+
+const recommended = recommend(matched);
+console.log("Recommended:", recommended.length);
+
+const ranked = await rankOpportunities(recommended, profile);
+console.log("Ranked:", ranked.length);
+  await cacheOpportunities(
+    profile.clerkId,
+    ranked
   );
 
-  // Match against skills and profile
-  const matched = matchOpportunities(
-    filtered,
-    profile
-  );
-
-  // Rank the opportunities
-  return recommend(matched);
+  return ranked;
 
 }

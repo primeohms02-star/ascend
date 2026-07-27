@@ -1,72 +1,123 @@
 import Link from "next/link";
-import { Recommendation } from "@/lib/engine/recommendations";
+
+import type { Recommendation } from "@/lib/engine/recommendations";
 
 type Props = {
   recommendation?: Recommendation;
 };
+
+function ArrowIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      className="h-4 w-4 transition-transform group-hover:translate-x-1"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M5 12h14m-6-6 6 6-6 6"
+      />
+    </svg>
+  );
+}
+
+function DirectionIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      className="h-5 w-5"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth="1.8"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M12 19V5m0 0L7 10m5-5 5 5"
+      />
+    </svg>
+  );
+}
 
 export default function RecommendationCard({
   recommendation,
 }: Props) {
   if (!recommendation) {
     return (
-      <section className="rounded-3xl border border-blue-500/20 bg-[#0B1220] p-6">
-        <p className="text-sm uppercase tracking-[0.3em] text-blue-400">
+      <section className="rounded-3xl border border-cyan-400/20 bg-slate-900/60 p-6">
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-300">
           Recommended Next
         </p>
 
-        <h2 className="mt-3 text-2xl font-bold text-white">
-          No recommendation yet
+        <h2 className="mt-2 text-xl font-semibold text-white">
+          Review your direction
         </h2>
 
-        <p className="mt-4 text-slate-400">
-          Atlas is still preparing your personalized recommendations.
+        <p className="mt-2 text-sm leading-6 text-slate-400">
+          Open Compass to help Atlas determine the most
+          useful next action.
         </p>
+
+        <Link
+          href="/compass"
+          className="group mt-5 inline-flex items-center gap-2 rounded-xl bg-cyan-400 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300"
+        >
+          Open Compass
+
+          <ArrowIcon />
+        </Link>
       </section>
     );
   }
 
   return (
-    <section className="relative overflow-hidden rounded-3xl border border-blue-500/20 bg-gradient-to-br from-[#0B1220] via-[#111827] to-[#0B1220] p-5 shadow-2xl">
-      <div className="absolute -bottom-24 -right-24 h-80 w-80 rounded-full bg-blue-500/10 blur-3xl" />
+    <section className="relative overflow-hidden rounded-3xl border border-cyan-400/20 bg-gradient-to-br from-cyan-400/[0.09] via-slate-900/80 to-slate-950 p-6 shadow-xl shadow-cyan-950/20">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-cyan-500/10 blur-3xl"
+      />
 
-      <div className="relative z-10">
-        <div className="flex items-start justify-between">
+      <div className="relative">
+        {/* Header */}
+
+        <div className="flex items-center justify-between gap-4">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-blue-400">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-300">
               Recommended Next
             </p>
 
-            <h2 className="mt-3 text-3xl font-bold leading-tight text-white">
-              {recommendation.title}
-            </h2>
+            <span className="mt-2 inline-flex rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1 text-[11px] font-semibold text-cyan-300">
+              {recommendation.category}
+            </span>
           </div>
 
-          <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-blue-500/20 bg-blue-500/10 text-2xl">
-            ✨
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-cyan-400 text-slate-950">
+            <DirectionIcon />
           </div>
         </div>
 
-        <p className="mt-5 text-lg leading-8 text-slate-300">
+        {/* Recommendation */}
+
+        <h2 className="mt-5 text-xl font-semibold text-white">
+          {recommendation.title}
+        </h2>
+
+        <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-400">
           {recommendation.description}
         </p>
 
-        <div className="mt-6 rounded-2xl border border-blue-500/20 bg-blue-500/5 p-5">
-          <p className="text-xs uppercase tracking-[0.3em] text-blue-400">
-            Cortex Recommendation
-          </p>
-
-          <p className="mt-3 italic leading-7 text-slate-200">
-            Small, consistent actions create extraordinary long-term results.
-          </p>
-        </div>
-
         <Link
           href={recommendation.href}
-          className="mt-6 inline-flex items-center rounded-2xl bg-blue-600 px-7 py-3.5 text-base font-semibold text-white transition duration-300 hover:bg-blue-500 hover:shadow-lg hover:shadow-blue-500/30"
+          className="group mt-5 inline-flex items-center gap-2 rounded-xl bg-cyan-400 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300 focus:outline-none focus:ring-2 focus:ring-cyan-300 focus:ring-offset-2 focus:ring-offset-slate-950"
         >
           {recommendation.action}
-          <span className="ml-2">→</span>
+
+          <ArrowIcon />
         </Link>
       </div>
     </section>

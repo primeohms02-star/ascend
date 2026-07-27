@@ -13,91 +13,99 @@ type CompassCardProps = {
   alignment: number;
 };
 
+function ArrowIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      className="h-4 w-4 transition-transform group-hover:translate-x-1"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M5 12h14m-6-6 6 6-6 6"
+      />
+    </svg>
+  );
+}
+
 export default function CompassCard({
   northStar,
   alignment,
 }: CompassCardProps) {
   return (
     <motion.section
-      initial={{ opacity: 0, y: 30 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.8 }}
-      className="relative overflow-hidden rounded-3xl border border-blue-500/20 bg-gradient-to-br from-[#05070B] via-[#0B1220] to-[#111827] shadow-2xl"
+      initial={{
+        opacity: 0,
+        y: 18,
+      }}
+      animate={{
+        opacity: 1,
+        y: 0,
+      }}
+      transition={{
+        duration: 0.5,
+      }}
+      className="relative overflow-hidden rounded-3xl border border-blue-400/20 bg-gradient-to-br from-[#05070B] via-[#0B1220] to-[#111827] shadow-xl shadow-blue-950/20"
     >
-      {/* Ambient Glow */}
-      <div className="absolute -top-32 -right-32 h-80 w-80 rounded-full bg-blue-500/10 blur-3xl" />
+      <div
+        aria-hidden="true"
+        className="absolute -right-24 -top-24 h-64 w-64 rounded-full bg-blue-500/10 blur-3xl"
+      />
 
-      {/* Animated Background */}
       <NightSky />
+      <NorthStar />
 
-      {/* Content */}
-      <div className="relative z-10 p-8 lg:p-10">
+      <div className="relative z-10 grid items-center gap-6 p-6 sm:p-7 lg:grid-cols-[minmax(0,1fr)_280px] lg:px-8">
+        {/* North Star content */}
 
-        <NorthStar />
-
-        <div className="grid items-center gap-12 lg:grid-cols-2">
-
-          {/* Left Side */}
-
-          <div>
-
-            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-blue-400">
-              North Star
-            </p>
-
-            <h2 className="mt-3 text-4xl font-bold leading-tight text-white">
-              This Is Who
-              <br />
-              You're Becoming
-            </h2>
-
-            <p className="mt-8 text-sm uppercase tracking-[0.2em] text-slate-500">
-              Your Vision
-            </p>
-
-            <p className="mt-3 text-3xl font-bold leading-relaxed text-blue-300">
-              {northStar}
-            </p>
-
-            <div className="mt-10">
-              <AlignmentBar alignment={alignment} />
-            </div>
-
-            <Link href="/atlas">
-              <button className="mt-10 rounded-2xl bg-blue-600 px-6 py-3 font-semibold text-white transition hover:bg-blue-500">
-                Open Atlas →
-              </button>
-            </Link>
-
-          </div>
-
-          {/* Right Side */}
-
-          <div className="flex justify-center lg:justify-center">
-
-            <div className="scale-110 lg:scale-125">
-              <CompassNeedle
-                alignment={alignment}
-              />
-            </div>
-
-          </div>
-
-        </div>
-
-        {/* Quote */}
-
-        <div className="mt-10 rounded-2xl border border-blue-500/20 bg-blue-500/5 p-6 backdrop-blur-sm">
-
-          <p className="text-center text-lg italic leading-8 text-slate-300">
-            "Every decision today shapes the person
-            you'll become tomorrow."
+        <div className="min-w-0">
+          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-blue-300">
+            North Star
           </p>
 
+          <div className="mt-3 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+            <h2 className="text-xl font-semibold text-white sm:text-2xl">
+              Your direction:
+            </h2>
+
+            <p className="text-xl font-bold text-blue-300 sm:text-2xl">
+              {northStar}
+            </p>
+          </div>
+
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-400">
+            The future you are intentionally building through
+            your missions, decisions, and opportunities.
+          </p>
+
+          <div className="mt-5 max-w-xl">
+            <AlignmentBar alignment={alignment} />
+          </div>
+
+          <Link
+            href="/atlas"
+            className="group mt-5 inline-flex items-center gap-2 rounded-xl bg-blue-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400/60"
+          >
+            Open Atlas
+
+            <ArrowIcon />
+          </Link>
         </div>
 
-      </div>
+        {/* Compact compass */}
 
+        <div className="hidden justify-center lg:flex">
+          <div className="scale-75">
+            <CompassNeedle
+              alignment={alignment}
+            />
+          </div>
+        </div>
+      </div>
     </motion.section>
   );
 }

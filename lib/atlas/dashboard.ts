@@ -1,83 +1,195 @@
 import { loadAtlasContext } from "./brain";
+import { calculateAscension } from "./ascension";
+
+import type { Recommendation } from "@/lib/engine/recommendations";
 
 export async function getAtlasDashboard(
   clerkId: string
 ) {
- const atlas = await loadAtlasContext(clerkId);
+  const atlas =
+    await loadAtlasContext(clerkId);
 
-const currentMission =
-  atlas.missions?.find((m: any) => m.status === "active") ??
-  atlas.missions?.[0] ??
-  null;
+  /*
+   * Only an active mission can appear as the
+   * current mission. Completed missions are history.
+   */
+  const currentMission =
+    atlas.missions?.find(
+      (mission: any) =>
+        mission.status === "active"
+    ) ?? null;
+
+  /*
+   * atlas_progress is now the canonical source
+   * of Ascension XP and level.
+   */
+  const ascensionScore = Number(
+    atlas.atlasProgress
+      ?.ascension_score ?? 0
+  );
+
+  const ascension =
+    calculateAscension(ascensionScore);
+
+  /*
+   * Recommended Next must produce a real action.
+   */
+  let recommendedNext: Recommendation;
+if (currentMission) {
+  recommendedNext = {
+    id: `mission-${currentMission.id}`,
+
+    title: "Continue Your Current Mission",
+
+    description:
+      currentMission.mission,
+
+    priority: "high",
+
+    category: "Current Mission",
+
+    action: "Go to Mission",
+
+    href: "#mission",
+  };
+
+  } else if (
+    !atlas.profile?.north_star
+  ) {
+    recommendedNext = {
+      id: "define-north-star",
+
+      title: "Define Your North Star",
+
+      description:
+        "Atlas needs a clear long-term direction before it can generate a meaningful strategic mission.",
+
+      priority: "high",
+
+      category: "Compass",
+
+      action: "Open Compass",
+
+      href: "/compass",
+    };
+  } else {
+    recommendedNext = {
+      id: "explore-opportunities",
+
+      title:
+        "Explore Your Next Opportunity",
+
+      description:
+        "Review opportunities connected to your direction while Atlas prepares your next mission.",
+
+      priority: "high",
+
+      category: "Opportunities",
+
+      action: "Explore Opportunities",
+
+      href: "/opportunities",
+    };
+  }
+
+  const completeTimeline =
+    atlas.timeline ?? [];
+
+  /*
+   * The Dashboard displays only the three most
+   * recent milestones. Atlas still remembers the
+   * complete timeline.
+   */
+  const timelinePreview =
+    completeTimeline.slice(0, 2);
 
   return {
- dailyBriefing: {
-  ...atlas.dailyBriefing,
-  focus:
-    currentMission?.mission ??
-    atlas.dailyBriefing.focus,
+    dailyBriefing: {
+      ...atlas.dailyBriefing,
+
+      focus:
+        currentMission?.mission ??
+        recommendedNext.title,
+    },
+
+    compass: {
+      northStar:
+        atlas.profile?.north_star ??
+        "Discover your purpose",
+
+      alignment: Number(
+        atlas.profile?.progress ?? 0
+      ),
+    },
+
+    mission: {
+      title:
+        currentMission?.mission ??
+        "Your Next Mission Is Being Prepared",
+
+      description:
+        currentMission?.reason ??
+        "Use Recommended Next while Atlas prepares the next strategic mission.",
+
+      missionId:
+        currentMission?.id ?? "",
+
+      available:
+        Boolean(currentMission),
+    },
+
+    progress: {
+      progress: Number(
+        atlas.profile?.progress ?? 0
+      ),
+
+      momentum:
+        `${
+          atlas.momentum
+            ?.current_streak ?? 0
+        } Day Streak`,
+
+      message:
+        atlas.momentumMessage ??
+        "Keep moving toward your North Star.",
+    },
+
+    /*
+     * Identity and Ascension now share the
+     * exact same calculated level.
+     */
+  identity: {
+  title: ascension.title,
+  level: ascension.level,
 },
-   compass: {
-  northStar:
-    atlas.profile.north_star ?? "Discover your purpose",
 
-  alignment:
-    Number(atlas.profile.progress ?? 0),
-},
-   mission: {
-  title:
-    currentMission?.mission ??
-    "Today's Mission",
+    ascension,
 
-  description:
-    currentMission?.reason ??
-    "No mission available.",
+    atlasProgress: {
+      ascension_score:
+        ascension.score,
 
-  missionId:
-    currentMission?.id ?? "",
-},
-progress: {
-  progress: Number(atlas.profile.progress ?? 0),
+      level:
+        ascension.level,
 
-  momentum: `${atlas.momentum?.current_streak ?? 0} Day Streak`,
+      title:
+        ascension.title,
 
- message:
-  atlas.momentumMessage ??
-  "Keep moving toward your North Star.",
-},
+      currentLevelStart:
+        ascension.currentLevelStart,
 
-   identity: {
-  title:
-    atlas.identity?.title ??
-    atlas.profile.journey,
+      nextLevelTarget:
+        ascension.nextLevelTarget,
 
-  level:
-    atlas.identity?.level ?? 1,
-},
+      progressPercent:
+        ascension.progressPercent,
 
-  atlasProgress: {
-  ascension_score:
-    Number(atlas.momentum?.ascension_score ?? 0),
+      xpIntoLevel:
+        ascension.xpIntoLevel,
 
-  level:
-    Number(
-      atlas.momentum?.ascension_score ?? 0
-    ) >= 1000
-      ? 5
-      : Number(
-          atlas.momentum?.ascension_score ?? 0
-        ) >= 500
-      ? 4
-      : Number(
-          atlas.momentum?.ascension_score ?? 0
-        ) >= 250
-      ? 3
-      : Number(
-          atlas.momentum?.ascension_score ?? 0
-        ) >= 100
-      ? 2
-      : 1,
-},
+      xpRequiredForLevel:
+        ascension.xpRequiredForLevel,
+    },
 
     profile:
       atlas.profile,
@@ -103,9 +215,20 @@ progress: {
     opportunities:
       atlas.opportunities ?? [],
 
-    recommendations:
-      atlas.recommendations ?? [],
-     timeline:
-  atlas.timeline ?? [], 
+    recommendations: [
+      recommendedNext,
+    ],
+
+    timeline:
+      timelinePreview,
+
+    timelineTotal:
+      completeTimeline.length,
+
+    completedMissionCount:
+      Number(
+        atlas.momentum
+          ?.completed_missions ?? 0
+      ),
   };
 }

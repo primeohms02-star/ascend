@@ -135,11 +135,11 @@ export async function buildAtlasContext(
   const atlas =
     await loadAtlasContext(clerkId);
 
-    const mission =
-  atlas.missions?.find((m: any) => m.status === "active") ??
-  atlas.missions?.[0] ??
-  null;
-
+ const mission =
+  atlas.missions?.find(
+    (mission: any) =>
+      mission.status === "active"
+  ) ?? null;
   const systemPrompt = `
 You are the AI strategist inside ASCEND.
 

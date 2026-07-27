@@ -3,61 +3,74 @@ type IdentityCardProps = {
   level: number;
 };
 
+function IdentityIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      className="h-5 w-5"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth="1.8"
+    >
+      <circle cx="12" cy="8" r="4" />
+
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M5 21c0-4.4 2.7-7 7-7s7 2.6 7 7"
+      />
+    </svg>
+  );
+}
+
 export default function IdentityCard({
   title,
   level,
 }: IdentityCardProps) {
   return (
-    <section className="relative overflow-hidden rounded-3xl border border-blue-500/20 bg-gradient-to-br from-[#0B1220] via-[#111827] to-[#0B1220] p-5 shadow-2xl">
+    <section className="relative overflow-hidden rounded-3xl border border-violet-400/20 bg-gradient-to-br from-violet-400/[0.07] via-slate-900/80 to-slate-950 p-6 shadow-xl shadow-violet-950/20">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -right-20 -top-20 h-52 w-52 rounded-full bg-violet-500/10 blur-3xl"
+      />
 
-      {/* Ambient Glow */}
+      <div className="relative">
+        {/* Header */}
 
-      <div className="absolute -top-24 -right-24 h-72 w-72 rounded-full bg-blue-500/10 blur-3xl" />
-
-      <div className="relative z-10">
-
-        <div className="flex items-start justify-between">
-
+        <div className="flex items-start justify-between gap-4">
           <div>
-
-            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-blue-400">
-              Identity
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-violet-300">
+              Evolving Identity
             </p>
 
-            <h2 className="mt-3 text-2xl font-bold leading-tight text-white">
+            <h2 className="mt-2 text-2xl font-bold text-white">
               {title}
             </h2>
-
-            <div className="mt-4 inline-flex items-center rounded-full border border-blue-500/20 bg-blue-500/10 px-4 py-2">
-
-              <span className="text-sm font-semibold text-blue-300">
-                Level {level}
-              </span>
-
-            </div>
-
           </div>
 
-          <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-blue-500/20 bg-blue-500/10 text-2xl">
-            🧭
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-violet-400/20 bg-violet-400/10 text-violet-300">
+            <IdentityIcon />
           </div>
-
         </div>
 
-        <div className="mt-5 rounded-2xl border border-blue-500/20 bg-blue-500/5 p-5">
+        {/* Shared level */}
 
-          <p className="text-xs uppercase tracking-[0.3em] text-blue-400">
-            Identity Evolution
-          </p>
+        <div className="mt-5 flex items-center justify-between gap-4 rounded-2xl border border-violet-400/15 bg-violet-400/[0.05] px-4 py-3">
+          <span className="text-sm text-slate-400">
+            Shared progression
+          </span>
 
-          <p className="mt-3 text-lg leading-8 text-slate-300">
-            Your identity is not defined by your intentions—it is shaped by the actions you repeat every day. Every completed mission strengthens who you're becoming.
-          </p>
-
+          <span className="text-sm font-semibold text-violet-300">
+            Level {level}
+          </span>
         </div>
 
+        <p className="mt-4 text-sm leading-6 text-slate-400">
+          Each completed mission provides evidence of the
+          person you are becoming.
+        </p>
       </div>
-
     </section>
   );
 }

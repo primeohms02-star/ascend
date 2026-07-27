@@ -1,157 +1,328 @@
 import Link from "next/link";
+
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
+
 import { getAtlasDashboard } from "@/lib/atlas/dashboard";
-import { think } from "@/lib/cortex";
-import { consultOracle } from "@/lib/engine/oracle";
+
 import AtlasTimeline from "@/app/components/dashboard/AtlasTimeline";
+
 import DailyBriefingCard from "@/app/dashboard/DailyBriefingCard";
 import CompassCard from "@/app/dashboard/CompassCard";
 import MissionCard from "@/app/dashboard/MissionCard";
 import IdentityCard from "@/app/dashboard/IdentityCard";
 import ProgressCard from "@/app/dashboard/ProgressCard";
 import AscensionProgress from "@/app/dashboard/AscensionProgress";
-import OracleCard from "@/app/dashboard/OracleCard";
-import RecommendationCard from "@/app/dashboard/RecommendationCard";
-import OpportunityRadar from "@/app/dashboard/opportunities/OpportunityRadar";
-import { getGreeting } from "@/lib/utils/greeting";
-import { Brain } from "lucide-react";
 
-export default async function DashboardPage() {
- const { userId } = await auth();
-
-if (!userId) {
-  redirect("/sign-in");
+function HomeIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      className="h-4 w-4"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="m3 11 9-8 9 8v9H6v-9m4 9v-6h4v6"
+      />
+    </svg>
+  );
 }
 
-const dashboard = await getAtlasDashboard(userId);
-  //const decision = think(brain);
+function OpportunityIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      className="h-5 w-5"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth="1.8"
+    >
+      <circle cx="12" cy="12" r="9" />
 
-  //const oracle = consultOracle(decision);
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"
+      />
+    </svg>
+  );
+}
+
+function ArrowIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      className="h-4 w-4 transition-transform group-hover:translate-x-1"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M5 12h14m-6-6 6 6-6 6"
+      />
+    </svg>
+  );
+}
+
+export default async function DashboardPage() {
+  const { userId } = await auth();
+
+  if (!userId) {
+    redirect("/sign-in");
+  }
+
+  const dashboard =
+    await getAtlasDashboard(userId);
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-[#020617] via-[#08111f] to-[#0f172a]">
-      <div className="mx-auto max-w-7xl px-6 py-8">
+      <div className="mx-auto max-w-7xl px-5 py-8 sm:px-6">
+        {/* Dashboard header */}
 
-        {/* Header */}
+        <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-300">
+              ASCEND Command Center
+            </p>
 
-        <div className="mb-6 flex items-center justify-end">
+            <h1 className="mt-1 text-3xl font-bold tracking-tight text-white">
+              Your Dashboard
+            </h1>
+
+            <p className="mt-1 text-sm text-slate-400">
+              Direction, action, and progress in one place.
+            </p>
+          </div>
 
           <Link
             href="/"
-            className="rounded-xl border border-slate-700 bg-slate-900/60 px-4 py-2 text-sm font-medium text-slate-200 transition hover:bg-slate-800"
+            className="inline-flex w-fit items-center gap-2 rounded-xl border border-slate-700/80 bg-slate-900/60 px-4 py-2.5 text-sm font-medium text-slate-300 transition hover:border-cyan-400/30 hover:bg-cyan-400/10 hover:text-cyan-300 focus:outline-none focus:ring-2 focus:ring-cyan-400/50"
           >
+            <HomeIcon />
+
             Home
           </Link>
+        </header>
 
-        </div>
+        {/* Daily briefing */}
 
-        {/* Daily Briefing */}
-
-        <div className="mb-6">
+        <section
+          aria-label="Daily briefing"
+          className="mt-6"
+        >
           <DailyBriefingCard
-            greeting={dashboard.dailyBriefing.greeting}
-            summary={dashboard.dailyBriefing.summary}
-            focus={dashboard.dailyBriefing.focus}
-            oracle={dashboard.dailyBriefing.oracle}
+            greeting={
+              dashboard.dailyBriefing.greeting
+            }
+            summary={
+              dashboard.dailyBriefing.summary
+            }
+            focus={
+              dashboard.dailyBriefing.focus
+            }
+            oracle={
+              dashboard.dailyBriefing.oracle
+            }
           />
-        </div>
+        </section>
 
-        {/* Compass */}
+        {/* Direction */}
 
-        <div id="compass" className="mb-6">
-          <CompassCard
-            northStar={dashboard.compass.northStar}
-            alignment={dashboard.compass.alignment}
-          />
-        </div>
+        <section
+          aria-labelledby="direction-heading"
+          className="mt-6"
+        >
+          <div className="mb-3 flex items-baseline gap-3">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-300">
+              Direction
+            </p>
 
-        {/* Dashboard Cards */}
+            <h2
+              id="direction-heading"
+              className="text-lg font-semibold text-white"
+            >
+              Where you are going
+            </h2>
+          </div>
 
-        <div className="columns-1 gap-6 lg:columns-2">
+          {/* Full-width rectangular North Star */}
 
-         <div
-  id="mission"
-  className="mb-6 break-inside-avoid"
->
+          <div
+            id="compass"
+            className="scroll-mt-8"
+          >
+            <CompassCard
+              northStar={
+                dashboard.compass.northStar
+              }
+              alignment={
+                dashboard.compass.alignment
+              }
+            />
+          </div>
+        </section>
+
+        {/* Mission and opportunity workspace */}
+
+        <section
+          aria-labelledby="action-heading"
+          className="mt-6"
+        >
+          <div className="mb-3 flex items-baseline gap-3">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-orange-300">
+              Action
+            </p>
+
+            <h2
+              id="action-heading"
+              className="text-lg font-semibold text-white"
+            >
+              What to do now
+            </h2>
+          </div>
+
+          <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1.2fr)_minmax(300px,0.8fr)]">
             <MissionCard
-              title={dashboard.mission.title}
-              description={dashboard.mission.description}
-              missionId={dashboard.mission.missionId}
+              title={
+                dashboard.mission.title
+              }
+              description={
+                dashboard.mission.description
+              }
+              missionId={
+                dashboard.mission.missionId
+              }
+              available={
+                dashboard.mission.available
+              }
+            />
+
+            <Link
+              id="opportunities"
+              href="/opportunities"
+              className="group relative scroll-mt-8 overflow-hidden rounded-3xl border border-emerald-400/20 bg-gradient-to-br from-emerald-400/[0.08] via-slate-900/80 to-slate-950 p-6 transition hover:border-emerald-400/35 hover:bg-emerald-400/[0.04]"
+            >
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute -right-20 -top-20 h-52 w-52 rounded-full bg-emerald-500/10 blur-3xl"
+              />
+
+              <div className="relative">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-emerald-400/20 bg-emerald-400/10 text-emerald-300">
+                  <OpportunityIcon />
+                </div>
+
+                <p className="mt-5 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-300">
+                  Opportunity Workspace
+                </p>
+
+                <h2 className="mt-2 text-xl font-semibold text-white">
+                  Discover your next possibility
+                </h2>
+
+                <p className="mt-2 text-sm leading-6 text-slate-400">
+                  Explore opportunities, evaluate them with
+                  Atlas, and build application action plans.
+                </p>
+
+                <span className="mt-5 inline-flex items-center gap-2 rounded-xl bg-emerald-400 px-4 py-2.5 text-sm font-semibold text-slate-950">
+                  Open Opportunities
+
+                  <ArrowIcon />
+                </span>
+              </div>
+            </Link>
+          </div>
+        </section>
+
+        {/* Growth */}
+
+        <section
+          aria-labelledby="growth-heading"
+          className="mt-6"
+        >
+          <div className="mb-3 flex items-baseline gap-3">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-300">
+              Growth
+            </p>
+
+            <h2
+              id="growth-heading"
+              className="text-lg font-semibold text-white"
+            >
+              Evidence of progress
+            </h2>
+          </div>
+
+          <div className="grid gap-5 lg:grid-cols-2">
+            <AscensionProgress
+              ascension={
+                dashboard.ascension
+              }
+            />
+
+            <IdentityCard
+              title={
+                dashboard.identity.title
+              }
+              level={
+                dashboard.identity.level
+              }
             />
           </div>
+        </section>
 
-          <div className="mb-6 break-inside-avoid">
-          <OracleCard
-  title="ATLAS Oracle"
-  message="Your future is built by the decisions you make today."
-/>
+        {/* Momentum */}
+
+        <section
+          aria-labelledby="momentum-heading"
+          className="mt-6"
+        >
+          <div className="mb-3 flex items-baseline gap-3">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-violet-300">
+              Momentum
+            </p>
+
+            <h2
+              id="momentum-heading"
+              className="text-lg font-semibold text-white"
+            >
+              Recent movement
+            </h2>
           </div>
 
-          <div className="mb-6 break-inside-avoid">
-           <IdentityCard
-  title={dashboard.identity.title}
-  level={dashboard.identity.level}
-/>
-          </div>
-
-          <div className="mb-6 break-inside-avoid">
+          <div className="grid items-start gap-5 lg:grid-cols-2">
             <ProgressCard
-              progress={dashboard.progress.progress}
-              momentum={dashboard.progress.momentum}
-              message={dashboard.progress.message}
+              progress={
+                dashboard.progress.progress
+              }
+              momentum={
+                dashboard.progress.momentum
+              }
+              message={
+                dashboard.progress.message
+              }
+            />
+
+            <AtlasTimeline
+              timeline={
+                dashboard.timeline
+              }
+              totalCount={
+                dashboard.timelineTotal
+              }
             />
           </div>
-
-          <div className="mb-6 break-inside-avoid">
-          <AscensionProgress
-  score={Number(dashboard.atlasProgress?.ascension_score ?? 0)}
-  level={Number(dashboard.atlasProgress?.level ?? 1)}
-/>
-          </div>
-<div
-  id="opportunities"
-  className="mb-6 break-inside-avoid"
->
-  <div className="mt-6">
-  <Link
-    href="/opportunities"
-    className="flex items-center justify-between rounded-2xl border border-cyan-500/20 bg-slate-800/40 p-5 transition hover:border-cyan-400 hover:bg-slate-800/60"
-  >
-    <div>
-      <h3 className="text-lg font-semibold text-white">
-        🌍 Explore Opportunities
-      </h3>
-
-      <p className="mt-1 text-sm text-slate-400">
-        View your personalized opportunity workspace powered by Atlas.
-      </p>
-    </div>
-
-    <span className="rounded-xl bg-cyan-500 px-4 py-2 font-medium text-slate-900">
-      Open →
-    </span>
-  </Link>
-</div>
-</div>
-
-        </div>
-
-       {/* Atlas Timeline */}
-
-<div className="mt-6">
-  <AtlasTimeline
-    timeline={dashboard.timeline}
-  />
-</div>
-        {/* Recommendation */}
-
-        <div className="mt-6">
-          <RecommendationCard
-            recommendation={dashboard.recommendations[0]}
-          />
-        </div>
-
+        </section>
       </div>
     </main>
   );

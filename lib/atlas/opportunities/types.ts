@@ -1,45 +1,40 @@
-export type Opportunity = {
+export interface Opportunity {
   id: string;
 
   title: string;
 
   company: string;
 
-  description: string;
+  description?: string;
 
-  url: string;
+  category?: string;
 
+  /**
+   * Which connector produced this opportunity.
+   * Examples:
+   * "wellfound"
+   * "remoteok"
+   * "coursera"
+   * "linkedin"
+   * "devpost"
+   */
   source: string;
 
-  category:
-    | "job"
-    | "internship"
-    | "scholarship"
-    | "grant"
-    | "competition"
-    | "course"
-    | "startup";
+  location?: string;
 
-  location: string;
+  remote?: boolean;
 
-  remote: boolean;
-
-  tags: string[];   // 👈 Add this
+  salary?: string;
 
   deadline?: string;
 
-  score?: number;
-};
-export type OpportunityRanking = {
-  northStar: number;
-  skills: number;
-  remote: number;
-  saved: number;
-  applied: number;
-  passive: number;
-  total: number;
-};
+  url?: string;
 
-export type RankedOpportunity = Opportunity & {
-  ranking: OpportunityRanking;
-};
+  tags: string[];
+
+  score?: number;
+}
+
+export interface RankedOpportunity extends Opportunity {
+  score: number;
+}

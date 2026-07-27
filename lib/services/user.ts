@@ -1,4 +1,7 @@
-import { auth } from "@clerk/nextjs/server";
+import {
+  auth,
+} from "@clerk/nextjs/server";
+
 import { redirect } from "next/navigation";
 
 import { getProfile } from "@/lib/supabase/profiles";
@@ -22,8 +25,7 @@ import { buildPrediction } from "@/lib/atlas/predictive";
 import { buildWeeklyReview } from "@/lib/atlas/weeklyReview";
 import { buildFutureSelf } from "@/lib/atlas/futureSelf";
 import { buildDailyBriefing } from "@/lib/atlas/dailyBriefing";
-
-import { createIdentity } from "../brain/identity";
+import { calculateAscension } from "@/lib/atlas/ascension";
 
 export async function getCurrentUserBrain() {
   const { userId } = await auth();
@@ -31,7 +33,12 @@ export async function getCurrentUserBrain() {
   if (!userId) {
     redirect("/sign-in");
   }
-  const clerkId = userId!;
+
+  const clerkId = userId;
+
+  /*
+   * Core profile
+   */
 
   let profile = await getProfile(clerkId);
 
@@ -39,76 +46,129 @@ export async function getCurrentUserBrain() {
     profile = await createProfile(clerkId);
   }
 
+  /*
+   * Long-term memory
+   */
+
   let memory = await getMemory(clerkId);
 
   if (!memory) {
     memory = await createMemory(clerkId);
   }
 
+  /*
+   * Missions
+   */
+
   let missions = await getMissions(clerkId);
 
   if (missions.length === 0) {
     await createMission(clerkId);
+
     missions = await getMissions(clerkId);
   }
 
-const identityRecord = await getIdentity(clerkId);
+  /*
+   * Canonical progression
+   */
 
-const identity = identityRecord
-  ? {
-      title: identityRecord.identity_title ?? "Explorer",
-      level: 1,
-      discipline: 0,
-      execution: 0,
-      learning: 0,
-      leadership: 0,
-      confidence: identityRecord.confidence ?? 0,
-      badges: [],
-    }
-  : createIdentity();
-    const progress = await getProgress(clerkId);
+  const progress = await getProgress(clerkId);
 
+  const ascension = calculateAscension(
+    Number(progress.ascension_score ?? 0)
+  );
 
-  const reflections = await getReflections(clerkId);
+  /*
+   * Identity uses the same progression level.
+   * The stored identity can provide a custom title,
+   * but it no longer controls the level.
+   */
+
+  const identityRecord =
+    await getIdentity(clerkId);
+
+  const identity = {
+  title:
+    identityRecord?.identity_title ??
+    ascension.title,
+
+  level: ascension.level,
+
+  /*
+   * These identity dimensions are not stored in
+   * atlas_identity yet, so they remain neutral until
+   * that system is implemented.
+   */
+  discipline: 0,
+  execution: 0,
+  learning: 0,
+  leadership: 0,
+
+  confidence:
+    identityRecord?.confidence ?? 0,
+
+  badges: [],
+};
+
+  /*
+   * Reflection intelligence
+   */
+
+  const reflections =
+    await getReflections(clerkId);
 
   const patterns = analyzePatterns(
-  reflections.map((r) => ({
-    reflection: r.reflection ?? "",
-    mood: r.mood ?? 3,
-  }))
-);
+    reflections.map((reflection) => ({
+      reflection:
+        reflection.reflection ?? "",
 
-  const adaptive = buildAdaptiveState(patterns);
+      mood:
+        reflection.mood ?? 3,
+    }))
+  );
 
-  const adaptiveMission = buildAdaptiveMission(adaptive);
+  const adaptive =
+    buildAdaptiveState(patterns);
 
-  const adaptiveOracle = buildAdaptiveOracle(adaptive);
+  const adaptiveMission =
+    buildAdaptiveMission(adaptive);
+
+  const adaptiveOracle =
+    buildAdaptiveOracle(adaptive);
+
+  const currentStreak = Number(
+    memory?.current_streak ?? 0
+  );
 
   const prediction = buildPrediction(
-  patterns,
-  memory?.current_streak ?? 0
-);
+    patterns,
+    currentStreak
+  );
 
-const weeklyReview = buildWeeklyReview(
-  patterns,
-  memory?.current_streak ?? 0
-);
+  const weeklyReview = buildWeeklyReview(
+    patterns,
+    currentStreak
+  );
+
+  const journey =
+    profile?.journey ??
+    "Purpose Discovery";
+
+  const northStar =
+    profile?.north_star ??
+    "Discover your purpose";
 
   const brain = {
-    journey: profile?.journey ?? "Purpose Discovery",
+    journey,
+    northStar,
 
-    northStar:
-      profile?.north_star ??
-      "Discover your purpose",
+    progress: ascension.score,
 
-  progress:
-  progress?.ascension_score ?? 0,
+    momentum:
+      `Level ${ascension.level}`,
 
-momentum:
-  `Level ${progress?.level ?? 1}`,
-
-momentumMessage:
-  "Keep moving toward your North Star.",
+    momentumMessage:
+      "Keep moving toward your North Star.",
   };
 
   return {
@@ -116,53 +176,57 @@ momentumMessage:
 
     identity,
 
+    /*
+     * Both names remain available while older
+     * ASCEND components are being migrated.
+     */
     atlasProgress: progress,
+    ascension,
 
     memory,
-
     missions,
-
     reflections,
 
     patterns,
-
     adaptive,
-
     adaptiveMission,
-
     adaptiveOracle,
 
     prediction,
-
     weeklyReview,
 
     futureSelf: buildFutureSelf(
-  patterns,
-  memory?.current_streak ?? 0,
-  progress?.ascension_score ?? 0
-),
+      patterns,
+      currentStreak,
+      ascension.score
+    ),
 
     dailyBriefing: buildDailyBriefing({
-  journey: profile?.journey ?? "Purpose Discovery",
+      journey,
+      northStar,
 
-  northStar:
-    profile?.north_star ??
-    "Discover your purpose",
+      missionTitle:
+        adaptiveMission.title,
 
-  missionTitle:
-    adaptiveMission.title,
-
-  progress:
-    progress?.ascension_score ?? 0,
-}),
+      progress:
+        ascension.score,
+    }),
 
     opportunities: rankOpportunities(
       [],
       adaptive
     ),
 
+    /*
+     * Dashboard recommendations will now be
+     * constructed from live mission state inside
+     * getAtlasDashboard().
+     */
     recommendations: [],
-missionTitle:adaptiveMission.title,
+
+    missionTitle:
+      adaptiveMission.title,
+
     ...brain,
   };
 }

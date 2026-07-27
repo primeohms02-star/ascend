@@ -1,4 +1,4 @@
-import { fetchAllSources } from "./connectors";
+
 import { buildOpportunityProfile } from "./build-profile";
 import { discoverOpportunities } from "./engine";
 import { rankOpportunities } from "./intelligence";
@@ -31,6 +31,8 @@ for (const opportunity of ranked) {
 
   const rotated =
   rotateOpportunities(ranked, 5);
+
+  console.log("Rotated:", rotated.length);
 
 return rotated;
 }

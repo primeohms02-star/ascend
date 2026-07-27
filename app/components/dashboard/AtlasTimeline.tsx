@@ -7,65 +7,129 @@ type TimelineItem = {
 
 type Props = {
   timeline: TimelineItem[];
+  totalCount?: number;
 };
+
+function TimelineIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      className="h-5 w-5"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth="1.8"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M12 8v5l3 2m6-3a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+      />
+    </svg>
+  );
+}
+
+function formatTimelineDate(
+  value: string
+): string {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "Recently";
+  }
+
+  return new Intl.DateTimeFormat("en", {
+    month: "short",
+    day: "numeric",
+  }).format(date);
+}
 
 export default function AtlasTimeline({
   timeline,
+  totalCount = timeline.length,
 }: Props) {
+  const hiddenCount = Math.max(
+    totalCount - timeline.length,
+    0
+  );
+
   return (
-    <section className="rounded-3xl border border-blue-500/20 bg-gradient-to-br from-[#0B1220] via-[#111827] to-[#0B1220] p-6 shadow-2xl">
+    <section className="overflow-hidden rounded-3xl border border-slate-700/80 bg-slate-900/60 p-6 shadow-xl shadow-slate-950/20">
+      {/* Header */}
 
-      <h2 className="text-2xl font-black text-white">
-        Atlas Timeline
-      </h2>
+      <div className="flex items-start gap-3">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-blue-400/20 bg-blue-400/10 text-blue-300">
+          <TimelineIcon />
+        </div>
 
-      <p className="mt-2 text-slate-400">
-        Your journey is being remembered.
-      </p>
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-blue-300">
+            Recent Milestones
+          </p>
 
-      <div className="mt-8 space-y-8">
-
-        {timeline.map((item, index) => (
-
-          <div
-            key={index}
-            className="relative pl-10"
-          >
-
-            {/* Vertical line */}
-
-            <div className="absolute left-4 top-8 bottom-0 w-px bg-blue-500/20" />
-
-            {/* Icon */}
-
-            <div className="absolute left-0 flex h-8 w-8 items-center justify-center rounded-full bg-blue-500/15 border border-blue-500/30">
-              {item.icon}
-            </div>
-
-            {/* Content */}
-
-            <div className="rounded-2xl border border-blue-500/15 bg-blue-500/5 p-4">
-
-              <h3 className="font-bold text-white">
-                {item.title}
-              </h3>
-
-              <p className="mt-2 text-slate-300">
-                {item.message}
-              </p>
-
-              <p className="mt-3 text-xs uppercase tracking-[0.2em] text-blue-400">
-                {new Date(item.created_at).toLocaleDateString()}
-              </p>
-
-            </div>
-
-          </div>
-
-        ))}
-
+          <h2 className="mt-1 text-xl font-semibold text-white">
+            Atlas Timeline
+          </h2>
+        </div>
       </div>
 
+      {/* Timeline preview */}
+
+      {timeline.length > 0 ? (
+        <ol className="mt-5 space-y-4">
+          {timeline.map((item, index) => (
+            <li
+              key={`${item.title}-${item.created_at}-${index}`}
+              className="flex gap-3 rounded-2xl border border-white/10 bg-slate-950/30 p-4"
+            >
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-blue-400/25 bg-blue-400/10 text-sm">
+                {item.icon}
+              </div>
+
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <h3 className="text-sm font-semibold text-white">
+                    {item.title}
+                  </h3>
+
+                  <time
+                    dateTime={item.created_at}
+                    className="text-[11px] text-slate-500"
+                  >
+                    {formatTimelineDate(
+                      item.created_at
+                    )}
+                  </time>
+                </div>
+
+                <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-400">
+                  {item.message}
+                </p>
+              </div>
+            </li>
+          ))}
+        </ol>
+      ) : (
+        <div className="mt-5 rounded-2xl border border-dashed border-slate-700 bg-slate-950/30 p-6 text-center">
+          <p className="text-sm font-medium text-white">
+            Your timeline is ready
+          </p>
+
+          <p className="mt-1 text-xs leading-5 text-slate-500">
+            Your latest milestones will appear here.
+          </p>
+        </div>
+      )}
+
+      {hiddenCount > 0 && (
+        <p className="mt-4 text-xs leading-5 text-slate-500">
+          {hiddenCount} older{" "}
+          {hiddenCount === 1
+            ? "milestone is"
+            : "milestones are"}{" "}
+          safely remembered by Atlas.
+        </p>
+      )}
     </section>
   );
 }
