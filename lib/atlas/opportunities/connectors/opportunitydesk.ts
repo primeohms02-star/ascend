@@ -1,184 +1,185 @@
 import { Opportunity } from "../types";
 import { OpportunityConnector } from "./types";
 
-const OPPORTUNITY_DESK_API =
-  "https://opportunitydesk.org/wp-json/wp/v2/posts";
+const FEED_URL =
+  "https://opportunitydesk.org/feed/";
 
 const REQUEST_HEADERS = {
-  Accept: "application/json",
+  Accept:
+    "application/rss+xml, application/xml, text/xml",
 
   "User-Agent":
     "ASCEND-Opportunity-Engine/1.0 (+https://www.ascendai.space)",
-
-  Referer:
-    "https://opportunitydesk.org/",
-};
-
-type WordPressText = {
-  rendered?: string;
-};
-
-type OpportunityDeskPost = {
-  id: number;
-  date?: string;
-  link?: string;
-  title?: WordPressText;
-  excerpt?: WordPressText;
-  content?: WordPressText;
 };
 
 function decodeEntities(
   value: string
 ): string {
   return value
+    .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1")
     .replace(/&nbsp;/gi, " ")
     .replace(/&amp;/gi, "&")
     .replace(/&quot;/gi, '"')
     .replace(/&#039;/gi, "'")
     .replace(/&#39;/gi, "'")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
     .replace(/&ndash;/gi, "–")
     .replace(/&mdash;/gi, "—")
-    .replace(/&hellip;/gi, "…")
-    .replace(/&#8211;/gi, "–")
-    .replace(/&#8212;/gi, "—")
-    .replace(/&#8216;/gi, "'")
-    .replace(/&#8217;/gi, "'")
-    .replace(/&#8220;/gi, '"')
-    .replace(/&#8221;/gi, '"');
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
-function removeHtml(
+function cleanText(
   value?: string
 ): string {
   return decodeEntities(
     (value ?? "")
       .replace(
-        /<style[^>]*>[\s\S]*?<\/style>/gi,
-        " "
-      )
-      .replace(
         /<script[^>]*>[\s\S]*?<\/script>/gi,
         " "
       )
+      .replace(
+        /<style[^>]*>[\s\S]*?<\/style>/gi,
+        " "
+      )
       .replace(/<[^>]+>/g, " ")
-      .replace(/\s+/g, " ")
-      .trim()
+  );
+}
+
+function getXmlValue(
+  block: string,
+  tag: string
+): string {
+  const escapedTag =
+    tag.replace(":", "\\:");
+
+  const expression = new RegExp(
+    `<${escapedTag}(?:\\s[^>]*)?>([\\s\\S]*?)<\\/${escapedTag}>`,
+    "i"
+  );
+
+  return (
+    expression.exec(block)?.[1] ?? ""
+  );
+}
+
+function createFallbackId(
+  value: string
+): string {
+  let hash = 0;
+
+  for (
+    let index = 0;
+    index < value.length;
+    index++
+  ) {
+    hash =
+      (hash * 31 +
+        value.charCodeAt(index)) |
+      0;
+  }
+
+  return `rss-${Math.abs(hash)}`;
+}
+
+function extractId(
+  block: string,
+  link: string
+): string {
+  const guid = decodeEntities(
+    getXmlValue(block, "guid")
+  );
+
+  const numericId =
+    guid.match(
+      /[?&]p=(\d+)/i
+    )?.[1];
+
+  return (
+    numericId ||
+    createFallbackId(link)
   );
 }
 
 function detectCategory(
   text: string
 ): string {
-  const normalized =
-    text.toLowerCase();
+  const value = text.toLowerCase();
 
   if (
-    normalized.includes("scholarship") ||
-    normalized.includes("studentship") ||
-    normalized.includes("bursary")
+    value.includes("scholarship") ||
+    value.includes("bursary") ||
+    value.includes("studentship")
   ) {
     return "scholarship";
   }
 
-  if (
-    normalized.includes("fellowship")
-  ) {
+  if (value.includes("fellowship")) {
     return "fellowship";
   }
 
   if (
-    normalized.includes("internship") ||
-    normalized.includes(
-      "graduate trainee"
-    ) ||
-    normalized.includes(
-      "graduate programme"
-    ) ||
-    normalized.includes(
-      "graduate program"
-    )
+    value.includes("internship") ||
+    value.includes("traineeship") ||
+    value.includes("graduate program")
   ) {
     return "internship";
   }
 
   if (
-    normalized.includes("grant") ||
-    normalized.includes(
-      "funding opportunity"
-    ) ||
-    normalized.includes(
-      "funding programme"
-    ) ||
-    normalized.includes(
-      "funding program"
-    )
+    value.includes("grant") ||
+    value.includes("funding")
   ) {
     return "grant";
   }
 
   if (
-    normalized.includes("accelerator") ||
-    normalized.includes("incubator") ||
-    normalized.includes(
-      "startup program"
-    ) ||
-    normalized.includes(
-      "startup programme"
-    )
+    value.includes("accelerator") ||
+    value.includes("incubator")
   ) {
     return "accelerator";
   }
 
   if (
-    normalized.includes("competition") ||
-    normalized.includes("challenge") ||
-    normalized.includes("award") ||
-    normalized.includes("prize")
+    value.includes("competition") ||
+    value.includes("challenge") ||
+    value.includes("award") ||
+    value.includes("prize")
   ) {
     return "competition";
   }
 
-  if (
-    normalized.includes("hackathon") ||
-    normalized.includes("hack fest")
-  ) {
+  if (value.includes("hackathon")) {
     return "hackathon";
   }
 
   if (
-    normalized.includes("mentorship") ||
-    normalized.includes(
-      "mentoring program"
-    ) ||
-    normalized.includes(
-      "mentoring programme"
-    )
+    value.includes("mentorship") ||
+    value.includes("mentoring")
   ) {
     return "mentorship";
   }
 
   if (
-    normalized.includes("volunteer") ||
-    normalized.includes("volunteering")
+    value.includes("volunteer") ||
+    value.includes("volunteering")
   ) {
     return "volunteering";
   }
 
   if (
-    normalized.includes("course") ||
-    normalized.includes("training") ||
-    normalized.includes("bootcamp") ||
-    normalized.includes(
-      "certification"
-    )
+    value.includes("course") ||
+    value.includes("training") ||
+    value.includes("bootcamp")
   ) {
     return "course";
   }
 
   if (
-    normalized.includes("job") ||
-    normalized.includes("vacancy") ||
-    normalized.includes("hiring")
+    value.includes("job") ||
+    value.includes("hiring") ||
+    value.includes("vacancy")
   ) {
     return "job";
   }
@@ -189,33 +190,28 @@ function detectCategory(
 function detectLocation(
   text: string
 ): string {
-  const normalized =
-    text.toLowerCase();
+  const value = text.toLowerCase();
 
   if (
-    normalized.includes("nigeria") ||
-    normalized.includes("nigerian")
+    value.includes("nigeria") ||
+    value.includes("nigerian")
   ) {
     return "Nigeria";
   }
 
   if (
-    normalized.includes("africa") ||
-    normalized.includes("african")
+    value.includes("africa") ||
+    value.includes("african")
   ) {
     return "Africa";
   }
 
   if (
-    normalized.includes("worldwide") ||
-    normalized.includes(
-      "global opportunity"
-    ) ||
-    normalized.includes(
-      "international applicants"
-    )
+    value.includes("remote") ||
+    value.includes("online") ||
+    value.includes("virtual")
   ) {
-    return "Global";
+    return "Remote";
   }
 
   return "Africa / Global";
@@ -224,22 +220,18 @@ function detectLocation(
 function extractDeadline(
   text: string
 ): string | undefined {
-  const match = text.match(
-    /deadline\s*[:\-–]\s*([^.|\n]{4,60})/i
-  );
-
-  return (
-    match?.[1]?.trim() ||
-    undefined
-  );
+  return text
+    .match(
+      /deadline\s*[:\-–]\s*([^.|\n]{4,70})/i
+    )?.[1]
+    ?.trim();
 }
 
 function buildTags(
   text: string,
   category: string
 ): string[] {
-  const normalized =
-    text.toLowerCase();
+  const value = text.toLowerCase();
 
   const tags = new Set<string>([
     category,
@@ -248,38 +240,26 @@ function buildTags(
 
   const possibleTags = [
     ["nigeria", "Nigeria"],
-    ["leadership", "Leadership"],
+    ["remote", "Remote"],
+    ["fully funded", "Fully Funded"],
     ["technology", "Technology"],
-    [
-      "artificial intelligence",
-      "AI",
-    ],
-    [
-      "entrepreneur",
-      "Entrepreneurship",
-    ],
+    ["artificial intelligence", "AI"],
+    ["entrepreneur", "Entrepreneurship"],
     ["startup", "Startups"],
     ["business", "Business"],
     ["research", "Research"],
+    ["leadership", "Leadership"],
     ["climate", "Climate"],
     ["health", "Health"],
     ["education", "Education"],
     ["women", "Women"],
     ["youth", "Youth"],
-    [
-      "fully funded",
-      "Fully Funded",
-    ],
-    ["remote", "Remote"],
-    ["online", "Online"],
   ];
 
   for (
     const [keyword, tag] of possibleTags
   ) {
-    if (
-      normalized.includes(keyword)
-    ) {
+    if (value.includes(keyword)) {
       tags.add(tag);
     }
   }
@@ -287,83 +267,79 @@ function buildTags(
   return Array.from(tags);
 }
 
-function mapPost(
-  post: OpportunityDeskPost
-): Opportunity {
-  const title = removeHtml(
-    post.title?.rendered
+function mapItem(
+  block: string
+): Opportunity | null {
+  const title = cleanText(
+    getXmlValue(block, "title")
   );
 
-  const description = removeHtml(
-    post.content?.rendered ||
-      post.excerpt?.rendered
+  const link = decodeEntities(
+    getXmlValue(block, "link")
   );
 
-  const searchableText =
+  const description = cleanText(
+    getXmlValue(
+      block,
+      "content:encoded"
+    ) ||
+      getXmlValue(
+        block,
+        "description"
+      )
+  );
+
+  if (!title || !link) {
+    return null;
+  }
+
+  const searchable =
     `${title} ${description}`;
 
-  const category =
-    detectCategory(searchableText);
+  const normalized =
+    searchable.toLowerCase();
 
-  const normalizedText =
-    searchableText.toLowerCase();
+  const category =
+    detectCategory(searchable);
 
   return {
-    id: String(post.id),
-
-    title:
-      title ||
-      "Opportunity Desk Programme",
-
+    id: extractId(block, link),
+    title,
     company: "Opportunity Desk",
-
     description,
-
     category,
-
     source: "opportunitydesk",
-
     location:
-      detectLocation(searchableText),
+      detectLocation(searchable),
 
     remote:
-      normalizedText.includes(
-        "remote"
-      ) ||
-      normalizedText.includes(
-        "virtual"
-      ) ||
-      normalizedText.includes(
-        "online"
-      ),
+      normalized.includes("remote") ||
+      normalized.includes("online") ||
+      normalized.includes("virtual"),
 
     deadline:
-      extractDeadline(searchableText),
+      extractDeadline(searchable),
 
-    url: post.link,
+    url: link,
 
     tags: buildTags(
-      searchableText,
+      searchable,
       category
     ),
   };
 }
 
-async function fetchPosts(): Promise<
-  Opportunity[]
-> {
-  try {
-    const params =
-      new URLSearchParams({
-        per_page: "30",
-        orderby: "date",
-        order: "desc",
-        _fields:
-          "id,link,title,excerpt",
-      });
+async function fetchFeedPage(
+  page: number
+): Promise<Opportunity[]> {
+  const url =
+    page === 1
+      ? FEED_URL
+      : `${FEED_URL}?paged=${page}`;
 
+  try {
     const response = await fetch(
-      `${OPPORTUNITY_DESK_API}?${params.toString()}`,
+      url,
       {
         headers: REQUEST_HEADERS,
 
@@ -375,24 +351,32 @@ async function fetchPosts(): Promise<
 
     if (!response.ok) {
       console.error(
-        "Opportunity Desk API error:",
+        `Opportunity Desk RSS page ${page} error:`,
         response.status
       );
 
       return [];
     }
 
-    const posts =
-      (await response.json()) as OpportunityDeskPost[];
+    const xml =
+      await response.text();
 
-    if (!Array.isArray(posts)) {
-      return [];
-    }
+    const blocks =
+      xml.match(
+        /<item\b[\s\S]*?<\/item>/gi
+      ) ?? [];
 
-    return posts.map(mapPost);
+    return blocks
+      .map(mapItem)
+      .filter(
+        (
+          opportunity
+        ): opportunity is Opportunity =>
+          opportunity !== null
+      );
   } catch (error) {
     console.error(
-      "Opportunity Desk fetch failed:",
+      `Opportunity Desk RSS page ${page} failed:`,
       error
     );
 
@@ -400,48 +384,38 @@ async function fetchPosts(): Promise<
   }
 }
 
-async function fetchPostById(
-  id: string
-): Promise<Opportunity | null> {
-  try {
-    const params =
-      new URLSearchParams({
-        _fields:
-          "id,link,title,excerpt,content",
-      });
+async function fetchPosts(): Promise<
+  Opportunity[]
+> {
+  const results =
+    await Promise.allSettled([
+      fetchFeedPage(1),
+      fetchFeedPage(2),
+      fetchFeedPage(3),
+    ]);
 
-    const response = await fetch(
-      `${OPPORTUNITY_DESK_API}/${encodeURIComponent(id)}?${params.toString()}`,
-      {
-        headers: REQUEST_HEADERS,
-
-        next: {
-          revalidate: 21600,
-        },
-      }
+  const opportunities =
+    results.flatMap((result) =>
+      result.status === "fulfilled"
+        ? result.value
+        : []
     );
 
-    if (!response.ok) {
-      console.error(
-        "Opportunity Desk lookup error:",
-        response.status
-      );
+  const unique = new Map<
+    string,
+    Opportunity
+  >();
 
-      return null;
-    }
-
-    const post =
-      (await response.json()) as OpportunityDeskPost;
-
-    return mapPost(post);
-  } catch (error) {
-    console.error(
-      "Opportunity Desk lookup failed:",
-      error
+  for (const opportunity of opportunities) {
+    unique.set(
+      opportunity.id,
+      opportunity
     );
-
-    return null;
   }
+
+  return Array.from(
+    unique.values()
+  );
 }
 
 export const OpportunityDeskConnector: OpportunityConnector =
@@ -457,6 +431,14 @@ export const OpportunityDeskConnector: OpportunityConnector =
     async getOpportunityById(
       id: string
     ): Promise<Opportunity | null> {
-      return fetchPostById(id);
+      const opportunities =
+        await fetchPosts();
+
+      return (
+        opportunities.find(
+          (opportunity) =>
+            opportunity.id === id
+        ) ?? null
+      );
     },
   };
