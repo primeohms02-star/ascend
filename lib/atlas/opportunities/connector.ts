@@ -1,31 +1,59 @@
 import { Opportunity } from "./types";
 
+import { fetchRemoteOK } from "./remoteok";
+
+import { normalizeOpportunity } from "./normalize";
+import { deduplicateOpportunities } from "./deduplicate";
+
+import { OpportunityConnector } from "./connectors/types";
+
 import { WellfoundConnector } from "./connectors/wellfound";
 import { WeWorkRemotelyConnector } from "./connectors/weworkremotely";
-import { USAJobsConnector } from "./connectors/usajobs";
 import { CourseraConnector } from "./connectors/coursera";
+import { USAJobsConnector } from "./connectors/usajobs";
 import { RemotiveConnector } from "./connectors/remotive";
 import { OpportunityDeskConnector } from "./connectors/opportunitydesk";
 import { OpportunityForAfricaConnector } from "./connectors/opportunityforafrica";
 import { MyJobMagConnector } from "./connectors/myjobmag";
+import { AfterSchoolAfricaConnector } from "./connectors/afterschoolafrica";
 
 const CONNECTOR_TIMEOUT = 20000;
 
+const RemoteOKConnector: OpportunityConnector = {
+  name: "RemoteOK",
+
+  async fetch(): Promise<Opportunity[]> {
+    return fetchRemoteOK();
+  },
+
+  async getOpportunityById(
+    id: string
+  ): Promise<Opportunity | null> {
+    const opportunities =
+      await fetchRemoteOK();
+
+    return (
+      opportunities.find(
+        (opportunity) =>
+          opportunity.id === id
+      ) ?? null
+    );
+  },
+};
+
 const connectors = {
-  wellfound:
-    WellfoundConnector,
+  remoteok: RemoteOKConnector,
+
+  wellfound: WellfoundConnector,
 
   weworkremotely:
     WeWorkRemotelyConnector,
 
-  usajobs:
-    USAJobsConnector,
+  coursera: CourseraConnector,
 
-  coursera:
-    CourseraConnector,
+  usajobs: USAJobsConnector,
 
-  remotive:
-    RemotiveConnector,
+  remotive: RemotiveConnector,
 
   opportunitydesk:
     OpportunityDeskConnector,
@@ -33,18 +61,23 @@ const connectors = {
   opportunityforafrica:
     OpportunityForAfricaConnector,
 
-  myjobmag:
-    MyJobMagConnector,
+  myjobmag: MyJobMagConnector,
+
+  afterschoolafrica:
+    AfterSchoolAfricaConnector,
 };
 
-async function withTimeout<T>(
+type ConnectorName =
+  keyof typeof connectors;
+
+function withTimeout<T>(
   promise: Promise<T>,
-  timeout: number,
-  connectorName: string
+  connectorName: string,
+  timeout = CONNECTOR_TIMEOUT
 ): Promise<T> {
   return new Promise<T>(
     (resolve, reject) => {
-      const timer = setTimeout(
+      const timeoutId = setTimeout(
         () => {
           reject(
             new Error(
@@ -57,58 +90,71 @@ async function withTimeout<T>(
 
       promise
         .then((result) => {
-          clearTimeout(timer);
+          clearTimeout(timeoutId);
           resolve(result);
         })
         .catch((error) => {
-          clearTimeout(timer);
+          clearTimeout(timeoutId);
           reject(error);
         });
     }
   );
 }
 
+async function fetchConnector(
+  name: ConnectorName,
+  connector: OpportunityConnector
+): Promise<Opportunity[]> {
+  try {
+    const opportunities =
+      await withTimeout(
+        connector.fetch(),
+        name
+      );
+
+    console.log(
+      `${name} returned ${opportunities.length} opportunities`
+    );
+
+    return opportunities;
+  } catch (error) {
+    console.error(
+      `Opportunity connector failed: ${name}`,
+      error
+    );
+
+    return [];
+  }
+}
+
 export async function fetchAllSources(): Promise<
   Opportunity[]
 > {
-  const entries =
-    Object.entries(connectors);
+  const entries = Object.entries(
+    connectors
+  ) as Array<
+    [
+      ConnectorName,
+      OpportunityConnector
+    ]
+  >;
 
-  const results =
-    await Promise.allSettled(
-      entries.map(
-        ([source, connector]) =>
-          withTimeout(
-            connector.fetch(),
-            CONNECTOR_TIMEOUT,
-            source
-          )
-      )
-    );
+  const results = await Promise.all(
+    entries.map(
+      ([name, connector]) =>
+        fetchConnector(
+          name,
+          connector
+        )
+    )
+  );
 
-  return results.flatMap(
-    (result, index) => {
-      const source =
-        entries[index]?.[0] ??
-        "unknown";
+  const normalized = results
+    .flat()
+    .map(normalizeOpportunity);
 
-      if (
-        result.status === "fulfilled"
-      ) {
-        console.log(
-          `${source} returned ${result.value.length} opportunities`
-        );
-
-        return result.value;
-      }
-
-      console.error(
-        `Opportunity connector failed: ${source}`,
-        result.reason
-      );
-
-      return [];
-    }
+  return deduplicateOpportunities(
+    normalized
   );
 }
 
@@ -121,7 +167,7 @@ export async function getOpportunityById(
 
   const connector =
     connectors[
-      normalizedSource as keyof typeof connectors
+      normalizedSource as ConnectorName
     ];
 
   if (!connector) {
@@ -136,12 +182,11 @@ export async function getOpportunityById(
   try {
     return await withTimeout(
       connector.getOpportunityById(id),
-      CONNECTOR_TIMEOUT,
       normalizedSource
     );
   } catch (error) {
     console.error(
-      `Opportunity lookup failed: ${normalizedSource}`,
+      `Could not retrieve opportunity from ${normalizedSource}:`,
       error
     );
 
