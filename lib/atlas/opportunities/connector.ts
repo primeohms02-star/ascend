@@ -14,6 +14,7 @@ import { USAJobsConnector } from "./connectors/usajobs";
 import { RemotiveConnector } from "./connectors/remotive";
 import { OpportunityDeskConnector } from "./connectors/opportunitydesk";
 import { OpportunityForAfricaConnector } from "./connectors/opportunityforafrica";
+
 import { MyJobMagConnector } from "./connectors/myjobmag";
 
 const CONNECTOR_TIMEOUT = 20000;
@@ -60,6 +61,7 @@ const connectors = {
   opportunityforafrica:
     OpportunityForAfricaConnector,
 
+  
   myjobmag: MyJobMagConnector,
 };
 

@@ -12,7 +12,7 @@ import type {
 const DEFAULT_PAGE_SIZE = 10;
 const MAX_PAGE_SIZE = 25;
 
-const SNAPSHOT_VERSION = "v7";
+const SNAPSHOT_VERSION = "v9";
 
 const SNAPSHOT_DURATION_SECONDS = 900;
 
