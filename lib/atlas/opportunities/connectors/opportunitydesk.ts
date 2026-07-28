@@ -4,6 +4,16 @@ import { OpportunityConnector } from "./types";
 const OPPORTUNITY_DESK_API =
   "https://opportunitydesk.org/wp-json/wp/v2/posts";
 
+const REQUEST_HEADERS = {
+  Accept: "application/json",
+
+  "User-Agent":
+    "ASCEND-Opportunity-Engine/1.0 (+https://www.ascendai.space)",
+
+  Referer:
+    "https://opportunitydesk.org/",
+};
+
 type WordPressText = {
   rendered?: string;
 };
@@ -17,7 +27,9 @@ type OpportunityDeskPost = {
   content?: WordPressText;
 };
 
-function decodeEntities(value: string): string {
+function decodeEntities(
+  value: string
+): string {
   return value
     .replace(/&nbsp;/gi, " ")
     .replace(/&amp;/gi, "&")
@@ -35,7 +47,9 @@ function decodeEntities(value: string): string {
     .replace(/&#8221;/gi, '"');
 }
 
-function removeHtml(value?: string): string {
+function removeHtml(
+  value?: string
+): string {
   return decodeEntities(
     (value ?? "")
       .replace(
@@ -52,8 +66,11 @@ function removeHtml(value?: string): string {
   );
 }
 
-function detectCategory(text: string): string {
-  const normalized = text.toLowerCase();
+function detectCategory(
+  text: string
+): string {
+  const normalized =
+    text.toLowerCase();
 
   if (
     normalized.includes("scholarship") ||
@@ -63,24 +80,38 @@ function detectCategory(text: string): string {
     return "scholarship";
   }
 
-  if (normalized.includes("fellowship")) {
+  if (
+    normalized.includes("fellowship")
+  ) {
     return "fellowship";
   }
 
   if (
     normalized.includes("internship") ||
-    normalized.includes("graduate trainee") ||
-    normalized.includes("graduate programme") ||
-    normalized.includes("graduate program")
+    normalized.includes(
+      "graduate trainee"
+    ) ||
+    normalized.includes(
+      "graduate programme"
+    ) ||
+    normalized.includes(
+      "graduate program"
+    )
   ) {
     return "internship";
   }
 
   if (
     normalized.includes("grant") ||
-    normalized.includes("funding opportunity") ||
-    normalized.includes("funding programme") ||
-    normalized.includes("funding program")
+    normalized.includes(
+      "funding opportunity"
+    ) ||
+    normalized.includes(
+      "funding programme"
+    ) ||
+    normalized.includes(
+      "funding program"
+    )
   ) {
     return "grant";
   }
@@ -88,8 +119,12 @@ function detectCategory(text: string): string {
   if (
     normalized.includes("accelerator") ||
     normalized.includes("incubator") ||
-    normalized.includes("startup program") ||
-    normalized.includes("startup programme")
+    normalized.includes(
+      "startup program"
+    ) ||
+    normalized.includes(
+      "startup programme"
+    )
   ) {
     return "accelerator";
   }
@@ -112,8 +147,12 @@ function detectCategory(text: string): string {
 
   if (
     normalized.includes("mentorship") ||
-    normalized.includes("mentoring program") ||
-    normalized.includes("mentoring programme")
+    normalized.includes(
+      "mentoring program"
+    ) ||
+    normalized.includes(
+      "mentoring programme"
+    )
   ) {
     return "mentorship";
   }
@@ -129,7 +168,9 @@ function detectCategory(text: string): string {
     normalized.includes("course") ||
     normalized.includes("training") ||
     normalized.includes("bootcamp") ||
-    normalized.includes("certification")
+    normalized.includes(
+      "certification"
+    )
   ) {
     return "course";
   }
@@ -145,8 +186,11 @@ function detectCategory(text: string): string {
   return "program";
 }
 
-function detectLocation(text: string): string {
-  const normalized = text.toLowerCase();
+function detectLocation(
+  text: string
+): string {
+  const normalized =
+    text.toLowerCase();
 
   if (
     normalized.includes("nigeria") ||
@@ -164,8 +208,12 @@ function detectLocation(text: string): string {
 
   if (
     normalized.includes("worldwide") ||
-    normalized.includes("global opportunity") ||
-    normalized.includes("international applicants")
+    normalized.includes(
+      "global opportunity"
+    ) ||
+    normalized.includes(
+      "international applicants"
+    )
   ) {
     return "Global";
   }
@@ -180,14 +228,18 @@ function extractDeadline(
     /deadline\s*[:\-–]\s*([^.|\n]{4,60})/i
   );
 
-  return match?.[1]?.trim() || undefined;
+  return (
+    match?.[1]?.trim() ||
+    undefined
+  );
 }
 
 function buildTags(
   text: string,
   category: string
 ): string[] {
-  const normalized = text.toLowerCase();
+  const normalized =
+    text.toLowerCase();
 
   const tags = new Set<string>([
     category,
@@ -195,75 +247,40 @@ function buildTags(
   ]);
 
   const possibleTags = [
-    {
-      keyword: "nigeria",
-      tag: "Nigeria",
-    },
-    {
-      keyword: "leadership",
-      tag: "Leadership",
-    },
-    {
-      keyword: "technology",
-      tag: "Technology",
-    },
-    {
-      keyword: "artificial intelligence",
-      tag: "AI",
-    },
-    {
-      keyword: "entrepreneur",
-      tag: "Entrepreneurship",
-    },
-    {
-      keyword: "startup",
-      tag: "Startups",
-    },
-    {
-      keyword: "business",
-      tag: "Business",
-    },
-    {
-      keyword: "research",
-      tag: "Research",
-    },
-    {
-      keyword: "climate",
-      tag: "Climate",
-    },
-    {
-      keyword: "health",
-      tag: "Health",
-    },
-    {
-      keyword: "education",
-      tag: "Education",
-    },
-    {
-      keyword: "women",
-      tag: "Women",
-    },
-    {
-      keyword: "youth",
-      tag: "Youth",
-    },
-    {
-      keyword: "fully funded",
-      tag: "Fully Funded",
-    },
-    {
-      keyword: "remote",
-      tag: "Remote",
-    },
-    {
-      keyword: "online",
-      tag: "Online",
-    },
+    ["nigeria", "Nigeria"],
+    ["leadership", "Leadership"],
+    ["technology", "Technology"],
+    [
+      "artificial intelligence",
+      "AI",
+    ],
+    [
+      "entrepreneur",
+      "Entrepreneurship",
+    ],
+    ["startup", "Startups"],
+    ["business", "Business"],
+    ["research", "Research"],
+    ["climate", "Climate"],
+    ["health", "Health"],
+    ["education", "Education"],
+    ["women", "Women"],
+    ["youth", "Youth"],
+    [
+      "fully funded",
+      "Fully Funded",
+    ],
+    ["remote", "Remote"],
+    ["online", "Online"],
   ];
 
-  for (const item of possibleTags) {
-    if (normalized.includes(item.keyword)) {
-      tags.add(item.tag);
+  for (
+    const [keyword, tag] of possibleTags
+  ) {
+    if (
+      normalized.includes(keyword)
+    ) {
+      tags.add(tag);
     }
   }
 
@@ -277,13 +294,13 @@ function mapPost(
     post.title?.rendered
   );
 
-  const fullDescription = removeHtml(
+  const description = removeHtml(
     post.content?.rendered ||
       post.excerpt?.rendered
   );
 
   const searchableText =
-    `${title} ${fullDescription}`;
+    `${title} ${description}`;
 
   const category =
     detectCategory(searchableText);
@@ -295,11 +312,12 @@ function mapPost(
     id: String(post.id),
 
     title:
-      title || "Opportunity Desk Programme",
+      title ||
+      "Opportunity Desk Programme",
 
     company: "Opportunity Desk",
 
-    description: fullDescription,
+    description,
 
     category,
 
@@ -309,9 +327,15 @@ function mapPost(
       detectLocation(searchableText),
 
     remote:
-      normalizedText.includes("remote") ||
-      normalizedText.includes("virtual") ||
-      normalizedText.includes("online"),
+      normalizedText.includes(
+        "remote"
+      ) ||
+      normalizedText.includes(
+        "virtual"
+      ) ||
+      normalizedText.includes(
+        "online"
+      ),
 
     deadline:
       extractDeadline(searchableText),
@@ -329,12 +353,20 @@ async function fetchPosts(): Promise<
   Opportunity[]
 > {
   try {
+    const params =
+      new URLSearchParams({
+        per_page: "30",
+        orderby: "date",
+        order: "desc",
+        _fields:
+          "id,link,title,excerpt",
+      });
+
     const response = await fetch(
-      `${OPPORTUNITY_DESK_API}?per_page=30&orderby=date&order=desc`,
+      `${OPPORTUNITY_DESK_API}?${params.toString()}`,
       {
-        headers: {
-          Accept: "application/json",
-        },
+        headers: REQUEST_HEADERS,
+
         next: {
           revalidate: 21600,
         },
@@ -372,12 +404,17 @@ async function fetchPostById(
   id: string
 ): Promise<Opportunity | null> {
   try {
+    const params =
+      new URLSearchParams({
+        _fields:
+          "id,link,title,excerpt,content",
+      });
+
     const response = await fetch(
-      `${OPPORTUNITY_DESK_API}/${encodeURIComponent(id)}`,
+      `${OPPORTUNITY_DESK_API}/${encodeURIComponent(id)}?${params.toString()}`,
       {
-        headers: {
-          Accept: "application/json",
-        },
+        headers: REQUEST_HEADERS,
+
         next: {
           revalidate: 21600,
         },
@@ -385,6 +422,11 @@ async function fetchPostById(
     );
 
     if (!response.ok) {
+      console.error(
+        "Opportunity Desk lookup error:",
+        response.status
+      );
+
       return null;
     }
 
@@ -406,7 +448,9 @@ export const OpportunityDeskConnector: OpportunityConnector =
   {
     name: "Opportunity Desk",
 
-    async fetch(): Promise<Opportunity[]> {
+    async fetch(): Promise<
+      Opportunity[]
+    > {
       return fetchPosts();
     },
 
