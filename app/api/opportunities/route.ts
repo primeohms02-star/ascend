@@ -1,34 +1,117 @@
-import { NextResponse } from "next/server";
+import {
+  NextRequest,
+  NextResponse,
+} from "next/server";
+
 import { auth } from "@clerk/nextjs/server";
-import { getPersonalizedOpportunities } from "@/lib/atlas/opportunities/service";
 
-export async function GET() {
+import {
+  getPersonalizedOpportunityPage,
+} from "@/lib/atlas/opportunities/service";
+
+export const dynamic = "force-dynamic";
+
+function parsePositiveInteger(
+  value: string | null,
+  fallback: number
+): number {
+  if (!value) {
+    return fallback;
+  }
+
+  const parsed = Number.parseInt(
+    value,
+    10
+  );
+
+  if (
+    !Number.isFinite(parsed) ||
+    parsed < 1
+  ) {
+    return fallback;
+  }
+
+  return parsed;
+}
+
+export async function GET(
+  request: NextRequest
+) {
   try {
-
     const { userId } = await auth();
 
     if (!userId) {
       return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
+        {
+          error: "Unauthorized",
+        },
+        {
+          status: 401,
+        }
       );
     }
 
-    const opportunities =
-      await getPersonalizedOpportunities({
-        clerkId: userId,
-      });
+    const searchParams =
+      request.nextUrl.searchParams;
 
-    return NextResponse.json(opportunities);
+    const page =
+      parsePositiveInteger(
+        searchParams.get("page"),
+        1
+      );
 
-  } catch (error) {
+    const limit =
+      parsePositiveInteger(
+        searchParams.get("limit"),
+        10
+      );
 
-    console.error(error);
+    const search =
+      searchParams
+        .get("search")
+        ?.trim() ?? "";
+
+    const filter =
+      searchParams
+        .get("filter")
+        ?.trim() ?? "All";
+
+    const result =
+      await getPersonalizedOpportunityPage(
+        {
+          clerkId: userId,
+        },
+        {
+          page,
+          limit,
+          search,
+          filter,
+        }
+      );
 
     return NextResponse.json(
-      { error: "Failed to fetch opportunities" },
-      { status: 500 }
+      result,
+      {
+        headers: {
+          "Cache-Control":
+            "private, no-store, max-age=0",
+        },
+      }
+    );
+  } catch (error) {
+    console.error(
+      "Opportunity API error:",
+      error
     );
 
+    return NextResponse.json(
+      {
+        error:
+          "Failed to fetch opportunities",
+      },
+      {
+        status: 500,
+      }
+    );
   }
 }

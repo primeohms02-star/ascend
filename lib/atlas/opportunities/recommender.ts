@@ -2,14 +2,14 @@ import { Opportunity } from "./types";
 
 export function recommend(
   opportunities: Opportunity[]
-) {
+): Opportunity[] {
+  // Do not limit results here.
+  //
+  // Atlas must rank the complete candidate pool
+  // before rotation chooses the final ten.
+  //
+  // Limiting here would unfairly favor whichever
+  // connectors happen to finish or appear first.
 
-  return opportunities
-    .sort(
-      (a, b) =>
-        (b.score ?? 0) -
-        (a.score ?? 0)
-    )
-    .slice(0, 10);
-
+  return [...opportunities];
 }

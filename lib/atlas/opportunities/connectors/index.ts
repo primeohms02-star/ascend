@@ -6,9 +6,12 @@ import { WeWorkRemotelyConnector } from "./weworkremotely";
 import { WellfoundConnector } from "./wellfound";
 import { CourseraConnector } from "./coursera";
 import { USAJobsConnector } from "./usajobs";
+import { RemotiveConnector } from "./remotive";
+import { OpportunityDeskConnector } from "./opportunitydesk";
+import { OpportunityForAfricaConnector } from "./opportunityforafrica";
 
 export async function fetchAllSources() {
-  const results = await Promise.all([
+  const results = await Promise.allSettled([
     fetchRemoteOK(),
 
     WeWorkRemotelyConnector.fetch(),
@@ -18,11 +21,32 @@ export async function fetchAllSources() {
     CourseraConnector.fetch(),
 
     USAJobsConnector.fetch(),
+
+    RemotiveConnector.fetch(),
+
+    OpportunityDeskConnector.fetch(),
+
+    OpportunityForAfricaConnector.fetch(),
   ]);
 
-  const normalized = results
-    .flat()
-    .map(normalizeOpportunity);
+  const opportunities = results.flatMap(
+    (result) => {
+      if (result.status === "fulfilled") {
+        return result.value;
+      }
+
+      console.error(
+        "Opportunity connector failed:",
+        result.reason
+      );
+
+      return [];
+    }
+  );
+
+  const normalized = opportunities.map(
+    normalizeOpportunity
+  );
 
   return deduplicateOpportunities(
     normalized

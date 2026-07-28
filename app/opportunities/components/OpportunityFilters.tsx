@@ -11,6 +11,14 @@ const filters: FilterOption[] = [
     value: "All",
   },
   {
+    label: "Nigeria",
+    value: "Nigeria",
+  },
+  {
+    label: "Africa",
+    value: "Africa",
+  },
+  {
     label: "Remote",
     value: "Remote",
   },
@@ -25,6 +33,42 @@ const filters: FilterOption[] = [
   {
     label: "Scholarships",
     value: "Scholarship",
+  },
+  {
+    label: "Fellowships",
+    value: "Fellowship",
+  },
+  {
+    label: "Grants",
+    value: "Grant",
+  },
+  {
+    label: "Accelerators",
+    value: "Accelerator",
+  },
+  {
+    label: "Competitions",
+    value: "Competition",
+  },
+  {
+    label: "Hackathons",
+    value: "Hackathon",
+  },
+  {
+    label: "Mentorships",
+    value: "Mentorship",
+  },
+  {
+    label: "Volunteering",
+    value: "Volunteering",
+  },
+  {
+    label: "Courses",
+    value: "Course",
+  },
+  {
+    label: "Programmes",
+    value: "Program",
   },
   {
     label: "AI",
