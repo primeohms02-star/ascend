@@ -11,7 +11,11 @@ import type {
 
 const DEFAULT_PAGE_SIZE = 10;
 const MAX_PAGE_SIZE = 25;
+
+const SNAPSHOT_VERSION = "v2";
+
 const SNAPSHOT_DURATION_SECONDS = 900;
+
 const SNAPSHOT_DURATION_MS =
   SNAPSHOT_DURATION_SECONDS * 1000;
 
@@ -20,22 +24,11 @@ type MemorySnapshot = {
   expiresAt: number;
 };
 
-/**
- * Fast memory cache for the current server process.
- */
 const memorySnapshots = new Map<
   string,
   MemorySnapshot
 >();
 
-/**
- * Tracks snapshots currently being generated.
- *
- * If React development mode or multiple browser
- * requests ask for the same user's opportunities
- * simultaneously, they share one Promise instead
- * of running every connector again.
- */
 const snapshotRequests = new Map<
   string,
   Promise<RankedOpportunity[]>
@@ -64,6 +57,12 @@ function normalize(
   return (
     value?.trim().toLowerCase() ?? ""
   );
+}
+
+function getSnapshotKey(
+  clerkId: string
+): string {
+  return `${SNAPSHOT_VERSION}:${clerkId}`;
 }
 
 function buildSearchableText(
@@ -243,6 +242,7 @@ async function createOpportunitySnapshot(
       },
       [
         "atlas-opportunity-snapshot",
+        SNAPSHOT_VERSION,
         clerkId,
       ],
       {
@@ -261,8 +261,11 @@ async function createOpportunitySnapshot(
 async function loadRankedOpportunities(
   clerkId: string
 ): Promise<RankedOpportunity[]> {
+  const snapshotKey =
+    getSnapshotKey(clerkId);
+
   const existingSnapshot =
-    memorySnapshots.get(clerkId);
+    memorySnapshots.get(snapshotKey);
 
   if (
     existingSnapshot &&
@@ -280,7 +283,7 @@ async function loadRankedOpportunities(
   }
 
   const existingRequest =
-    snapshotRequests.get(clerkId);
+    snapshotRequests.get(snapshotKey);
 
   if (existingRequest) {
     console.log(
@@ -294,7 +297,7 @@ async function loadRankedOpportunities(
     createOpportunitySnapshot(clerkId)
       .then((opportunities) => {
         memorySnapshots.set(
-          clerkId,
+          snapshotKey,
           {
             opportunities,
 
@@ -308,12 +311,12 @@ async function loadRankedOpportunities(
       })
       .finally(() => {
         snapshotRequests.delete(
-          clerkId
+          snapshotKey
         );
       });
 
   snapshotRequests.set(
-    clerkId,
+    snapshotKey,
     snapshotRequest
   );
 
@@ -339,10 +342,6 @@ function recordDisplayedInBackground(
   clerkId: string,
   opportunities: RankedOpportunity[]
 ) {
-  /**
-   * Impression tracking should never block
-   * the opportunity API response.
-   */
   void recordDisplayedOpportunities(
     clerkId,
     opportunities
@@ -354,11 +353,6 @@ function recordDisplayedInBackground(
   });
 }
 
-/**
- * Backward-compatible function for any part
- * of ASCEND that only needs the first ten
- * recommendations.
- */
 export async function getPersonalizedOpportunities(
   profile: {
     clerkId: string;
@@ -383,10 +377,6 @@ export async function getPersonalizedOpportunities(
   return recommendations;
 }
 
-/**
- * Returns every matched opportunity through
- * stable server-side filtering and pagination.
- */
 export async function getPersonalizedOpportunityPage(
   profile: {
     clerkId: string;
