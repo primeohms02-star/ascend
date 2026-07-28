@@ -9,18 +9,20 @@ import {
 
 import Link from "next/link";
 
+import SupportEscalation from "./components/SupportEscalation";
+
 import {
   AlertTriangle,
   ArrowLeft,
   CheckCircle2,
   ChevronRight,
-  Compass,
   LifeBuoy,
   Loader2,
   MessageSquare,
   Send,
   ShieldCheck,
   Wrench,
+  Compass,
 } from "lucide-react";
 
 import type {
@@ -79,8 +81,11 @@ function createMessage(
     id: `${role}-${Date.now()}-${Math.random()
       .toString(36)
       .slice(2)}`,
+
     role,
+
     content,
+
     createdAt:
       new Date().toISOString(),
   };
@@ -108,13 +113,17 @@ export default function SupportPage() {
   const [message, setMessage] =
     useState("");
 
-  const [conversation, setConversation] =
-    useState<SupportMessage[]>([]);
+  const [
+    conversation,
+    setConversation,
+  ] = useState<SupportMessage[]>([]);
 
-  const [diagnosis, setDiagnosis] =
-    useState<SupportDiagnosis | null>(
-      null
-    );
+  const [
+    diagnosis,
+    setDiagnosis,
+  ] = useState<SupportDiagnosis | null>(
+    null
+  );
 
   const [
     suggestedActions,
@@ -143,7 +152,10 @@ export default function SupportPage() {
     const trimmedMessage =
       text.trim();
 
-    if (!trimmedMessage || loading) {
+    if (
+      !trimmedMessage ||
+      loading
+    ) {
       return;
     }
 
@@ -170,17 +182,22 @@ export default function SupportPage() {
         "/api/support",
         {
           method: "POST",
+
           headers: {
             "Content-Type":
               "application/json",
           },
+
           body: JSON.stringify({
             message:
               trimmedMessage,
+
             conversation:
               previousConversation,
+
             currentPath:
               window.location.pathname,
+
             browser:
               window.navigator
                 .userAgent,
@@ -209,6 +226,7 @@ export default function SupportPage() {
 
       setConversation((current) => [
         ...current,
+
         createMessage(
           "assistant",
           supportData.reply
@@ -233,6 +251,7 @@ export default function SupportPage() {
 
       setConversation((current) => [
         ...current,
+
         createMessage(
           "assistant",
           "I could not complete the support diagnosis. Please try again, or describe the exact page and error message you encountered."
@@ -263,6 +282,12 @@ export default function SupportPage() {
 
   const hasConversation =
     conversation.length > 0;
+
+  const initialUserMessage =
+    conversation.find(
+      (item) =>
+        item.role === "user"
+    );
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-[#020617] via-[#07111f] to-[#0f172a] text-white">
@@ -322,6 +347,7 @@ export default function SupportPage() {
 
           <h1 className="mt-4 text-4xl font-black tracking-tight sm:text-5xl">
             Diagnose. Resolve.
+
             <span className="block bg-gradient-to-r from-blue-300 via-cyan-300 to-blue-500 bg-clip-text text-transparent">
               Keep moving forward.
             </span>
@@ -575,10 +601,12 @@ export default function SupportPage() {
                       <Loader2
                         size={18}
                         className="animate-spin"
+                        aria-hidden="true"
                       />
                     ) : (
                       <Send
                         size={18}
+                        aria-hidden="true"
                       />
                     )}
                   </button>
@@ -589,6 +617,8 @@ export default function SupportPage() {
             {/* Diagnostic panel */}
 
             <aside className="space-y-5 lg:sticky lg:top-28">
+              {/* Live diagnosis */}
+
               <section className="rounded-3xl border border-white/10 bg-slate-950/60 p-6 backdrop-blur-xl">
                 <p className="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-300">
                   Live Diagnosis
@@ -631,11 +661,13 @@ export default function SupportPage() {
                           <AlertTriangle
                             size={17}
                             className="text-amber-300"
+                            aria-hidden="true"
                           />
                         ) : (
                           <CheckCircle2
                             size={17}
                             className="text-emerald-300"
+                            aria-hidden="true"
                           />
                         )}
 
@@ -655,6 +687,8 @@ export default function SupportPage() {
                   </p>
                 )}
               </section>
+
+              {/* Suggested actions */}
 
               {suggestedActions.length >
                 0 && (
@@ -686,6 +720,31 @@ export default function SupportPage() {
                   </ol>
                 </section>
               )}
+
+              {/* Case escalation */}
+
+              {diagnosis &&
+                initialUserMessage && (
+                  <SupportEscalation
+                    key={
+                      initialUserMessage.id
+                    }
+                    initialMessage={
+                      initialUserMessage.content
+                    }
+                    diagnosis={
+                      diagnosis
+                    }
+                    conversation={
+                      conversation
+                    }
+                    suggestedActions={
+                      suggestedActions
+                    }
+                  />
+                )}
+
+              {/* Privacy */}
 
               <section className="rounded-3xl border border-white/10 bg-white/[0.025] p-6">
                 <p className="text-sm font-medium text-white">

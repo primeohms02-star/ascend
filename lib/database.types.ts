@@ -14,6 +14,81 @@ export type Database = {
   }
   public: {
     Tables: {
+      ascend_support_cases: {
+        Row: {
+          assigned_to: string | null
+          browser: string | null
+          category: string
+          closed_at: string | null
+          contact_email: string | null
+          conversation: Json
+          created_at: string
+          current_path: string | null
+          diagnosis: Json
+          escalated_at: string
+          evidence: Json
+          id: string
+          initial_message: string
+          reference_number: string
+          resolution: string | null
+          resolved_at: string | null
+          status: string
+          suggested_actions: Json
+          title: string
+          updated_at: string
+          urgency: string
+          user_id: string | null
+        }
+        Insert: {
+          assigned_to?: string | null
+          browser?: string | null
+          category?: string
+          closed_at?: string | null
+          contact_email?: string | null
+          conversation?: Json
+          created_at?: string
+          current_path?: string | null
+          diagnosis?: Json
+          escalated_at?: string
+          evidence?: Json
+          id?: string
+          initial_message: string
+          reference_number: string
+          resolution?: string | null
+          resolved_at?: string | null
+          status?: string
+          suggested_actions?: Json
+          title: string
+          updated_at?: string
+          urgency?: string
+          user_id?: string | null
+        }
+        Update: {
+          assigned_to?: string | null
+          browser?: string | null
+          category?: string
+          closed_at?: string | null
+          contact_email?: string | null
+          conversation?: Json
+          created_at?: string
+          current_path?: string | null
+          diagnosis?: Json
+          escalated_at?: string
+          evidence?: Json
+          id?: string
+          initial_message?: string
+          reference_number?: string
+          resolution?: string | null
+          resolved_at?: string | null
+          status?: string
+          suggested_actions?: Json
+          title?: string
+          updated_at?: string
+          urgency?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       atlas_facts: {
         Row: {
           created_at: string

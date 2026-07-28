@@ -61,3 +61,70 @@ export type SupportTopic = {
   possibleCauses: string[];
   recommendedSteps: string[];
 };
+
+export type SupportCaseStatus =
+  | "open"
+  | "investigating"
+  | "waiting_for_user"
+  | "resolved"
+  | "closed";
+
+export type SupportEvidence = {
+  id: string;
+  type:
+    | "error_message"
+    | "page"
+    | "browser"
+    | "screenshot"
+    | "note";
+  label: string;
+  value: string;
+  createdAt: string;
+};
+
+export type SupportCase = {
+  id: string;
+  referenceNumber: string;
+  userId?: string | null;
+  contactEmail?: string | null;
+  category: SupportCategory;
+  urgency: SupportUrgency;
+  status: SupportCaseStatus;
+  title: string;
+  initialMessage: string;
+  diagnosis: SupportDiagnosis;
+  conversation: SupportMessage[];
+  suggestedActions: string[];
+  evidence: SupportEvidence[];
+  currentPath?: string | null;
+  browser?: string | null;
+  resolution?: string | null;
+  assignedTo?: string | null;
+  escalatedAt: string;
+  resolvedAt?: string | null;
+  closedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type CreateSupportCaseRequest = {
+  initialMessage: string;
+  diagnosis: SupportDiagnosis;
+  conversation: SupportMessage[];
+  suggestedActions: string[];
+  evidence?: SupportEvidence[];
+  currentPath?: string;
+  browser?: string;
+  contactEmail?: string;
+};
+
+export type CreateSupportCaseResponse = {
+  success: true;
+  duplicate: boolean;
+  supportCase: SupportCase;
+};
+
+export type SupportCaseErrorResponse = {
+  success: false;
+  error: string;
+};
