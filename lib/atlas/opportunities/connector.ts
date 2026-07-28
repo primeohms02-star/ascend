@@ -7,26 +7,34 @@ import { CourseraConnector } from "./connectors/coursera";
 import { RemotiveConnector } from "./connectors/remotive";
 import { OpportunityDeskConnector } from "./connectors/opportunitydesk";
 import { OpportunityForAfricaConnector } from "./connectors/opportunityforafrica";
+import { MyJobMagConnector } from "./connectors/myjobmag";
 
-const CONNECTOR_TIMEOUT = 10000;
+const CONNECTOR_TIMEOUT = 20000;
 
 const connectors = {
-  wellfound: WellfoundConnector,
+  wellfound:
+    WellfoundConnector,
 
   weworkremotely:
     WeWorkRemotelyConnector,
 
-  usajobs: USAJobsConnector,
+  usajobs:
+    USAJobsConnector,
 
-  coursera: CourseraConnector,
+  coursera:
+    CourseraConnector,
 
-  remotive: RemotiveConnector,
+  remotive:
+    RemotiveConnector,
 
   opportunitydesk:
     OpportunityDeskConnector,
 
   opportunityforafrica:
     OpportunityForAfricaConnector,
+
+  myjobmag:
+    MyJobMagConnector,
 };
 
 async function withTimeout<T>(

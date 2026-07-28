@@ -9,29 +9,35 @@ import { USAJobsConnector } from "./usajobs";
 import { RemotiveConnector } from "./remotive";
 import { OpportunityDeskConnector } from "./opportunitydesk";
 import { OpportunityForAfricaConnector } from "./opportunityforafrica";
+import { MyJobMagConnector } from "./myjobmag";
 
 export async function fetchAllSources() {
-  const results = await Promise.allSettled([
-    fetchRemoteOK(),
+  const results =
+    await Promise.allSettled([
+      fetchRemoteOK(),
 
-    WeWorkRemotelyConnector.fetch(),
+      WeWorkRemotelyConnector.fetch(),
 
-    WellfoundConnector.fetch(),
+      WellfoundConnector.fetch(),
 
-    CourseraConnector.fetch(),
+      CourseraConnector.fetch(),
 
-    USAJobsConnector.fetch(),
+      USAJobsConnector.fetch(),
 
-    RemotiveConnector.fetch(),
+      RemotiveConnector.fetch(),
 
-    OpportunityDeskConnector.fetch(),
+      OpportunityDeskConnector.fetch(),
 
-    OpportunityForAfricaConnector.fetch(),
-  ]);
+      OpportunityForAfricaConnector.fetch(),
 
-  const opportunities = results.flatMap(
-    (result) => {
-      if (result.status === "fulfilled") {
+      MyJobMagConnector.fetch(),
+    ]);
+
+  const opportunities =
+    results.flatMap((result) => {
+      if (
+        result.status === "fulfilled"
+      ) {
         return result.value;
       }
 
@@ -41,12 +47,12 @@ export async function fetchAllSources() {
       );
 
       return [];
-    }
-  );
+    });
 
-  const normalized = opportunities.map(
-    normalizeOpportunity
-  );
+  const normalized =
+    opportunities.map(
+      normalizeOpportunity
+    );
 
   return deduplicateOpportunities(
     normalized
