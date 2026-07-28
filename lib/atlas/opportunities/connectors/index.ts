@@ -13,7 +13,6 @@ import { RemotiveConnector } from "./remotive";
 import { OpportunityDeskConnector } from "./opportunitydesk";
 import { OpportunityForAfricaConnector } from "./opportunityforafrica";
 import { MyJobMagConnector } from "./myjobmag";
-import { AfterSchoolAfricaConnector } from "./afterschoolafrica";
 
 type Source = {
   name: string;
@@ -64,11 +63,6 @@ const sources: Source[] = [
     name: "myjobmag",
     fetch: () =>
       MyJobMagConnector.fetch(),
-  },
-  {
-    name: "afterschoolafrica",
-    fetch: () =>
-      AfterSchoolAfricaConnector.fetch(),
   },
 ];
 

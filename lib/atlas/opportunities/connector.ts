@@ -15,7 +15,6 @@ import { RemotiveConnector } from "./connectors/remotive";
 import { OpportunityDeskConnector } from "./connectors/opportunitydesk";
 import { OpportunityForAfricaConnector } from "./connectors/opportunityforafrica";
 import { MyJobMagConnector } from "./connectors/myjobmag";
-import { AfterSchoolAfricaConnector } from "./connectors/afterschoolafrica";
 
 const CONNECTOR_TIMEOUT = 20000;
 
@@ -62,9 +61,6 @@ const connectors = {
     OpportunityForAfricaConnector,
 
   myjobmag: MyJobMagConnector,
-
-  afterschoolafrica:
-    AfterSchoolAfricaConnector,
 };
 
 type ConnectorName =
