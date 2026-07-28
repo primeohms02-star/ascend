@@ -1,41 +1,57 @@
 "use client";
 
-import { motion } from "framer-motion";
 import {
-  Search,
-  Route,
-  Rocket,
-  Mountain,
+  motion,
+} from "framer-motion";
+
+import {
+  Compass,
+  SearchCheck,
+  Target,
+  TrendingUp,
+  UserRoundSearch,
 } from "lucide-react";
 
 const steps = [
   {
     number: "01",
-    icon: Search,
-    title: "Discover",
+    icon: UserRoundSearch,
+    label: "Understand",
+    title: "Tell ASCEND where you are",
     description:
-      "Understand where you are, your strengths, and the opportunities available to you.",
+      "Share your current identity, immediate goal, challenges and the future you want to build.",
   },
   {
     number: "02",
-    icon: Route,
-    title: "Plan",
+    icon: Compass,
+    label: "Direction",
+    title: "Define your North Star",
     description:
-      "Create a clear roadmap with goals, habits and daily actions that move you forward.",
+      "ASCEND turns your answers into a living direction that guides missions, decisions and opportunities.",
   },
   {
     number: "03",
-    icon: Rocket,
-    title: "Execute",
+    icon: Target,
+    label: "Action",
+    title: "Receive one strategic mission",
     description:
-      "Stay consistent with intelligent guidance, reminders and AI-powered support.",
+      "Atlas chooses a concrete next action based on your direction, progress and completed mission history.",
   },
   {
     number: "04",
-    icon: Mountain,
-    title: "Ascend",
+    icon: SearchCheck,
+    label: "Decision",
+    title: "Discover and evaluate opportunities",
     description:
-      "Measure your growth, unlock new opportunities and become the person you're capable of becoming.",
+      "Explore matched opportunities and use the Atlas Decision Engine to decide what deserves your time.",
+  },
+  {
+    number: "05",
+    icon: TrendingUp,
+    label: "Evidence",
+    title: "Build measurable momentum",
+    description:
+      "Complete missions, preserve milestones and watch consistent evidence move you through Ascension levels.",
   },
 ];
 
@@ -43,74 +59,148 @@ export default function HowItWorks() {
   return (
     <section
       id="how-it-works"
-      className="bg-[#05070B] px-6 py-28"
+      aria-labelledby="how-it-works-heading"
+      className="relative overflow-hidden border-t border-white/[0.06] bg-[#070A10] px-6 py-28"
     >
-      <div className="mx-auto max-w-7xl">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute left-1/2 top-1/2 h-[620px] w-[620px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-blue-600/[0.07] blur-[170px]"
+      />
 
-        <div className="mb-20 text-center">
-
-          <p className="mb-4 text-sm uppercase tracking-[0.3em] text-blue-500">
-            How It Works
+      <div className="relative mx-auto max-w-7xl">
+        <div className="mx-auto mb-16 max-w-3xl text-center">
+          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-cyan-400">
+            How ASCEND Works
           </p>
 
-          <h2 className="text-4xl font-bold text-white md:text-5xl">
-            Four simple steps.
+          <h2
+            id="how-it-works-heading"
+            className="mt-5 text-4xl font-black tracking-tight text-white md:text-5xl"
+          >
+            From uncertainty
             <br />
-            One extraordinary journey.
+
+            <span className="text-cyan-300">
+              to evidence of growth.
+            </span>
           </h2>
 
-          <p className="mx-auto mt-6 max-w-2xl text-lg text-slate-400">
-            ASCEND isn't another productivity app.
-            It's a complete operating system for helping you grow with purpose.
+          <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-slate-400">
+            ASCEND does more than give advice. It
+            connects who you are becoming to what
+            you should do next—and remembers the
+            progress you create.
+          </p>
+        </div>
+
+        <div className="relative">
+          {/* Desktop connection line */}
+
+          <div
+            aria-hidden="true"
+            className="absolute left-[10%] right-[10%] top-12 hidden h-px bg-gradient-to-r from-transparent via-blue-400/30 to-transparent lg:block"
+          />
+
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
+            {steps.map(
+              (
+                step,
+                index
+              ) => {
+                const Icon =
+                  step.icon;
+
+                return (
+                  <motion.article
+                    key={step.number}
+                    initial={{
+                      opacity: 0,
+                      y: 30,
+                    }}
+                    whileInView={{
+                      opacity: 1,
+                      y: 0,
+                    }}
+                    viewport={{
+                      once: true,
+                      amount: 0.25,
+                    }}
+                    transition={{
+                      duration: 0.5,
+                      delay:
+                        index * 0.08,
+                    }}
+                    className="group relative"
+                  >
+                    <div className="relative z-10 mx-auto flex h-24 w-24 items-center justify-center rounded-full border border-blue-400/20 bg-[#0A101C] shadow-[0_0_35px_rgba(37,99,235,0.12)] transition group-hover:border-cyan-400/40 group-hover:shadow-[0_0_45px_rgba(34,211,238,0.18)]">
+                      <Icon
+                        size={30}
+                        className="text-cyan-300"
+                        aria-hidden="true"
+                      />
+
+                      <span className="absolute -right-2 -top-2 flex h-8 min-w-8 items-center justify-center rounded-full border border-blue-400/30 bg-blue-500 px-2 text-[11px] font-bold text-white">
+                        {
+                          step.number
+                        }
+                      </span>
+                    </div>
+
+                    <div className="mt-7 rounded-3xl border border-white/[0.08] bg-white/[0.03] p-5 text-center transition duration-300 group-hover:border-blue-400/20 group-hover:bg-white/[0.05]">
+                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-blue-400">
+                        {
+                          step.label
+                        }
+                      </p>
+
+                      <h3 className="mt-3 text-lg font-bold leading-7 text-white">
+                        {
+                          step.title
+                        }
+                      </h3>
+
+                      <p className="mt-3 text-sm leading-6 text-slate-400">
+                        {
+                          step.description
+                        }
+                      </p>
+                    </div>
+                  </motion.article>
+                );
+              }
+            )}
+          </div>
+        </div>
+
+        <motion.div
+          initial={{
+            opacity: 0,
+            y: 20,
+          }}
+          whileInView={{
+            opacity: 1,
+            y: 0,
+          }}
+          viewport={{
+            once: true,
+          }}
+          transition={{
+            delay: 0.2,
+            duration: 0.6,
+          }}
+          className="mx-auto mt-16 max-w-4xl rounded-3xl border border-cyan-400/15 bg-gradient-to-r from-cyan-400/[0.07] via-blue-500/[0.08] to-cyan-400/[0.07] p-7 text-center"
+        >
+          <p className="text-lg font-semibold text-white">
+            Every completed mission creates new
+            evidence.
           </p>
 
-        </div>
-
-        <div className="grid gap-8 md:grid-cols-2 xl:grid-cols-4">
-
-          {steps.map((step, index) => {
-            const Icon = step.icon;
-
-            return (
-              <motion.div
-                key={step.number}
-                initial={{ opacity: 0, y: 40 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{
-                  duration: 0.5,
-                  delay: index * 0.1,
-                }}
-                whileHover={{
-                  y: -8,
-                }}
-                className="relative rounded-3xl border border-white/10 bg-white/5 p-8 backdrop-blur-xl transition hover:border-blue-500/40"
-              >
-                <span className="text-6xl font-black text-white/10">
-                  {step.number}
-                </span>
-
-                <div className="mt-6 mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-500/10">
-                  <Icon
-                    size={30}
-                    className="text-blue-400"
-                  />
-                </div>
-
-                <h3 className="mb-4 text-2xl font-semibold text-white">
-                  {step.title}
-                </h3>
-
-                <p className="leading-8 text-slate-400">
-                  {step.description}
-                </p>
-
-              </motion.div>
-            );
-          })}
-
-        </div>
-
+          <p className="mt-2 leading-7 text-slate-400">
+            Atlas uses that evidence to understand
+            your journey more clearly and make your
+            next direction more relevant.
+          </p>
+        </motion.div>
       </div>
     </section>
   );

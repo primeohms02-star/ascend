@@ -1,120 +1,250 @@
 "use client";
 
-import { useState } from "react";
+import {
+  useState,
+} from "react";
+
 import Link from "next/link";
+
+import {
+  ArrowUpRight,
+  Compass,
+} from "lucide-react";
+
 import AboutModal from "@/app/components/AboutModal";
 
+const productLinks = [
+  {
+    label: "Compass",
+    href: "/compass",
+  },
+  {
+    label: "Atlas",
+    href: "/atlas",
+  },
+  {
+    label: "Missions",
+    href: "/dashboard#mission",
+  },
+  {
+    label: "Opportunities",
+    href: "/opportunities",
+  },
+  {
+    label: "Momentum",
+    href: "/dashboard#momentum",
+  },
+];
+
+const journeyLinks = [
+  {
+    label: "How It Works",
+    href: "/#how-it-works",
+  },
+  {
+    label: "Features",
+    href: "/#features",
+  },
+  {
+    label: "Dashboard",
+    href: "/dashboard",
+  },
+];
+
 export default function Footer() {
-  const [aboutOpen, setAboutOpen] = useState(false);
+  const [
+    aboutOpen,
+    setAboutOpen,
+  ] = useState(false);
 
   return (
     <>
       <footer
         id="contact"
-        className="border-t border-white/10 bg-[#05070B] px-6 py-20"
+        className="relative overflow-hidden border-t border-white/[0.08] bg-[#030509] px-6 pb-10 pt-20"
       >
-        <div className="mx-auto grid max-w-7xl gap-14 md:grid-cols-2 lg:grid-cols-5">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -left-40 top-0 h-96 w-96 rounded-full bg-blue-600/[0.08] blur-[150px]"
+        />
 
-          {/* Brand */}
+        <div className="relative mx-auto max-w-7xl">
+          <div className="grid gap-14 md:grid-cols-2 lg:grid-cols-[1.5fr_1fr_1fr_1fr]">
+            {/* Brand */}
 
-          <div className="lg:col-span-2">
-            <h2 className="text-3xl font-bold text-white">
-              ASCEND
-            </h2>
+            <div>
+              <Link
+                href="/"
+                className="inline-flex items-center gap-3"
+              >
+                <span className="flex h-11 w-11 items-center justify-center rounded-xl border border-blue-400/20 bg-blue-400/10 text-blue-300">
+                  <Compass
+                    size={22}
+                    aria-hidden="true"
+                  />
+                </span>
 
-            <p className="mt-6 max-w-md leading-8 text-slate-400">
-              Helping people discover their direction and continually
-              ascend toward their highest potential.
+                <span className="text-2xl font-black tracking-[0.22em] text-white">
+                  ASCEND
+                </span>
+              </Link>
+
+              <p className="mt-6 max-w-md text-base leading-8 text-slate-400">
+                An Operating System for Human
+                Potential—built to turn uncertainty
+                into direction, action and evidence
+                of growth.
+              </p>
+
+              <div className="mt-7 inline-flex rounded-full border border-white/10 bg-white/[0.04] px-4 py-2">
+                <p className="text-xs font-medium uppercase tracking-[0.2em] text-slate-500">
+                  Direction • Action • Growth
+                </p>
+              </div>
+            </div>
+
+            {/* Product */}
+
+            <div>
+              <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-white">
+                Product
+              </h2>
+
+              <ul className="mt-6 space-y-4">
+                {productLinks.map(
+                  (item) => (
+                    <li
+                      key={
+                        item.label
+                      }
+                    >
+                      <Link
+                        href={
+                          item.href
+                        }
+                        className="text-sm text-slate-400 transition hover:text-blue-300"
+                      >
+                        {
+                          item.label
+                        }
+                      </Link>
+                    </li>
+                  )
+                )}
+              </ul>
+            </div>
+
+            {/* Journey */}
+
+            <div>
+              <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-white">
+                Explore
+              </h2>
+
+              <ul className="mt-6 space-y-4">
+                {journeyLinks.map(
+                  (item) => (
+                    <li
+                      key={
+                        item.label
+                      }
+                    >
+                      <Link
+                        href={
+                          item.href
+                        }
+                        className="text-sm text-slate-400 transition hover:text-blue-300"
+                      >
+                        {
+                          item.label
+                        }
+                      </Link>
+                    </li>
+                  )
+                )}
+
+                <li>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setAboutOpen(
+                        true
+                      )
+                    }
+                    className="text-sm text-slate-400 transition hover:text-blue-300"
+                  >
+                    About ASCEND
+                  </button>
+                </li>
+              </ul>
+            </div>
+
+            {/* Support */}
+
+            <div>
+              <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-white">
+                Connect
+              </h2>
+
+              <ul className="mt-6 space-y-4">
+                <li>
+                  <Link
+                    href="/support"
+                    className="group inline-flex items-center gap-2 text-sm text-slate-400 transition hover:text-cyan-300"
+                  >
+                    ASCEND Support
+
+                    <span className="rounded-full border border-cyan-400/20 bg-cyan-400/10 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-cyan-300">
+                      AI
+                    </span>
+                  </Link>
+                </li>
+
+                <li>
+                  <a
+                    href="https://x.com/Ascendai_space"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 text-sm text-slate-400 transition hover:text-white"
+                  >
+                    Follow on X
+
+                    <ArrowUpRight
+                      size={14}
+                      aria-hidden="true"
+                    />
+                  </a>
+                </li>
+              </ul>
+
+              <p className="mt-7 text-xs leading-6 text-slate-600">
+                Support AI will help users
+                understand ASCEND, resolve product
+                issues and find the correct next
+                step.
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-16 flex flex-col gap-4 border-t border-white/[0.08] pt-8 text-sm text-slate-600 sm:flex-row sm:items-center sm:justify-between">
+            <p>
+              © 2026 ASCEND. Built for
+              Human Potential.
+            </p>
+
+            <p>
+              Every meaningful journey begins
+              with direction.
             </p>
           </div>
-
-          {/* Product */}
-
-          <div>
-            <h3 className="mb-6 font-semibold text-white">
-              Product
-            </h3>
-
-            <ul className="space-y-4 text-slate-400">
-              <li><span>Atlas</span></li>
-              <li><span>Cortex</span></li>
-              <li><span>Navigator</span></li>
-              <li><span>Momentum</span></li>
-              <li><span>Opportunities</span></li>
-            </ul>
-          </div>
-
-          {/* Company */}
-
-          <div>
-            <h3 className="mb-6 font-semibold text-white">
-              Company
-            </h3>
-
-            <ul className="space-y-4 text-slate-400">
-
-              <li>
-                <button
-                  onClick={() => setAboutOpen(true)}
-                  className="transition hover:text-white"
-                >
-                  About
-                </button>
-              </li>
-
-              <li>
-                <Link
-                  href="/#how-it-works"
-                  className="transition hover:text-white"
-                >
-                  Roadmap
-                </Link>
-              </li>
-
-            </ul>
-          </div>
-
-          {/* Connect */}
-
-          <div>
-            <h3 className="mb-6 font-semibold text-white">
-              Connect
-            </h3>
-
-            <ul className="space-y-4 text-slate-400">
-
-              <li>
-                <a
-                  href="https://x.com/Ascendai_space"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="transition hover:text-white"
-                >
-                  X
-                </a>
-              </li>
-
-              <li>
-                <span className="text-slate-500">
-                  Support (Coming Soon)
-                </span>
-              </li>
-
-            </ul>
-          </div>
-
-        </div>
-
-        <div className="mx-auto mt-16 max-w-7xl border-t border-white/10 pt-8">
-          <p className="text-center text-sm text-slate-500">
-            © 2026 ASCEND. Built for Human Potential.
-          </p>
         </div>
       </footer>
 
       <AboutModal
         open={aboutOpen}
-        onClose={() => setAboutOpen(false)}
+        onClose={() =>
+          setAboutOpen(false)
+        }
       />
     </>
   );
