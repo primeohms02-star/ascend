@@ -2,6 +2,8 @@ import { randomUUID } from "crypto";
 
 import { supabaseServer } from "@/lib/supabase-server";
 
+import { notifySupportAdminsOfNewCase } from "./notifications";
+
 import type {
   CreateSupportCaseRequest,
   SupportCase,
@@ -47,13 +49,11 @@ function normalizeEmail(
   value?: string | null
 ): string | null {
   const email =
-    value?.trim().toLowerCase();
+    value
+      ?.trim()
+      .toLowerCase();
 
-  if (!email) {
-    return null;
-  }
-
-  return email;
+  return email || null;
 }
 
 function createReferenceNumber(): string {
@@ -166,7 +166,10 @@ async function findRecentDuplicateCase({
   contactEmail?: string | null;
   category: SupportCategory;
 }): Promise<SupportCase | null> {
-  if (!userId && !contactEmail) {
+  if (
+    !userId &&
+    !contactEmail
+  ) {
     return null;
   }
 
@@ -177,7 +180,10 @@ async function findRecentDuplicateCase({
     ).toISOString();
 
   if (userId) {
-    const { data, error } =
+    const {
+      data,
+      error,
+    } =
       await supabaseServer
         .from(
           "ascend_support_cases"
@@ -200,9 +206,12 @@ async function findRecentDuplicateCase({
           "created_at",
           duplicateWindow
         )
-        .order("created_at", {
-          ascending: false,
-        })
+        .order(
+          "created_at",
+          {
+            ascending: false,
+          }
+        )
         .limit(1)
         .maybeSingle();
 
@@ -223,7 +232,10 @@ async function findRecentDuplicateCase({
   }
 
   if (contactEmail) {
-    const { data, error } =
+    const {
+      data,
+      error,
+    } =
       await supabaseServer
         .from(
           "ascend_support_cases"
@@ -246,9 +258,12 @@ async function findRecentDuplicateCase({
           "created_at",
           duplicateWindow
         )
-        .order("created_at", {
-          ascending: false,
-        })
+        .order(
+          "created_at",
+          {
+            ascending: false,
+          }
+        )
         .limit(1)
         .maybeSingle();
 
@@ -283,7 +298,10 @@ export async function createSupportCase({
       request.contactEmail
     );
 
-  if (!userId && !contactEmail) {
+  if (
+    !userId &&
+    !contactEmail
+  ) {
     throw new Error(
       "Sign in or provide a contact email before escalating this issue."
     );
@@ -292,15 +310,24 @@ export async function createSupportCase({
   const duplicate =
     await findRecentDuplicateCase({
       userId,
+
       contactEmail,
+
       category:
-        request.diagnosis.category,
+        request.diagnosis
+          .category,
     });
 
   if (duplicate) {
+    console.log(
+      "Support notification skipped because the case is a recent duplicate:",
+      duplicate.referenceNumber
+    );
+
     return {
       supportCase:
         duplicate,
+
       duplicate: true,
     };
   }
@@ -323,7 +350,10 @@ export async function createSupportCase({
     request.evidence ?? []
   ).slice(0, 10);
 
-  const { data, error } =
+  const {
+    data,
+    error,
+  } =
     await supabaseServer
       .from(
         "ascend_support_cases"
@@ -349,7 +379,8 @@ export async function createSupportCase({
         status: "open",
 
         title:
-          request.diagnosis.title,
+          request.diagnosis
+            .title,
 
         initial_message:
           request.initialMessage,
@@ -373,12 +404,16 @@ export async function createSupportCase({
           null,
 
         escalated_at:
-          new Date().toISOString(),
+          new Date()
+            .toISOString(),
       })
       .select("*")
       .single();
 
-  if (error || !data) {
+  if (
+    error ||
+    !data
+  ) {
     console.error(
       "Support case creation error:",
       error
@@ -389,9 +424,49 @@ export async function createSupportCase({
     );
   }
 
+  const supportCase =
+    mapSupportCase(data);
+
+  console.log(
+    "New support case created:",
+    supportCase.referenceNumber
+  );
+
+  /*
+  |--------------------------------------------------------------------------
+  | NOTIFY SUPPORT ADMINISTRATORS
+  |--------------------------------------------------------------------------
+  |
+  | Notification failures must never prevent the user from receiving their
+  | successfully created support case.
+  |
+  */
+
+  try {
+    console.log(
+      "Attempting support administrator email notification:",
+      supportCase.referenceNumber
+    );
+
+    await notifySupportAdminsOfNewCase(
+      supportCase
+    );
+
+    console.log(
+      "Support administrator notification process completed:",
+      supportCase.referenceNumber
+    );
+  } catch (
+    notificationError
+  ) {
+    console.error(
+      "Support administrator notification encountered an unexpected error:",
+      notificationError
+    );
+  }
+
   return {
-    supportCase:
-      mapSupportCase(data),
+    supportCase,
 
     duplicate: false,
   };
@@ -412,17 +487,25 @@ export async function getSupportCaseByReference({
       .toUpperCase();
 
   const normalizedEmail =
-    normalizeEmail(contactEmail);
+    normalizeEmail(
+      contactEmail
+    );
 
   if (
     !normalizedReference ||
-    (!userId && !normalizedEmail)
+    (
+      !userId &&
+      !normalizedEmail
+    )
   ) {
     return null;
   }
 
   if (userId) {
-    const { data, error } =
+    const {
+      data,
+      error,
+    } =
       await supabaseServer
         .from(
           "ascend_support_cases"
@@ -455,7 +538,10 @@ export async function getSupportCaseByReference({
   }
 
   if (normalizedEmail) {
-    const { data, error } =
+    const {
+      data,
+      error,
+    } =
       await supabaseServer
         .from(
           "ascend_support_cases"
