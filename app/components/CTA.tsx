@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 
 import { useAuth } from "@clerk/nextjs";
@@ -8,7 +9,6 @@ import { motion } from "framer-motion";
 
 import {
   ArrowRight,
-  Compass,
 } from "lucide-react";
 
 export default function CTA() {
@@ -50,10 +50,14 @@ export default function CTA() {
         }}
         className="relative mx-auto max-w-5xl overflow-hidden rounded-[2rem] border border-blue-400/20 bg-gradient-to-br from-blue-500/[0.12] via-slate-950/90 to-cyan-500/[0.08] px-6 py-16 text-center shadow-[0_0_100px_rgba(37,99,235,0.12)] sm:px-12 md:py-20"
       >
-        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-cyan-400/25 bg-cyan-400/10 text-cyan-300 shadow-[0_0_35px_rgba(34,211,238,0.15)]">
-          <Compass
-            size={30}
-            aria-hidden="true"
+        <div className="relative mx-auto h-20 w-20">
+          <Image
+            src="/ascend-navbar-logo.png"
+            alt=""
+            fill
+            priority
+            sizes="80px"
+            className="object-contain"
           />
         </div>
 

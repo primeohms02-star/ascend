@@ -4,11 +4,11 @@ import {
   useState,
 } from "react";
 
+import Image from "next/image";
 import Link from "next/link";
 
 import {
   ArrowUpRight,
-  Compass,
 } from "lucide-react";
 
 import AboutModal from "@/app/components/AboutModal";
@@ -75,16 +75,20 @@ export default function Footer() {
             <div>
               <Link
                 href="/"
-                className="inline-flex items-center gap-3"
+                aria-label="ASCEND home"
+                className="group inline-flex items-center gap-3"
               >
-                <span className="flex h-11 w-11 items-center justify-center rounded-xl border border-blue-400/20 bg-blue-400/10 text-blue-300">
-                  <Compass
-                    size={22}
-                    aria-hidden="true"
+                <span className="relative h-12 w-12 shrink-0">
+                  <Image
+                    src="/ascend-navbar-logo.png"
+                    alt=""
+                    fill
+                    sizes="48px"
+                    className="object-contain transition duration-300 group-hover:scale-105"
                   />
                 </span>
 
-                <span className="text-2xl font-black tracking-[0.22em] text-white">
+                <span className="text-2xl font-black tracking-[0.22em] text-white transition group-hover:text-blue-300">
                   ASCEND
                 </span>
               </Link>

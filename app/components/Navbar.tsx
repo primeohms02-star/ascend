@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import Image from "next/image";
 import Link from "next/link";
 
 import { useAuth } from "@clerk/nextjs";
@@ -57,9 +58,23 @@ export default function Navbar() {
           <Link
             href="/"
             onClick={closeMobileMenu}
-            className="shrink-0 text-xl font-black tracking-[0.22em] text-white transition hover:text-blue-300 sm:text-2xl"
+            aria-label="ASCEND home"
+            className="group flex shrink-0 items-center gap-2.5"
           >
-            ASCEND
+            <span className="relative flex h-10 w-10 shrink-0 items-center justify-center sm:h-11 sm:w-11">
+              <Image
+                src="/ascend-navbar-logo.png"
+                alt=""
+                fill
+                priority
+                sizes="44px"
+                className="object-contain transition duration-300 group-hover:scale-105"
+              />
+            </span>
+
+            <span className="text-lg font-black tracking-[0.18em] text-white transition group-hover:text-blue-300 sm:text-2xl sm:tracking-[0.22em]">
+              ASCEND
+            </span>
           </Link>
 
           {/* Desktop navigation */}
