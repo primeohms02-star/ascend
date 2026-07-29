@@ -31,6 +31,8 @@ import type {
   SupportUrgency,
 } from "@/lib/support/types";
 
+import AdminCaseConversation from "./components/AdminCaseConversation";
+
 type CasesResponse =
   | {
       success: true;
@@ -1153,6 +1155,18 @@ export default function SupportAdminPage() {
                   )}
                 </div>
 
+                <AdminCaseConversation
+                  key={
+                    selectedCase.id
+                  }
+                  supportCase={
+                    selectedCase
+                  }
+                  onReplySent={
+                    loadCases
+                  }
+                />
+
                 <div className="mt-6 grid gap-5 lg:grid-cols-2">
                   <div>
                     <label
@@ -1294,7 +1308,9 @@ export default function SupportAdminPage() {
                     onClick={
                       saveCase
                     }
-                    disabled={saving}
+                    disabled={
+                      saving
+                    }
                     className="inline-flex items-center justify-center gap-2 rounded-xl bg-cyan-400 px-6 py-3 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {saving ? (

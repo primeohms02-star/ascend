@@ -1,5 +1,5 @@
 "use client";
-
+import SupportAdminButton from "./components/SupportAdminButton";
 import {
   FormEvent,
   useEffect,
@@ -292,45 +292,45 @@ export default function SupportPage() {
   return (
     <main className="min-h-screen bg-gradient-to-br from-[#020617] via-[#07111f] to-[#0f172a] text-white">
       {/* Ambient background */}
+<div
+  aria-hidden="true"
+  className="pointer-events-none fixed inset-0 overflow-hidden"
+>
+  <div className="absolute -left-40 top-32 h-96 w-96 rounded-full bg-blue-600/10 blur-[130px]" />
 
-      <div
-        aria-hidden="true"
-        className="pointer-events-none fixed inset-0 overflow-hidden"
-      >
-        <div className="absolute -left-40 top-32 h-96 w-96 rounded-full bg-blue-600/10 blur-[130px]" />
-
-        <div className="absolute -right-40 top-1/3 h-96 w-96 rounded-full bg-cyan-500/10 blur-[130px]" />
-      </div>
+  <div className="absolute -right-40 top-1/3 h-96 w-96 rounded-full bg-cyan-500/10 blur-[130px]" />
+</div>
 
       <div className="relative mx-auto max-w-7xl px-5 py-8 sm:px-6 lg:px-8">
-        {/* Header */}
+      {/* Header */}
 
-        <header className="flex flex-wrap items-center justify-between gap-4">
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-medium text-slate-300 transition hover:border-blue-400/30 hover:bg-white/10 hover:text-white"
-          >
-            <ArrowLeft
-              size={17}
-              aria-hidden="true"
-            />
+<header className="flex flex-wrap items-center justify-between gap-4">
+  <Link
+    href="/"
+    className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-medium text-slate-300 transition hover:border-blue-400/30 hover:bg-white/10 hover:text-white"
+  >
+    <ArrowLeft
+      size={17}
+      aria-hidden="true"
+    />
 
-            Back to ASCEND
-          </Link>
+    Back to ASCEND
+  </Link>
 
-          {hasConversation && (
-            <button
-              type="button"
-              onClick={
-                resetSupportSession
-              }
-              className="rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-medium text-slate-300 transition hover:bg-white/10 hover:text-white"
-            >
-              Start New Diagnosis
-            </button>
-          )}
-        </header>
+  <div className="flex flex-wrap items-center justify-end gap-3">
+    <SupportAdminButton />
 
+    {hasConversation && (
+      <button
+        type="button"
+        onClick={resetSupportSession}
+        className="rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-medium text-slate-300 transition hover:bg-white/10 hover:text-white"
+      >
+        Start New Diagnosis
+      </button>
+    )}
+  </div>
+</header>
         {/* Introduction */}
 
         <section className="mx-auto max-w-3xl pb-10 pt-14 text-center">

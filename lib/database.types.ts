@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+ascend_support_case_messages: {
+        Row: {
+          case_id: string
+          created_at: string
+          id: string
+          message: string
+          sender_name: string | null
+          sender_type: string
+          sender_user_id: string | null
+        }
+        Insert: {
+          case_id: string
+          created_at?: string
+          id?: string
+          message: string
+          sender_name?: string | null
+          sender_type?: string
+          sender_user_id?: string | null
+        }
+        Update: {
+          case_id?: string
+          created_at?: string
+          id?: string
+          message?: string
+          sender_name?: string | null
+          sender_type?: string
+          sender_user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ascend_support_case_messages_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "ascend_support_cases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+
       ascend_support_cases: {
         Row: {
           assigned_to: string | null

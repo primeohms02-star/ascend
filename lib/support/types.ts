@@ -128,3 +128,38 @@ export type SupportCaseErrorResponse = {
   success: false;
   error: string;
 };
+
+export type SupportCaseMessageSender =
+  | "user"
+  | "support"
+  | "system";
+
+export type SupportCaseMessage = {
+  id: string;
+  caseId: string;
+  senderType: SupportCaseMessageSender;
+  senderUserId?: string | null;
+  senderName?: string | null;
+  message: string;
+  createdAt: string;
+};
+
+export type CreateSupportCaseMessageRequest = {
+  message: string;
+  contactEmail?: string;
+};
+
+export type SupportCaseMessagesResponse = {
+  success: true;
+  messages: SupportCaseMessage[];
+};
+
+export type SupportCaseMessageResponse = {
+  success: true;
+  supportMessage: SupportCaseMessage;
+};
+
+export type SupportCaseMessageErrorResponse = {
+  success: false;
+  error: string;
+};

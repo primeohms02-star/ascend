@@ -1,5 +1,5 @@
 "use client";
-
+import SupportCaseConversation from "./components/SupportCaseConversation";
 import {
   FormEvent,
   useCallback,
@@ -624,6 +624,24 @@ export default function SupportCasePage() {
                     }
                   </p>
                 </section>
+
+                <SupportCaseConversation
+  key={supportCase.id}
+  referenceNumber={supportCase.referenceNumber}
+  status={supportCase.status}
+  contactEmail={
+    userId
+      ? undefined
+      : contactEmail
+  }
+  onReplySent={() =>
+    retrieveCase(
+      userId
+        ? undefined
+        : contactEmail
+    )
+  }
+/>
 
                 <section className="rounded-3xl border border-white/10 bg-white/[0.04] p-6 sm:p-8">
                   <h2 className="text-xl font-bold">
