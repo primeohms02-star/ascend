@@ -1,13 +1,16 @@
 import type { Metadata } from "next";
+
 import { ClerkProvider } from "@clerk/nextjs";
 
+import AscendLaunch from "@/app/components/AscendLaunch";
 import { NotificationProvider } from "@/app/context/NotificationContext";
 
 import "./globals.css";
 
 export const metadata: Metadata = {
   title: "ASCEND",
-  description: "Discover your next direction.",
+  description:
+    "Discover your next direction.",
 };
 
 export default function RootLayout({
@@ -20,6 +23,8 @@ export default function RootLayout({
       <html lang="en">
         <body>
           <NotificationProvider>
+            <AscendLaunch />
+
             {children}
           </NotificationProvider>
         </body>
