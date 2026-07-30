@@ -21,16 +21,24 @@ import UserMenu from "./UserMenu";
 
 const navigation = [
   {
+    label: "About",
+    href: "/about",
+  },
+  {
     label: "Features",
-    href: "#features",
+    href: "/features",
   },
   {
     label: "How It Works",
-    href: "#how-it-works",
+    href: "/how-it-works",
+  },
+  {
+    label: "Roadmap",
+    href: "/roadmap",
   },
   {
     label: "Contact",
-    href: "#contact",
+    href: "/contact",
   },
 ];
 
@@ -79,15 +87,15 @@ export default function Navbar() {
 
           {/* Desktop navigation */}
 
-          <div className="hidden items-center gap-8 lg:flex">
+          <div className="hidden items-center gap-6 lg:flex xl:gap-8">
             {navigation.map((item) => (
-              <a
+              <Link
                 key={item.label}
                 href={item.href}
                 className="text-sm font-medium text-slate-400 transition hover:text-white"
               >
                 {item.label}
-              </a>
+              </Link>
             ))}
           </div>
 
@@ -194,14 +202,14 @@ export default function Navbar() {
               <div className="mt-4 border-t border-white/10 pt-4">
                 <div className="flex flex-col gap-2">
                   {navigation.map((item) => (
-                    <a
+                    <Link
                       key={item.label}
                       href={item.href}
                       onClick={closeMobileMenu}
                       className="rounded-xl px-4 py-3 text-sm font-medium text-slate-300 transition hover:bg-white/5 hover:text-white"
                     >
                       {item.label}
-                    </a>
+                    </Link>
                   ))}
                 </div>
 
