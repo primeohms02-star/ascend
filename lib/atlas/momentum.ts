@@ -3,11 +3,23 @@ import {
   saveMomentum,
 } from "@/lib/supabase/atlasMomentum";
 
+import {
+  updateStreak,
+} from "@/lib/atlas/streak";
+
 export async function completeMission(
   userId: string
 ) {
+  const [
+    storedMomentum,
+    dailyStreak,
+  ] = await Promise.all([
+    getMomentum(userId),
+    updateStreak(userId),
+  ]);
+
   const current =
-    (await getMomentum(userId)) ?? {
+    storedMomentum ?? {
       current_streak: 0,
       longest_streak: 0,
       completed_missions: 0,
@@ -15,34 +27,56 @@ export async function completeMission(
       ascension_score: 0,
     };
 
-  const streak = (current.current_streak ?? 0) + 1;
+  const completedMissions =
+    Number(
+      current.completed_missions ?? 0
+    ) + 1;
 
-const longest = Math.max(
-  streak,
-  current.longest_streak ?? 0
-);
+  /*
+   * atlas_progress is the canonical XP source.
+   * The legacy momentum score is preserved only
+   * for database compatibility and is no longer
+   * recalculated independently.
+   */
+  await saveMomentum(
+    userId,
+    {
+      current_streak:
+        Number(
+          dailyStreak
+            .current_streak ?? 0
+        ),
 
-  const completed =
-  (current.completed_missions ?? 0) + 1;
+      longest_streak:
+        Number(
+          dailyStreak
+            .longest_streak ?? 0
+        ),
 
-  // Initial scoring algorithm
-  const score =
-    completed * 10 +
-    streak * 5;
+      completed_missions:
+        completedMissions,
 
-  await saveMomentum(userId, {
-    current_streak: streak,
-    longest_streak: longest,
-    completed_missions: completed,
-    skipped_missions:
-      current.skipped_missions ?? 0,
-    ascension_score: score,
-  });
+      skipped_missions:
+        Number(
+          current.skipped_missions ?? 0
+        ),
 
-  return await getMomentum(userId);
+      ascension_score:
+        Number(
+          current.ascension_score ?? 0
+        ),
+    }
+  );
+
+  return await getMomentum(
+    userId
+  );
 }
+
 export async function loadMomentum(
   userId: string
 ) {
-  return await getMomentum(userId);
+  return await getMomentum(
+    userId
+  );
 }
