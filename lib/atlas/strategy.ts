@@ -1,11 +1,27 @@
-import { supabaseServer } from "@/lib/supabase-server";
+import {
+  supabaseServer,
+} from "@/lib/supabase-server";
 
-export async function loadStrategy(userId: string) {
-  return await supabaseServer
-    .from("atlas_strategy")
-    .select("*")
-    .eq("user_id", userId)
-    .single();
+export async function loadStrategy(
+  userId: string
+) {
+  const { data, error } =
+    await supabaseServer
+      .from("atlas_strategy")
+      .select("*")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+  if (error) {
+    console.error(
+      "Atlas Strategy Load Error:",
+      error
+    );
+
+    throw error;
+  }
+
+  return data ?? null;
 }
 
 export async function updateStrategy(
@@ -18,31 +34,82 @@ export async function updateStrategy(
     today_mission?: string;
   }
 ) {
-  return await supabaseServer
-    .from("atlas_strategy")
-    .update(strategy)
-    .eq("user_id", userId);
+  const { data, error } =
+    await supabaseServer
+      .from("atlas_strategy")
+      .update({
+        ...strategy,
+        updated_at:
+          new Date().toISOString(),
+      })
+      .eq("user_id", userId)
+      .select()
+      .maybeSingle();
+
+  if (error) {
+    console.error(
+      "Atlas Strategy Update Error:",
+      error
+    );
+
+    throw error;
+  }
+
+  return data ?? null;
 }
+
 export async function updateTodayMission(
   userId: string,
   mission: string
 ) {
-  return await supabaseServer
-    .from("atlas_strategy")
-    .update({
-      today_mission: mission,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("user_id", userId);
+  const { data, error } =
+    await supabaseServer
+      .from("atlas_strategy")
+      .update({
+        today_mission:
+          mission.trim(),
+        updated_at:
+          new Date().toISOString(),
+      })
+      .eq("user_id", userId)
+      .select()
+      .maybeSingle();
+
+  if (error) {
+    console.error(
+      "Today Mission Update Error:",
+      error
+    );
+
+    throw error;
+  }
+
+  return data ?? null;
 }
+
 export async function clearTodayMission(
   userId: string
 ) {
-  return await supabaseServer
-    .from("atlas_strategy")
-    .update({
-      today_mission: null,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("user_id", userId);
+  const { data, error } =
+    await supabaseServer
+      .from("atlas_strategy")
+      .update({
+        today_mission: null,
+        updated_at:
+          new Date().toISOString(),
+      })
+      .eq("user_id", userId)
+      .select()
+      .maybeSingle();
+
+  if (error) {
+    console.error(
+      "Today Mission Clear Error:",
+      error
+    );
+
+    throw error;
+  }
+
+  return data ?? null;
 }
