@@ -64,7 +64,7 @@ export default function ProgressCard({
         <div className="mt-5">
           <div className="flex items-center justify-between gap-4">
             <span className="text-sm text-slate-400">
-              North Star alignment
+              Current level progress
             </span>
 
             <span className="text-sm font-semibold text-cyan-300">

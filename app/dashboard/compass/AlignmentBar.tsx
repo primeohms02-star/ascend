@@ -15,11 +15,11 @@ export default function AlignmentBar({
       <div className="mb-4 flex items-center justify-between">
 
         <span className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
-          North Star Alignment
+          Current level progress
         </span>
 
         <span className="rounded-full border border-blue-500/20 bg-blue-500/10 px-3 py-1 text-sm font-bold text-cyan-300">
-          {alignment}% Aligned
+          {alignment}% level progress
         </span>
 
       </div>

@@ -1,4 +1,6 @@
-import { getGreeting } from "../utils/greeting";
+import {
+  getGreeting,
+} from "../utils/greeting";
 
 export type DailyBriefing = {
   greeting: string;
@@ -11,41 +13,70 @@ type DailyBriefingInput = {
   journey: string;
   northStar: string;
   missionTitle: string;
+
+  /*
+   * Canonical Ascension XP—not a percentage.
+   */
   progress: number;
 };
 
 export function buildDailyBriefing(
   brain: DailyBriefingInput
 ): DailyBriefing {
-  let greeting = getGreeting();
+  const ascensionScore =
+    Math.max(
+      0,
+      Math.round(
+        Number.isFinite(
+          brain.progress
+        )
+          ? brain.progress
+          : 0
+      )
+    );
 
- const baseGreeting = getGreeting();
+  let message =
+    "Today is another opportunity to create evidence of progress.";
 
-let message = "Today is another chance to begin.";
+  if (
+    ascensionScore >= 400
+  ) {
+    message =
+      "Your completed actions show substantial momentum.";
+  } else if (
+    ascensionScore >= 175
+  ) {
+    message =
+      "You are building meaningful evidence of growth.";
+  } else if (
+    ascensionScore >= 50
+  ) {
+    message =
+      "Your completed missions are creating visible momentum.";
+  } else if (
+    ascensionScore > 0
+  ) {
+    message =
+      "Every valid mission completion strengthens your direction.";
+  }
 
-if (brain.progress >= 80) {
-  message = "You're operating at a high level today.";
-} else if (brain.progress >= 50) {
-  message = "You're building real momentum.";
-} else if (brain.progress >= 20) {
-  message = "Every completed mission moves you forward.";
-}
-
-return {
-  greeting: `${baseGreeting}. ${message}`,
-  summary: `You are currently following the ${brain.journey} journey and are ${brain.progress}% aligned with your North Star.`,
-  focus: `Today's mission is "${brain.missionTitle}". Finish it before the day ends.`,
-  oracle: "Consistency is the bridge between intention and transformation.",
-};
+  const hasMission =
+    brain.missionTitle !==
+    "No active mission";
 
   return {
-    greeting,
+    greeting:
+      `${getGreeting()}. ${message}`,
 
-    summary: `You are currently following the ${brain.journey} journey and are ${brain.progress}% aligned with your North Star.`,
+    summary:
+      `You are following the ${brain.journey} journey and have earned ${ascensionScore} Ascension XP toward your North Star.`,
 
-    focus: `Today's mission is "${brain.missionTitle}". Finish it before the day ends.`,
+    focus:
+      hasMission
+        ? `Your current mission is “${brain.missionTitle}”.`
+        : "You currently have no active mission.",
 
     oracle:
-      "Consistency is the bridge between intention and transformation.",
+      "Progress is measured through meaningful evidence, not activity alone.",
   };
 }
