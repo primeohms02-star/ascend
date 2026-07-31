@@ -1,42 +1,62 @@
-export type TimelineItem = {
+export type TimelineMemory = {
   id?: string;
   title: string | null;
+  message: string;
+  memory_type:
+    | string
+    | null;
+  created_at: string;
+};
+
+export type TimelineItem = {
+  id?: string;
+  icon: string;
+  title: string;
   message: string;
   type: string;
   created_at: string;
 };
 
 export function buildTimeline(
-  memories: TimelineItem[]
-) {
-  return memories
+  memories: TimelineMemory[]
+): TimelineItem[] {
+  return [...memories]
     .sort(
-      (a, b) =>
-        new Date(b.created_at).getTime() -
-        new Date(a.created_at).getTime()
+      (first, second) =>
+        new Date(
+          second.created_at
+        ).getTime() -
+        new Date(
+          first.created_at
+        ).getTime()
     )
-    .map((memory) => ({
+    .map((memory) => {
+      const type =
+        memory.memory_type ??
+        "memory";
 
-      icon:
-        memory.type === "mission"
+      const icon =
+        type === "mission"
           ? "🎯"
-          : memory.type === "reflection"
-          ? "📝"
-          : memory.type === "north_star"
-          ? "⭐"
-          : memory.type === "oracle"
-          ? "🧠"
-          : "📌",
+          : type === "reflection"
+            ? "📝"
+            : type === "north_star"
+              ? "⭐"
+              : type === "oracle"
+                ? "🧠"
+                : "📌";
 
-      title:
-        memory.title ??
-        "Memory",
-
-      message:
-        memory.message,
-
-      created_at:
-        memory.created_at,
-
-    }));
+      return {
+        id: memory.id,
+        icon,
+        title:
+          memory.title ??
+          "Memory",
+        message:
+          memory.message,
+        type,
+        created_at:
+          memory.created_at,
+      };
+    });
 }
