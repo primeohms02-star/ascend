@@ -11,7 +11,6 @@ import { getReflections } from "@/lib/supabase/reflections";
 
 import { createProfile } from "@/lib/supabase/createProfile";
 import { createMemory } from "@/lib/supabase/createMemory";
-import { createMission } from "@/lib/supabase/createMission";
 
 import { getIdentity } from "@/lib/supabase/atlasIdentity";
 import { getProgress } from "@/lib/supabase/atlasProgress";
@@ -57,26 +56,33 @@ export async function getCurrentUserBrain() {
   }
 
   /*
-   * Missions
+   * Mission state is read-only here.
+   *
+   * Missions may be created only after:
+   * - onboarding completion,
+   * - valid mission completion,
+   * - an approved mission replacement flow.
+   *
+   * Loading the Dashboard or chatting with Atlas
+   * must never create a mission.
    */
 
-  let missions = await getMissions(clerkId);
-
-  if (missions.length === 0) {
-    await createMission(clerkId);
-
-    missions = await getMissions(clerkId);
-  }
+  const missions =
+    await getMissions(clerkId);
 
   /*
    * Canonical progression
    */
 
-  const progress = await getProgress(clerkId);
+  const progress =
+    await getProgress(clerkId);
 
-  const ascension = calculateAscension(
-    Number(progress.ascension_score ?? 0)
-  );
+  const ascension =
+    calculateAscension(
+      Number(
+        progress.ascension_score ?? 0
+      )
+    );
 
   /*
    * Identity uses the same progression level.
@@ -88,27 +94,27 @@ export async function getCurrentUserBrain() {
     await getIdentity(clerkId);
 
   const identity = {
-  title:
-    identityRecord?.identity_title ??
-    ascension.title,
+    title:
+      identityRecord?.identity_title ??
+      ascension.title,
 
-  level: ascension.level,
+    level: ascension.level,
 
-  /*
-   * These identity dimensions are not stored in
-   * atlas_identity yet, so they remain neutral until
-   * that system is implemented.
-   */
-  discipline: 0,
-  execution: 0,
-  learning: 0,
-  leadership: 0,
+    /*
+     * These identity dimensions are not stored in
+     * atlas_identity yet, so they remain neutral until
+     * that system is implemented.
+     */
+    discipline: 0,
+    execution: 0,
+    learning: 0,
+    leadership: 0,
 
-  confidence:
-    identityRecord?.confidence ?? 0,
+    confidence:
+      identityRecord?.confidence ?? 0,
 
-  badges: [],
-};
+    badges: [],
+  };
 
   /*
    * Reflection intelligence
@@ -140,15 +146,17 @@ export async function getCurrentUserBrain() {
     memory?.current_streak ?? 0
   );
 
-  const prediction = buildPrediction(
-    patterns,
-    currentStreak
-  );
+  const prediction =
+    buildPrediction(
+      patterns,
+      currentStreak
+    );
 
-  const weeklyReview = buildWeeklyReview(
-    patterns,
-    currentStreak
-  );
+  const weeklyReview =
+    buildWeeklyReview(
+      patterns,
+      currentStreak
+    );
 
   const journey =
     profile?.journey ??
@@ -195,32 +203,34 @@ export async function getCurrentUserBrain() {
     prediction,
     weeklyReview,
 
-    futureSelf: buildFutureSelf(
-      patterns,
-      currentStreak,
-      ascension.score
-    ),
+    futureSelf:
+      buildFutureSelf(
+        patterns,
+        currentStreak,
+        ascension.score
+      ),
 
-    dailyBriefing: buildDailyBriefing({
-      journey,
-      northStar,
+    dailyBriefing:
+      buildDailyBriefing({
+        journey,
+        northStar,
 
-      missionTitle:
-        adaptiveMission.title,
+        missionTitle:
+          adaptiveMission.title,
 
-      progress:
-        ascension.score,
-    }),
+        progress:
+          ascension.score,
+      }),
 
-    opportunities: rankOpportunities(
-      [],
-      adaptive
-    ),
+    opportunities:
+      rankOpportunities(
+        [],
+        adaptive
+      ),
 
     /*
-     * Dashboard recommendations will now be
-     * constructed from live mission state inside
-     * getAtlasDashboard().
+     * Dashboard recommendations are constructed
+     * from live mission state in getAtlasDashboard().
      */
     recommendations: [],
 
