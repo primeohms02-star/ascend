@@ -1,12 +1,15 @@
-import { AtlasBrainState } from "./brainState";
+import {
+  AtlasBrainState,
+} from "./brainState";
 
 export type AtlasDecision = {
-  priority: "growth" | "discipline" | "recovery";
+  priority:
+    | "growth"
+    | "discipline"
+    | "recovery";
 
   missionWeight: number;
-
   oracleWeight: number;
-
   opportunityWeight: number;
 
   explanation: string;
@@ -15,71 +18,96 @@ export type AtlasDecision = {
 export function decideNextAction(
   brain: AtlasBrainState
 ): AtlasDecision {
-
   const streak =
-    brain.momentum?.current_streak ?? 0;
+    Number(
+      brain.momentum
+        ?.current_streak ?? 0
+    );
 
-  const progress =
-    brain.progress;
+  const completed =
+    Number(
+      brain.momentum
+        ?.completed_missions ?? 0
+    );
 
-  const weaknesses =
-    brain.patterns.weaknesses.length;
+  const skipped =
+    Number(
+      brain.momentum
+        ?.skipped_missions ?? 0
+    );
 
-  if (streak < 3) {
+  const totalDecisions =
+    completed + skipped;
+
+  /*
+   * Recovery requires evidence of disrupted
+   * follow-through. New users are not labelled
+   * undisciplined.
+   */
+  if (
+    totalDecisions >= 4 &&
+    skipped > completed
+  ) {
     return {
-      priority: "discipline",
+      priority:
+        "recovery",
 
-      missionWeight: 100,
-
-      oracleWeight: 40,
-
-      opportunityWeight: 20,
-
-      explanation:
-        "User needs consistency before complexity.",
-    };
-  }
-
-  if (weaknesses >= 2) {
-    return {
-      priority: "growth",
-
-      missionWeight: 90,
-
-      oracleWeight: 70,
-
+      missionWeight: 70,
+      oracleWeight: 90,
       opportunityWeight: 30,
 
       explanation:
-        "Mission should directly target current weaknesses.",
+        "Use a smaller, evidence-producing mission to rebuild reliable momentum.",
     };
   }
 
-  if (progress >= 80) {
+  /*
+   * Established users returning after a break
+   * receive a manageable consistency mission.
+   */
+  if (
+    completed >= 3 &&
+    streak === 0
+  ) {
     return {
-      priority: "growth",
+      priority:
+        "discipline",
 
-      missionWeight: 60,
+      missionWeight: 90,
+      oracleWeight: 60,
+      opportunityWeight: 30,
 
-      oracleWeight: 100,
+      explanation:
+        "Re-establish a realistic action rhythm before increasing complexity.",
+    };
+  }
 
+  if (
+    streak >= 5 ||
+    brain.progress >= 70
+  ) {
+    return {
+      priority:
+        "growth",
+
+      missionWeight: 70,
+      oracleWeight: 80,
       opportunityWeight: 90,
 
       explanation:
-        "User is ready for high-impact strategic actions.",
+        "Current evidence supports a higher-impact strategic action.",
     };
   }
 
   return {
-    priority: "growth",
+    priority:
+      "growth",
 
     missionWeight: 80,
-
     oracleWeight: 60,
-
     opportunityWeight: 50,
 
     explanation:
-      "Continue steady progression toward the North Star.",
+      "Continue steady, relevant progression toward the North Star.",
   };
 }

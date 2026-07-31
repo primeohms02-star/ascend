@@ -1,4 +1,6 @@
-import { AtlasBrainState } from "./brainState";
+import {
+  AtlasBrainState,
+} from "./brainState";
 
 export type BehaviorAnalysis = {
   strengths: string[];
@@ -9,40 +11,79 @@ export type BehaviorAnalysis = {
 export function analyzeBehavior(
   brain: AtlasBrainState
 ): BehaviorAnalysis {
-
   const strengths: string[] = [];
   const weaknesses: string[] = [];
   const habits: string[] = [];
 
   const streak =
-    brain.momentum?.current_streak ?? 0;
+    Number(
+      brain.momentum
+        ?.current_streak ?? 0
+    );
 
   const completed =
-    brain.momentum?.completed_missions ?? 0;
+    Number(
+      brain.momentum
+        ?.completed_missions ?? 0
+    );
 
   const skipped =
-    brain.momentum?.skipped_missions ?? 0;
+    Number(
+      brain.momentum
+        ?.skipped_missions ?? 0
+    );
 
-  if (streak >= 7)
-    strengths.push("Consistent");
+  const totalDecisions =
+    completed + skipped;
 
-  if (completed >= 20)
-    strengths.push("Finisher");
+  /*
+   * Require enough evidence before describing
+   * behavioural patterns.
+   */
+  if (streak >= 3) {
+    strengths.push(
+      "Building consistent action"
+    );
+  }
 
-  if (brain.progress >= 60)
-    strengths.push("Focused");
+  if (completed >= 5) {
+    strengths.push(
+      "Produces evidence of completion"
+    );
+  }
 
-  if (skipped >= 5)
-    weaknesses.push("Avoids difficult missions");
+  if (
+    totalDecisions >= 4
+  ) {
+    const completionRate =
+      completed /
+      totalDecisions;
 
-  if (streak < 3)
-    weaknesses.push("Needs consistency");
+    if (
+      completionRate >= 0.75
+    ) {
+      habits.push(
+        "Usually follows missions through"
+      );
+    }
 
-  if (completed > skipped)
-    habits.push("Completes before skipping");
+    if (
+      completionRate < 0.5
+    ) {
+      weaknesses.push(
+        "Mission follow-through may need support"
+      );
+    }
+  }
 
-  if (skipped > completed)
-    habits.push("Often abandons missions");
+  if (
+    brain.reflections.length >=
+      3
+  ) {
+    habits.push(
+      "Uses reflection as part of growth"
+    );
+  }
 
   return {
     strengths,

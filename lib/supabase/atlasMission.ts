@@ -1,14 +1,20 @@
-import { supabase } from "./client";
+import {
+  supabaseServer,
+} from "@/lib/supabase-server";
 
 export type AtlasMissionRecord = {
   id: string;
   user_id: string;
   mission: string;
   reason: string | null;
+
   status:
     | "active"
     | "completed"
-    | "skipped";
+    | "skipped"
+    | "replaced"
+    | "cancelled";
+
   created_at?: string;
   completed_at?: string | null;
 };
@@ -18,16 +24,46 @@ export async function saveMission(
   mission: string,
   reason: string
 ) {
-  const { data, error } = await supabase
-    .from("atlas_missions")
-    .insert({
-      user_id: userId,
-      mission,
-      reason,
-      status: "active",
-    })
-    .select()
-    .single();
+  const cleanMission =
+    mission.trim();
+
+  const cleanReason =
+    reason.trim();
+
+  if (
+    !cleanMission ||
+    !cleanReason
+  ) {
+    throw new Error(
+      "A mission and reason are required."
+    );
+  }
+
+  /*
+   * Never create another mission while one is active.
+   */
+  const activeMission =
+    await getActiveMission(
+      userId
+    );
+
+  if (activeMission) {
+    return activeMission;
+  }
+
+  const { data, error } =
+    await supabaseServer
+      .from("atlas_missions")
+      .insert({
+        user_id: userId,
+        mission:
+          cleanMission,
+        reason:
+          cleanReason,
+        status: "active",
+      })
+      .select()
+      .single();
 
   if (error) {
     console.error(
@@ -41,18 +77,48 @@ export async function saveMission(
   return data as AtlasMissionRecord;
 }
 
+export async function getActiveMission(
+  userId: string
+) {
+  const { data, error } =
+    await supabaseServer
+      .from("atlas_missions")
+      .select("*")
+      .eq("user_id", userId)
+      .eq("status", "active")
+      .order("created_at", {
+        ascending: false,
+      })
+      .limit(1)
+      .maybeSingle();
+
+  if (error) {
+    console.error(
+      "Get Active Mission Error:",
+      error
+    );
+
+    throw error;
+  }
+
+  return data as
+    | AtlasMissionRecord
+    | null;
+}
+
 export async function getLatestMission(
   userId: string
 ) {
-  const { data, error } = await supabase
-    .from("atlas_missions")
-    .select("*")
-    .eq("user_id", userId)
-    .order("created_at", {
-      ascending: false,
-    })
-    .limit(1)
-    .maybeSingle();
+  const { data, error } =
+    await supabaseServer
+      .from("atlas_missions")
+      .select("*")
+      .eq("user_id", userId)
+      .order("created_at", {
+        ascending: false,
+      })
+      .limit(1)
+      .maybeSingle();
 
   if (error) {
     console.error(
@@ -60,33 +126,31 @@ export async function getLatestMission(
       error
     );
 
-    return null;
+    throw error;
   }
 
-  return data as AtlasMissionRecord | null;
+  return data as
+    | AtlasMissionRecord
+    | null;
 }
 
 export async function completeMissionById(
   userId: string,
   missionId: string
 ) {
-  /*
-   * Requiring status=active makes completion
-   * idempotent. A completed mission cannot award
-   * XP a second time.
-   */
-  const { data, error } = await supabase
-    .from("atlas_missions")
-    .update({
-      status: "completed",
-      completed_at:
-        new Date().toISOString(),
-    })
-    .eq("id", missionId)
-    .eq("user_id", userId)
-    .eq("status", "active")
-    .select("*")
-    .maybeSingle();
+  const { data, error } =
+    await supabaseServer
+      .from("atlas_missions")
+      .update({
+        status: "completed",
+        completed_at:
+          new Date().toISOString(),
+      })
+      .eq("id", missionId)
+      .eq("user_id", userId)
+      .eq("status", "active")
+      .select("*")
+      .maybeSingle();
 
   if (error) {
     console.error(
@@ -97,105 +161,93 @@ export async function completeMissionById(
     throw error;
   }
 
-  return data as AtlasMissionRecord | null;
+  return data as
+    | AtlasMissionRecord
+    | null;
 }
 
 /*
- * Retained for compatibility with older files.
- * New code should complete an exact mission ID.
+ * Legacy helper retained temporarily.
+ * New interfaces should complete an exact mission ID.
  */
 export async function completeLatestMission(
   userId: string
 ) {
-  const { data, error } = await supabase
-    .from("atlas_missions")
-    .select("id")
-    .eq("user_id", userId)
-    .eq("status", "active")
-    .order("created_at", {
-      ascending: false,
-    })
-    .limit(1)
-    .maybeSingle();
-
-  if (error) {
-    console.error(
-      "Find Active Mission Error:",
-      error
+  const activeMission =
+    await getActiveMission(
+      userId
     );
 
-    throw error;
-  }
-
-  if (!data) {
+  if (!activeMission) {
     return null;
   }
 
   return completeMissionById(
     userId,
-    data.id
+    activeMission.id
   );
 }
 
 export async function skipLatestMission(
   userId: string
 ) {
-  const { data, error } = await supabase
+  const activeMission =
+    await getActiveMission(
+      userId
+    );
+
+  if (!activeMission) {
+    return null;
+  }
+
+  const {
+    data,
+    error,
+  } = await supabaseServer
     .from("atlas_missions")
-    .select("id")
+    .update({
+      status: "skipped",
+    })
+    .eq(
+      "id",
+      activeMission.id
+    )
     .eq("user_id", userId)
     .eq("status", "active")
-    .order("created_at", {
-      ascending: false,
-    })
-    .limit(1)
+    .select("*")
     .maybeSingle();
 
   if (error) {
     console.error(
-      "Find Mission to Skip Error:",
+      "Mission Skip Error:",
       error
     );
 
     throw error;
   }
 
-  if (!data) {
-    return null;
-  }
-
-  const { data: skippedMission, error: updateError } =
-    await supabase
-      .from("atlas_missions")
-      .update({
-        status: "skipped",
-      })
-      .eq("id", data.id)
-      .eq("user_id", userId)
-      .eq("status", "active")
-      .select("*")
-      .maybeSingle();
-
-  if (updateError) {
-    console.error(
-      "Mission Skip Error:",
-      updateError
-    );
-
-    throw updateError;
-  }
-
-  return skippedMission as AtlasMissionRecord | null;
+  return data as
+    | AtlasMissionRecord
+    | null;
 }
 
 export async function getCompletedMissionTitles(
   userId: string
 ) {
-  const { data, error } = await supabase
-    .from("atlas_missions")
-    .select("mission")
-    .eq("user_id", userId)
-    .eq("status", "completed");
+  const { data, error } =
+    await supabaseServer
+      .from("atlas_missions")
+      .select(
+        "mission,completed_at"
+      )
+      .eq("user_id", userId)
+      .eq(
+        "status",
+        "completed"
+      )
+      .order("completed_at", {
+        ascending: true,
+      });
 
   if (error) {
     console.error(
@@ -203,10 +255,11 @@ export async function getCompletedMissionTitles(
       error
     );
 
-    return [];
+    throw error;
   }
 
   return (data ?? []).map(
-    (mission) => mission.mission
+    (storedMission) =>
+      storedMission.mission
   );
 }
