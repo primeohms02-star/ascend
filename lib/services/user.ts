@@ -2,32 +2,77 @@ import {
   auth,
 } from "@clerk/nextjs/server";
 
-import { redirect } from "next/navigation";
+import {
+  redirect,
+} from "next/navigation";
 
-import { getProfile } from "@/lib/supabase/profiles";
-import { getMemory } from "@/lib/supabase/memory";
-import { getMissions } from "@/lib/supabase/missions";
-import { getReflections } from "@/lib/supabase/reflections";
+import {
+  getProfile,
+} from "@/lib/supabase/profiles";
 
-import { createProfile } from "@/lib/supabase/createProfile";
-import { createMemory } from "@/lib/supabase/createMemory";
+import {
+  getMemory,
+} from "@/lib/supabase/memory";
 
-import { getIdentity } from "@/lib/supabase/atlasIdentity";
-import { getProgress } from "@/lib/supabase/atlasProgress";
+import {
+  getMissions,
+} from "@/lib/supabase/missions";
 
-import { analyzePatterns } from "@/lib/atlas/patterns";
-import { buildAdaptiveState } from "@/lib/atlas/adaptive";
-import { buildAdaptiveMission } from "@/lib/atlas/adaptiveMission";
-import { buildAdaptiveOracle } from "@/lib/atlas/adaptiveOracle";
-import { rankOpportunities } from "@/lib/atlas/opportunityRanking";
-import { buildPrediction } from "@/lib/atlas/predictive";
-import { buildWeeklyReview } from "@/lib/atlas/weeklyReview";
-import { buildFutureSelf } from "@/lib/atlas/futureSelf";
-import { buildDailyBriefing } from "@/lib/atlas/dailyBriefing";
-import { calculateAscension } from "@/lib/atlas/ascension";
+import {
+  getReflections,
+} from "@/lib/supabase/reflections";
+
+import {
+  getIdentity,
+} from "@/lib/supabase/atlasIdentity";
+
+import {
+  getProgress,
+} from "@/lib/supabase/atlasProgress";
+
+import {
+  analyzePatterns,
+} from "@/lib/atlas/patterns";
+
+import {
+  buildAdaptiveState,
+} from "@/lib/atlas/adaptive";
+
+import {
+  buildAdaptiveMission,
+} from "@/lib/atlas/adaptiveMission";
+
+import {
+  buildAdaptiveOracle,
+} from "@/lib/atlas/adaptiveOracle";
+
+import {
+  rankOpportunities,
+} from "@/lib/atlas/opportunityRanking";
+
+import {
+  buildPrediction,
+} from "@/lib/atlas/predictive";
+
+import {
+  buildWeeklyReview,
+} from "@/lib/atlas/weeklyReview";
+
+import {
+  buildFutureSelf,
+} from "@/lib/atlas/futureSelf";
+
+import {
+  buildDailyBriefing,
+} from "@/lib/atlas/dailyBriefing";
+
+import {
+  calculateAscension,
+} from "@/lib/atlas/ascension";
 
 export async function getCurrentUserBrain() {
-  const { userId } = await auth();
+  const { userId } =
+    await auth();
 
   if (!userId) {
     redirect("/sign-in");
@@ -36,46 +81,64 @@ export async function getCurrentUserBrain() {
   const clerkId = userId;
 
   /*
-   * Core profile
+   * All context reads are performed without creating
+   * profiles, memory rows, missions or progression.
    */
-
-  let profile = await getProfile(clerkId);
-
-  if (!profile) {
-    profile = await createProfile(clerkId);
-  }
+  const [
+    storedProfile,
+    storedMemory,
+    missions,
+    progress,
+    identityRecord,
+    reflections,
+  ] = await Promise.all([
+    getProfile(clerkId),
+    getMemory(clerkId),
+    getMissions(clerkId),
+    getProgress(clerkId),
+    getIdentity(clerkId),
+    getReflections(clerkId),
+  ]);
 
   /*
-   * Long-term memory
+   * A neutral in-memory fallback keeps Atlas stable
+   * if a Clerk webhook has not created the profile
+   * yet. It is never written during a read.
    */
+  const profile =
+    storedProfile ?? {
+      clerk_id: clerkId,
+      full_name: "",
+      email: "",
 
-  let memory = await getMemory(clerkId);
+      journey:
+        "Purpose Discovery",
 
-  if (!memory) {
-    memory = await createMemory(clerkId);
-  }
+      north_star: "",
 
-  /*
-   * Mission state is read-only here.
-   *
-   * Missions may be created only after:
-   * - onboarding completion,
-   * - valid mission completion,
-   * - an approved mission replacement flow.
-   *
-   * Loading the Dashboard or chatting with Atlas
-   * must never create a mission.
-   */
+      progress: 0,
+      completed_steps: 0,
 
-  const missions =
-    await getMissions(clerkId);
+      current_streak: 0,
+      longest_streak: 0,
+      last_mission_date: null,
+    };
 
-  /*
-   * Canonical progression
-   */
+  const memory =
+    storedMemory ?? {
+      user_id: clerkId,
 
-  const progress =
-    await getProgress(clerkId);
+      strengths: [],
+      weaknesses: [],
+
+      last_mission: null,
+
+      current_streak: 0,
+      longest_streak: 0,
+
+      missions_completed: 0,
+      missions_missed: 0,
+    };
 
   const ascension =
     calculateAscension(
@@ -84,93 +147,86 @@ export async function getCurrentUserBrain() {
       )
     );
 
-  /*
-   * Identity uses the same progression level.
-   * The stored identity can provide a custom title,
-   * but it no longer controls the level.
-   */
-
-  const identityRecord =
-    await getIdentity(clerkId);
-
   const identity = {
     title:
-      identityRecord?.identity_title ??
+      identityRecord
+        ?.identity_title ??
       ascension.title,
 
-    level: ascension.level,
+    level:
+      ascension.level,
 
-    /*
-     * These identity dimensions are not stored in
-     * atlas_identity yet, so they remain neutral until
-     * that system is implemented.
-     */
     discipline: 0,
     execution: 0,
     learning: 0,
     leadership: 0,
 
     confidence:
-      identityRecord?.confidence ?? 0,
+      identityRecord
+        ?.confidence ?? 0,
 
     badges: [],
   };
 
-  /*
-   * Reflection intelligence
-   */
+  const patterns =
+    analyzePatterns(
+      reflections.map(
+        (reflection) => ({
+          reflection:
+            reflection.reflection ??
+            "",
 
-  const reflections =
-    await getReflections(clerkId);
-
-  const patterns = analyzePatterns(
-    reflections.map((reflection) => ({
-      reflection:
-        reflection.reflection ?? "",
-
-      mood:
-        reflection.mood ?? 3,
-    }))
-  );
-
-  const adaptive =
-    buildAdaptiveState(patterns);
-
-  const adaptiveMission =
-    buildAdaptiveMission(adaptive);
-
-  const adaptiveOracle =
-    buildAdaptiveOracle(adaptive);
-
-  const currentStreak = Number(
-    memory?.current_streak ?? 0
-  );
-
-  const prediction =
-    buildPrediction(
-      patterns,
-      currentStreak
+          mood:
+            reflection.mood ?? 3,
+        })
+      )
     );
 
-  const weeklyReview =
-    buildWeeklyReview(
-      patterns,
-      currentStreak
+  /*
+   * Adaptive state may influence tone and difficulty,
+   * but it does not define the current mission.
+   */
+  const adaptive =
+    buildAdaptiveState(
+      patterns
+    );
+
+  const adaptiveMission =
+    buildAdaptiveMission(
+      adaptive
+    );
+
+  const adaptiveOracle =
+    buildAdaptiveOracle(
+      adaptive
+    );
+
+  const activeMission =
+    missions.find(
+      (mission) =>
+        mission.status ===
+        "active"
+    ) ?? null;
+
+  const currentStreak =
+    Number(
+      memory.current_streak ?? 0
     );
 
   const journey =
-    profile?.journey ??
+    profile.journey ??
     "Purpose Discovery";
 
   const northStar =
-    profile?.north_star ??
-    "Discover your purpose";
+    profile.north_star ??
+    "";
 
   const brain = {
     journey,
     northStar,
 
-    progress: ascension.score,
+    progress:
+      ascension.score,
 
     momentum:
       `Level ${ascension.level}`,
@@ -184,11 +240,9 @@ export async function getCurrentUserBrain() {
 
     identity,
 
-    /*
-     * Both names remain available while older
-     * ASCEND components are being migrated.
-     */
-    atlasProgress: progress,
+    atlasProgress:
+      progress,
+
     ascension,
 
     memory,
@@ -197,11 +251,25 @@ export async function getCurrentUserBrain() {
 
     patterns,
     adaptive,
+
+    /*
+     * Retained as an adaptive suggestion for older
+     * components. It is not the current mission.
+     */
     adaptiveMission,
     adaptiveOracle,
 
-    prediction,
-    weeklyReview,
+    prediction:
+      buildPrediction(
+        patterns,
+        currentStreak
+      ),
+
+    weeklyReview:
+      buildWeeklyReview(
+        patterns,
+        currentStreak
+      ),
 
     futureSelf:
       buildFutureSelf(
@@ -216,7 +284,9 @@ export async function getCurrentUserBrain() {
         northStar,
 
         missionTitle:
-          adaptiveMission.title,
+          activeMission
+            ?.mission ??
+          "No active mission",
 
         progress:
           ascension.score,
@@ -228,14 +298,17 @@ export async function getCurrentUserBrain() {
         adaptive
       ),
 
-    /*
-     * Dashboard recommendations are constructed
-     * from live mission state in getAtlasDashboard().
-     */
     recommendations: [],
 
+    /*
+     * This compatibility field now follows the
+     * authoritative active mission.
+     */
     missionTitle:
-      adaptiveMission.title,
+      activeMission?.mission ??
+      "No active mission",
+
+    activeMission,
 
     ...brain,
   };
