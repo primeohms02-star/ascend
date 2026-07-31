@@ -57,6 +57,7 @@ export default function CompassCard({
       />
 
       <NightSky />
+
       <NorthStar />
 
       <div className="relative z-10 grid items-center gap-6 p-6 sm:p-7 lg:grid-cols-[minmax(0,1fr)_280px] lg:px-8">
@@ -72,7 +73,7 @@ export default function CompassCard({
               Your direction:
             </h2>
 
-            <p className="text-xl font-bold text-blue-300 sm:text-2xl">
+            <p className="break-words text-xl font-bold text-blue-300 sm:text-2xl">
               {northStar}
             </p>
           </div>
@@ -82,8 +83,20 @@ export default function CompassCard({
             your missions, decisions, and opportunities.
           </p>
 
+          {/* Mobile compass */}
+
+          <div className="relative mt-5 flex h-52 items-center justify-center overflow-visible sm:h-60 lg:hidden">
+            <div className="origin-center scale-[0.62] sm:scale-[0.72]">
+              <CompassNeedle
+                alignment={alignment}
+              />
+            </div>
+          </div>
+
           <div className="mt-5 max-w-xl">
-            <AlignmentBar alignment={alignment} />
+            <AlignmentBar
+              alignment={alignment}
+            />
           </div>
 
           <Link
@@ -96,7 +109,7 @@ export default function CompassCard({
           </Link>
         </div>
 
-        {/* Compact compass */}
+        {/* Desktop compass */}
 
         <div className="hidden justify-center lg:flex">
           <div className="scale-75">
