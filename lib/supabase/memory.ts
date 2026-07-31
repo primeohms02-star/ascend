@@ -1,11 +1,25 @@
-import { supabase } from "./client";
+import {
+  supabaseServer,
+} from "@/lib/supabase-server";
 
-export async function getMemory(userId: string) {
-  const { data } = await supabase
-    .from("memory")
-    .select("*")
-    .eq("user_id", userId)
-    .single();
+export async function getMemory(
+  userId: string
+) {
+  const { data, error } =
+    await supabaseServer
+      .from("memory")
+      .select("*")
+      .eq("user_id", userId)
+      .maybeSingle();
 
-  return data;
+  if (error) {
+    console.error(
+      "Legacy Memory Load Error:",
+      error
+    );
+
+    throw error;
+  }
+
+  return data ?? null;
 }
