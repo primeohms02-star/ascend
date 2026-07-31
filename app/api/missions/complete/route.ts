@@ -12,7 +12,6 @@ import {
 } from "@/lib/supabase/profiles";
 
 import {
-  completeMissionById,
   saveMission,
 } from "@/lib/supabase/atlasMission";
 
@@ -21,16 +20,12 @@ import {
 } from "@/lib/engine/mission";
 
 import {
-  completeMission as completeMomentumMission,
-} from "@/lib/atlas/momentum";
-
-import {
-  addAscensionScore,
-} from "@/lib/supabase/atlasProgress";
-
-import {
   calculateAscension,
 } from "@/lib/atlas/ascension";
+
+import {
+  completeMissionTransaction,
+} from "@/lib/atlas/completeMissionTransaction";
 
 import {
   recordMemory,
@@ -84,16 +79,18 @@ export async function POST(
     }
 
     /*
-     * Complete only the exact active mission clicked.
-     * A completed mission cannot award XP twice.
+     * Mission completion, XP, daily streak and
+     * momentum now succeed or fail together inside
+     * one database transaction.
      */
-    const completedMission =
-      await completeMissionById(
+    const transaction =
+      await completeMissionTransaction(
         userId,
-        missionId.trim()
+        missionId.trim(),
+        MISSION_XP_REWARD
       );
 
-    if (!completedMission) {
+    if (!transaction) {
       return NextResponse.json(
         {
           error:
@@ -105,27 +102,11 @@ export async function POST(
       );
     }
 
-    /*
-     * atlas_progress is the only canonical source
-     * of Ascension XP and level.
-     *
-     * Momentum records completion counts and the
-     * date-based streak, but no longer calculates
-     * a separate Ascension score.
-     */
-    const [
+    const {
+      completedMission,
       progress,
       momentum,
-    ] = await Promise.all([
-      addAscensionScore(
-        userId,
-        MISSION_XP_REWARD
-      ),
-
-      completeMomentumMission(
-        userId
-      ),
-    ]);
+    } = transaction;
 
     const ascension =
       calculateAscension(
@@ -139,8 +120,8 @@ export async function POST(
       await getProfile(userId);
 
     /*
-     * Mission completion teaches the opportunity
-     * system about the user's broad direction.
+     * Preference learning is useful but is not part
+     * of the critical completion transaction.
      */
     if (profile?.journey) {
       try {
@@ -160,8 +141,8 @@ export async function POST(
     }
 
     /*
-     * Store one structured milestone in Atlas
-     * history. Conversation memory remains separate.
+     * Timeline memory is non-critical. Failure here
+     * must not reverse genuine completion progress.
      */
     try {
       await recordMemory(
@@ -181,15 +162,15 @@ export async function POST(
 
           current_streak:
             momentum
-              ?.current_streak ?? 0,
+              .current_streak ?? 0,
 
           longest_streak:
             momentum
-              ?.longest_streak ?? 0,
+              .longest_streak ?? 0,
 
           completed_missions:
             momentum
-              ?.completed_missions ?? 0,
+              .completed_missions ?? 0,
 
           ascension_score:
             ascension.score,
@@ -213,8 +194,8 @@ export async function POST(
     }
 
     /*
-     * A new mission is generated only after a valid
-     * mission completion lifecycle event.
+     * The next mission is generated only after the
+     * atomic completion transaction succeeds.
      */
     let nextMission = null;
 
@@ -236,10 +217,6 @@ export async function POST(
       } catch (
         missionError
       ) {
-        /*
-         * The Dashboard remains usable if next-mission
-         * generation temporarily fails.
-         */
         console.error(
           "Next Mission Generation Error:",
           missionError
