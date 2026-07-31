@@ -1,6 +1,10 @@
-import { supabase } from "./client";
+import {
+  supabaseServer,
+} from "@/lib/supabase-server";
 
-import { calculateAscension } from "@/lib/atlas/ascension";
+import {
+  calculateAscension,
+} from "@/lib/atlas/ascension";
 
 export type AtlasProgressRecord = {
   user_id: string;
@@ -12,11 +16,12 @@ export type AtlasProgressRecord = {
 export async function getProgress(
   userId: string
 ): Promise<AtlasProgressRecord> {
-  const { data, error } = await supabase
-    .from("atlas_progress")
-    .select("*")
-    .eq("user_id", userId)
-    .maybeSingle();
+  const { data, error } =
+    await supabaseServer
+      .from("atlas_progress")
+      .select("*")
+      .eq("user_id", userId)
+      .maybeSingle();
 
   if (error) {
     console.error(
@@ -27,75 +32,57 @@ export async function getProgress(
     throw error;
   }
 
-  if (data) {
-    const ascension =
-      calculateAscension(
-        Number(data.ascension_score ?? 0)
-      );
+  /*
+   * Context loading is read-only.
+   * A missing record is represented safely in memory.
+   * The atomic mission-completion function creates
+   * the stored record when XP is first awarded.
+   */
+  if (!data) {
+    const initial =
+      calculateAscension(0);
 
-    /*
-     * Repair an old or inconsistent stored level.
-     */
-    if (
-      Number(data.level ?? 1) !==
-      ascension.level
-    ) {
-      const { data: repaired, error: repairError } =
-        await supabase
-          .from("atlas_progress")
-          .update({
-            level: ascension.level,
-            updated_at:
-              new Date().toISOString(),
-          })
-          .eq("user_id", userId)
-          .select()
-          .single();
-
-      if (repairError) {
-        console.error(
-          "Repair Atlas Level Error:",
-          repairError
-        );
-
-        throw repairError;
-      }
-
-      return repaired as AtlasProgressRecord;
-    }
-
-    return data as AtlasProgressRecord;
+    return {
+      user_id: userId,
+      ascension_score:
+        initial.score,
+      level:
+        initial.level,
+    };
   }
 
-  const initialAscension =
-    calculateAscension(0);
-
-  const { data: created, error: createError } =
-    await supabase
-      .from("atlas_progress")
-      .insert({
-        user_id: userId,
-        ascension_score:
-          initialAscension.score,
-        level: initialAscension.level,
-        updated_at:
-          new Date().toISOString(),
-      })
-      .select()
-      .single();
-
-  if (createError) {
-    console.error(
-      "Create Atlas Progress Error:",
-      createError
+  const ascension =
+    calculateAscension(
+      Number(
+        data.ascension_score ?? 0
+      )
     );
 
-    throw createError;
-  }
+  return {
+    user_id:
+      data.user_id,
 
-  return created as AtlasProgressRecord;
+    ascension_score:
+      ascension.score,
+
+    /*
+     * Derived level is authoritative even if an old
+     * stored level has not yet been repaired.
+     */
+    level:
+      ascension.level,
+
+    updated_at:
+      data.updated_at ??
+      undefined,
+  };
 }
 
+/*
+ * Retained only for compatibility with older code.
+ * Mission XP must normally be awarded through the
+ * atomic complete_atlas_mission database function.
+ */
 export async function addAscensionScore(
   userId: string,
   amount: number
@@ -103,31 +90,42 @@ export async function addAscensionScore(
   const progress =
     await getProgress(userId);
 
-  const safeAmount = Math.max(
-    0,
-    Math.round(
-      Number.isFinite(amount) ? amount : 0
-    )
-  );
-
-  const newScore =
-    Number(progress.ascension_score ?? 0) +
-    safeAmount;
+  const safeAmount =
+    Math.max(
+      0,
+      Math.round(
+        Number.isFinite(amount)
+          ? amount
+          : 0
+      )
+    );
 
   const ascension =
-    calculateAscension(newScore);
+    calculateAscension(
+      progress.ascension_score +
+        safeAmount
+    );
 
-  const { data, error } = await supabase
-    .from("atlas_progress")
-    .update({
-      ascension_score: ascension.score,
-      level: ascension.level,
-      updated_at:
-        new Date().toISOString(),
-    })
-    .eq("user_id", userId)
-    .select()
-    .single();
+  const { data, error } =
+    await supabaseServer
+      .from("atlas_progress")
+      .upsert(
+        {
+          user_id: userId,
+          ascension_score:
+            ascension.score,
+          level:
+            ascension.level,
+          updated_at:
+            new Date().toISOString(),
+        },
+        {
+          onConflict:
+            "user_id",
+        }
+      )
+      .select()
+      .single();
 
   if (error) {
     console.error(

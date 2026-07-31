@@ -1,13 +1,27 @@
-import { supabase } from "./client";
+import {
+  supabaseServer,
+} from "@/lib/supabase-server";
 
-export async function getMomentum(userId: string) {
-  const { data } = await supabase
-    .from("atlas_momentum")
-    .select("*")
-    .eq("user_id", userId)
-    .single();
+export async function getMomentum(
+  userId: string
+) {
+  const { data, error } =
+    await supabaseServer
+      .from("atlas_momentum")
+      .select("*")
+      .eq("user_id", userId)
+      .maybeSingle();
 
-  return data;
+  if (error) {
+    console.error(
+      "Momentum Load Error:",
+      error
+    );
+
+    throw error;
+  }
+
+  return data ?? null;
 }
 
 export async function saveMomentum(
@@ -20,21 +34,32 @@ export async function saveMomentum(
     ascension_score: number;
   }
 ) {
-  const { error } = await supabase
-    .from("atlas_momentum")
-    .upsert(
-      {
-        user_id: userId,
-        ...momentum,
-        updated_at: new Date().toISOString(),
-      },
-      {
-        onConflict: "user_id",
-      }
-    );
+  const { data, error } =
+    await supabaseServer
+      .from("atlas_momentum")
+      .upsert(
+        {
+          user_id: userId,
+          ...momentum,
+          updated_at:
+            new Date().toISOString(),
+        },
+        {
+          onConflict:
+            "user_id",
+        }
+      )
+      .select()
+      .single();
 
   if (error) {
-    console.error("Momentum save error:", error);
+    console.error(
+      "Momentum Save Error:",
+      error
+    );
+
     throw error;
   }
+
+  return data;
 }
