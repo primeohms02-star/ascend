@@ -1,25 +1,18 @@
-
-import { getCurrentUserBrain } from "@/lib/services/user";
-import { analyzePatterns } from "@/lib/atlas/patterns";
-import { buildAdaptiveState } from "@/lib/atlas/adaptive";
-import { buildAdaptiveMission } from "@/lib/atlas/adaptiveMission";
-import { buildAdaptiveOracle } from "@/lib/atlas/adaptiveOracle";
-import { buildPrediction } from "@/lib/atlas/predictive";
-import { buildWeeklyReview } from "@/lib/atlas/weeklyReview";
-import { buildFutureSelf } from "@/lib/atlas/futureSelf";
-import { buildDailyBriefing } from "@/lib/atlas/dailyBriefing";
-import { rankOpportunities } from "@/lib/atlas/opportunityRanking";
-import { createIdentity } from "@/lib/brain/identity";
-import { buildTimeline } from "@/lib/atlas/timeline";
-import { groq } from "./groq";
-import { calculateAscension } from "@/lib/atlas/ascension";
 import {
-  loadProfile,
+  getCurrentUserBrain,
+} from "@/lib/services/user";
+
+import {
+  buildTimeline,
+} from "@/lib/atlas/timeline";
+
+import { groq } from "./groq";
+
+import {
   updateProfileProgress,
 } from "./profile";
 
 import {
-  loadCurrentMission,
   createMission,
   completeMission,
 } from "./missions";
@@ -73,8 +66,8 @@ import {
 export async function loadAtlasContext(
   clerkId: string
 ) {
-  // Build the unified Atlas brain first.
-  const brain = await getCurrentUserBrain();
+  const brain =
+    await getCurrentUserBrain();
 
   const [
     strategy,
@@ -116,13 +109,13 @@ export async function loadAtlasContext(
     memory,
     atlasMemories,
 
-    timeline: buildTimeline(
-      atlasMemories as any
-    ),
+    timeline:
+      buildTimeline(
+        atlasMemories as any
+      ),
   };
 }
-  
- 
+
 /*
 |--------------------------------------------------------------------------
 | BUILD COMPLETE SYSTEM PROMPT
@@ -135,11 +128,12 @@ export async function buildAtlasContext(
   const atlas =
     await loadAtlasContext(clerkId);
 
- const mission =
-  atlas.missions?.find(
-    (mission: any) =>
-      mission.status === "active"
-  ) ?? null;
+  const mission =
+    atlas.missions?.find(
+      (mission: any) =>
+        mission.status === "active"
+    ) ?? null;
+
   const systemPrompt = `
 You are the AI strategist inside ASCEND.
 
@@ -162,6 +156,7 @@ Never tell the user an old North Star.
 Never tell the user outdated progress.
 
 Always trust the live context.
+
 =============================
 PROFILE
 =============================
@@ -197,7 +192,13 @@ This mission is the user's CURRENT mission.
 
 It replaces every previous mission stored in memory.
 
-Do not mention any previous mission unless the user explicitly asks about their history.
+If no active mission is shown, the user currently has no active mission.
+
+Do not present a completed, skipped or historical mission as current.
+
+Do not create, replace or complete a mission during an ordinary conversation.
+
+Do not mention a previous mission unless the user explicitly asks about mission history.
 
 =============================
 LONG-TERM USER FACTS
@@ -210,6 +211,7 @@ These are stable facts about the user.
 Use them to personalize responses.
 
 Never use them to determine the user's current mission, progress, level or strategy.
+
 =============================
 LATEST REFLECTION
 =============================
@@ -252,6 +254,7 @@ Every response should move the user toward their North Star.
     systemPrompt,
   };
 }
+
 /*
 |--------------------------------------------------------------------------
 | RUN ATLAS
@@ -275,19 +278,21 @@ export async function runAtlasBrain({
     },
 
     ...(atlas.memory ?? [])
-  .slice(-12)
+      .slice(-12)
       .filter(
-        (m: any) =>
-          m.role === "user" ||
-          m.role === "assistant" ||
-          m.role === "atlas"
+        (memory: any) =>
+          memory.role === "user" ||
+          memory.role === "assistant" ||
+          memory.role === "atlas"
       )
-      .map((m: any) => ({
+      .map((memory: any) => ({
         role:
-          m.role === "atlas"
+          memory.role === "atlas"
             ? "assistant"
-            : m.role,
-        content: m.message,
+            : memory.role,
+
+        content:
+          memory.message,
       })),
 
     {
@@ -298,30 +303,42 @@ export async function runAtlasBrain({
 
   const completion =
     await groq.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
+      model:
+        "llama-3.3-70b-versatile",
+
       temperature: 0.7,
+
       max_completion_tokens: 600,
-      messages: conversation as any,
+
+      messages:
+        conversation as any,
     });
 
   const reply =
-    completion.choices[0]?.message?.content ??
+    completion.choices[0]
+      ?.message?.content ??
     "I'm thinking...";
 
- const mission =
-  atlas.missions?.find((m: any) => m.status === "active") ??
-  atlas.missions?.[0] ??
-  null;
+  const mission =
+    atlas.missions?.find(
+      (storedMission: any) =>
+        storedMission.status === "active"
+    ) ?? null;
 
-return {
-  reply,
-  profile: atlas.profile,
-  mission,
-  momentum: atlas.momentum,
-  strategy: atlas.strategy,
-  compassResults: atlas.compassResults,
-};
+  return {
+    reply,
+    profile:
+      atlas.profile,
+    mission,
+    momentum:
+      atlas.momentum,
+    strategy:
+      atlas.strategy,
+    compassResults:
+      atlas.compassResults,
+  };
 }
+
 /*
 |--------------------------------------------------------------------------
 | EXTRACT PERMANENT MEMORY
@@ -333,12 +350,17 @@ export async function extractPermanentMemory(
 ) {
   const completion =
     await groq.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
+      model:
+        "llama-3.3-70b-versatile",
+
       temperature: 0,
+
       max_completion_tokens: 120,
+
       messages: [
         {
           role: "system",
+
           content: `
 You are the permanent memory system for ATLAS.
 
@@ -380,7 +402,9 @@ Return ONLY the fact or NONE.
     });
 
   return (
-    completion.choices[0]?.message?.content?.trim() ??
+    completion.choices[0]
+      ?.message?.content
+      ?.trim() ??
     "NONE"
   );
 }
@@ -398,12 +422,17 @@ export async function generateMission(
 ) {
   const completion =
     await groq.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
+      model:
+        "llama-3.3-70b-versatile",
+
       temperature: 0,
+
       max_completion_tokens: 220,
+
       messages: [
         {
           role: "system",
+
           content: `
 You are ATLAS.
 
@@ -435,6 +464,7 @@ REASON:
         },
         {
           role: "user",
+
           content: `
 Current Mission:
 ${currentMission ?? "None"}
@@ -447,7 +477,9 @@ ${userMessage}
     });
 
   return (
-    completion.choices[0]?.message?.content?.trim() ??
+    completion.choices[0]
+      ?.message?.content
+      ?.trim() ??
     "NONE"
   );
 }
@@ -483,7 +515,10 @@ export async function persistAtlasResponse({
     profile
   );
 
-  if (fact && fact !== "NONE") {
+  if (
+    fact &&
+    fact !== "NONE"
+  ) {
     await saveFact(
       clerkId,
       fact
@@ -502,9 +537,13 @@ export async function completeCurrentMission(
   clerkId: string,
   profile: any
 ) {
-  if (!mission) return;
+  if (!mission) {
+    return;
+  }
 
-  await completeMission(mission.id);
+  await completeMission(
+    mission.id
+  );
 
   await updateProfileProgress(
     clerkId,
@@ -527,6 +566,5 @@ export async function createNewMission(
     clerkId,
     mission,
     reason
-  
   );
 }
