@@ -1,178 +1,116 @@
-import { NextResponse } from "next/server";
-import Groq from "groq-sdk";
-import { supabaseServer } from "@/lib/supabase-server";
+import {
+  NextRequest,
+  NextResponse,
+} from "next/server";
 
-const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY!,
-});
+import { auth } from "@clerk/nextjs/server";
 
-export async function POST(req: Request) {
+import {
+  extractPermanentMemory,
+  persistAtlasResponse,
+  runAtlasBrain,
+} from "@/lib/atlas/brain";
+
+/*
+ * Legacy compatibility endpoint.
+ *
+ * The current Atlas interface uses /api/atlas/chat.
+ * This route remains temporarily available for older
+ * components, but now uses the same authenticated brain.
+ */
+export async function POST(
+  request: NextRequest
+) {
   try {
-    const { message, clerkId } = await req.json();
+    const { userId } = await auth();
 
-    if (!message || !clerkId) {
+    if (!userId) {
       return NextResponse.json(
-        { error: "Missing message or clerkId" },
-        { status: 400 }
+        {
+          error: "Unauthorized",
+        },
+        {
+          status: 401,
+        }
       );
     }
 
-    // Load profile
-    const { data: profile } = await supabaseServer
-      .from("profiles")
-      .select("*")
-      .eq("clerk_id", clerkId)
-      .single();
+    const body = await request.json();
 
-    if (!profile) {
-      return NextResponse.json({
-        reply: "I couldn't find your profile yet.",
-      });
+    /*
+     * Older clients used "question".
+     * Current clients use "message".
+     */
+    const submittedMessage =
+      typeof body.message === "string"
+        ? body.message
+        : body.question;
+
+    if (
+      typeof submittedMessage !== "string" ||
+      submittedMessage.trim().length === 0
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "A message is required.",
+        },
+        {
+          status: 400,
+        }
+      );
     }
 
-    // Save current user message
-    await supabaseServer.from("atlas_memory").insert({
-      user_id: clerkId,
-      role: "user",
-      message,
-      current_streak: profile.current_streak,
-      longest_streak: profile.longest_streak,
-      last_mission_date: new Date().toISOString(),
+    const cleanMessage =
+      submittedMessage.trim();
+
+    const atlasResult =
+      await runAtlasBrain({
+        clerkId: userId,
+        message: cleanMessage,
+      });
+
+    const fact =
+      await extractPermanentMemory(
+        cleanMessage
+      );
+
+    await persistAtlasResponse({
+      clerkId: userId,
+      profile: atlasResult.profile,
+      userMessage: cleanMessage,
+      reply: atlasResult.reply,
+      fact,
     });
 
-    // Load previous conversation history
-    const { data: memory } = await supabaseServer
-      .from("atlas_memory")
-      .select("role,message")
-      .eq("user_id", clerkId)
-      .order("created_at", { ascending: false })
-      .limit(10);
-
-    
-
-// Load long-term memory
-const { data: memoryRows } = await supabaseServer
-  .from("atlas_memory")
-  .select("message")
-  .eq("user_id", clerkId)
-  .eq("role", "user")
-  .order("created_at", { ascending: true })
-  .limit(50);
-
-const memoryFacts =
-  memoryRows?.map((m) => `- ${m.message}`).join("\n") ?? "";
-
-    // Build system prompt
-    const context = `
-You are ATLAS, the strategist inside ASCEND.
-
-
-
-This is the user's profile.
-
-Name: ${profile.full_name}
-North Star: ${profile.north_star}
-Journey: ${profile.journey}
-Progress: ${profile.progress}%
-Completed Steps: ${profile.completed_steps}
-Current Streak: ${profile.current_streak}
-Longest Streak: ${profile.longest_streak}
-
-
-You are not only a chatbot.
-
-You are the user's lifelong strategist.
-
-Before answering any question:
-
-1. Analyze the user's progress.
-2. Analyze their streak.
-3. Analyze their current journey.
-4. Analyze their North Star.
-5. Analyze previous conversations.
-
-Begin every conversation with ONE strategic observation.
-
-The observation should never be generic.
-
-It should feel like you have been watching their growth.
-
-After the observation, answer the user's question normally.
-
-Keep responses concise, practical and motivating.
-
-Never repeat the same observation twice if possible.
-
-Always answer like a world-class strategist.
-
-You remember previous conversations with the user.
-
-Be encouraging, concise, practical and strategic.
-
-Always relate your advice to the user's North Star.
-
-Never give generic advice.
-
-The above are facts the user has previously told you.
-
-Treat them as long-term memory.
-
-If the user asks about something they've previously told you, answer using these memories.
-
-Never say "I don't know" if the answer exists in these memories.
-
-
-`;
-    // Ask Groq
-    const completion = await groq.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
-      temperature: 0.7,
-      max_completion_tokens: 600,
-     messages: [
-  {
-    role: "system",
-    content: context,
-  },
-
-  ...(memory ?? []).map((m) => ({
-    role: m.role as "user" | "assistant",
-    content: m.message,
-  })),
-
-  {
-    role: "user",
-    content: message,
-  },
-],
-    });
-
-    const reply =
-      completion.choices[0]?.message?.content ??
-      "I'm thinking... ask me again.";
-
-
-    // Save Atlas reply
-    await supabaseServer.from("atlas_memory").insert({
-      user_id: clerkId,
-      role: "assistant",
-      message: reply,
-      current_streak: profile.current_streak,
-      longest_streak: profile.longest_streak,
-      last_mission_date: new Date().toISOString(),
-    });
-
+    /*
+     * "reply" is the current response field.
+     * "answer" temporarily supports the legacy
+     * AtlasChat component.
+     */
     return NextResponse.json({
-      reply,
+      reply: atlasResult.reply,
+      answer: atlasResult.reply,
+      deprecated: true,
     });
   } catch (error) {
-    console.error(error);
+    console.error(
+      "Legacy Atlas Route Error:",
+      error
+    );
 
     return NextResponse.json(
       {
-        reply: "Atlas encountered an error.",
+        error:
+          "Atlas encountered an error.",
+        reply:
+          "Atlas encountered an error. Please try again.",
+        answer:
+          "Atlas encountered an error. Please try again.",
       },
-      { status: 500 }
-
+      {
+        status: 500,
+      }
     );
   }
 }

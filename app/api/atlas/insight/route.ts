@@ -1,118 +1,80 @@
-import { NextResponse } from "next/server";
-import Groq from "groq-sdk";
-import { supabaseServer } from "@/lib/supabase-server";
+import {
+  NextRequest,
+  NextResponse,
+} from "next/server";
 
-const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY!,
-});
+import { auth } from "@clerk/nextjs/server";
 
-export async function POST(req: Request) {
+import {
+  runAtlasBrain,
+} from "@/lib/atlas/brain";
+
+export async function POST(
+  request: NextRequest
+) {
   try {
-    const { clerkId } = await req.json();
+    const { userId } = await auth();
 
-    if (!clerkId) {
+    if (!userId) {
       return NextResponse.json(
-        { error: "Missing clerkId" },
-        { status: 400 }
+        {
+          error: "Unauthorized",
+        },
+        {
+          status: 401,
+        }
       );
     }
 
-    const { data: profile } = await supabaseServer
-      .from("profiles")
-      .select("*")
-      .eq("clerk_id", clerkId)
-      .single();
-
-    if (!profile) {
-      return NextResponse.json({
-        insight: "I couldn't load your profile.",
-      });
+    /*
+     * Consume the request safely for compatibility
+     * with older callers, but never trust or use a
+     * browser-supplied Clerk ID.
+     */
+    try {
+      await request.json();
+    } catch {
+      /*
+       * This endpoint does not require a request body.
+       */
     }
 
-    const { data: memory } = await supabaseServer
-      .from("atlas_memory")
-      .select("role,message")
-      .eq("user_id", clerkId)
-      .order("created_at", { ascending: false })
-      .limit(10);
+    const atlasResult =
+      await runAtlasBrain({
+        clerkId: userId,
+        message: `
+Give me one concise strategic insight about my current direction.
 
-    const previousMessages =
-      memory
-        ?.reverse()
-        .map((m) => ({
-          role: m.role as "user" | "assistant",
-          content: m.message,
-        })) ?? [];
-
-    const systemPrompt = `
-You are ATLAS.
-
-You are not chatting.
-
-You are observing.
-
-Study:
-
-Name: ${profile.full_name}
-
-North Star:
-${profile.north_star}
-
-Journey:
-${profile.journey}
-
-Progress:
-${profile.progress}
-
-Completed Steps:
-${profile.completed_steps}
-
-Current Streak:
-${profile.current_streak}
-
-Longest Streak:
-${profile.longest_streak}
-
-Previous conversations are attached.
-
-Produce ONE strategic insight.
-
-Do not greet.
-
-Do not explain yourself.
-
-Keep it under 120 words.
-
-It should feel like an elite strategist quietly observing the user's growth.
-`;
-
-    const completion = await groq.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
-      temperature: 0.5,
-      messages: [
-        {
-          role: "system",
-          content: systemPrompt,
-        },
-        ...previousMessages,
-        {
-          role: "user",
-          content:
-            "Generate today's strategic insight.",
-        },
-      ],
-    });
+Rules:
+- Use my live ASCEND context.
+- Do not greet me.
+- Do not invent progress or achievements.
+- Do not repeat an old mission as current.
+- Do not modify or generate a mission.
+- Do not claim certainty without evidence.
+- Keep the insight under 120 words.
+        `.trim(),
+      });
 
     return NextResponse.json({
-      insight:
-        completion.choices[0]?.message?.content ??
-        "No insight available.",
+      insight: atlasResult.reply,
     });
   } catch (error) {
-    console.error(error);
+    console.error(
+      "Atlas Insight Error:",
+      error
+    );
 
-    return NextResponse.json({
-      insight: "Unable to generate insight.",
-    });
+    return NextResponse.json(
+      {
+        error:
+          "Atlas could not generate an insight.",
+        insight:
+          "No strategic insight is available right now.",
+      },
+      {
+        status: 500,
+      }
+    );
   }
 }

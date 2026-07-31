@@ -1,44 +1,34 @@
 "use server";
 
-import { auth } from "@clerk/nextjs/server";
-import { revalidatePath } from "next/cache";
+import {
+  auth,
+} from "@clerk/nextjs/server";
 
-import { completeMission } from "@/lib/supabase/completeMission";
-import { getMemory } from "@/lib/supabase/memory";
-import { updateMemory } from "@/lib/supabase/updateMemory";
-
+/*
+ * Deprecated mission-completion action.
+ *
+ * Mission completion must go through:
+ * POST /api/missions/complete
+ *
+ * That endpoint verifies mission ownership, requires
+ * active status, prevents duplicate XP, and generates
+ * the next mission through the approved lifecycle.
+ */
 export async function completeMissionAction(
-  missionId: string
+  _missionId: string
 ) {
   const { userId } = await auth();
 
   if (!userId) {
-    return;
+    return {
+      success: false,
+      error: "Unauthorized",
+    };
   }
 
-  await completeMission(missionId);
-
-  const memory = await getMemory(userId);
-
-  if (!memory) {
-    return;
-  }
-const currentStreak =
-  (memory.current_streak ?? 0) + 1;
-
-const longestStreak = Math.max(
-  currentStreak,
-  memory.longest_streak ?? 0
-);
-
-const missionsCompleted =
-  (memory.missions_completed ?? 0) + 1;
-  await updateMemory(
-    userId,
-    currentStreak,
-    longestStreak,
-    missionsCompleted
-  );
-
-  revalidatePath("/dashboard");
+  return {
+    success: false,
+    error:
+      "This mission action is no longer supported. Refresh the Dashboard and use the current Complete Mission button.",
+  };
 }
