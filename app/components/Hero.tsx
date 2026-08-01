@@ -19,15 +19,17 @@ const signals = [
 ];
 
 export default function Hero() {
-  const { isLoaded, userId } = useAuth();
+  const { isLoaded, userId } =
+    useAuth();
 
+  /*
+   * Signed-out visitors begin with account creation.
+   * Signed-in users can revisit onboarding whenever
+   * they need to redefine their direction.
+   */
   const primaryHref = userId
-    ? "/dashboard"
+    ? "/onboarding"
     : "/sign-up";
-
-  const primaryLabel = userId
-    ? "Open Your Dashboard"
-    : "Start Your Journey";
 
   return (
     <section className="relative flex min-h-screen overflow-hidden bg-[#05070B] px-6 pb-24 pt-36 text-white">
@@ -90,16 +92,20 @@ export default function Hero() {
           </p>
 
           <div className="mt-9 flex flex-wrap gap-x-6 gap-y-3">
-            {signals.map((signal) => (
-              <div
-                key={signal}
-                className="flex items-center gap-2 text-sm text-slate-400"
-              >
-                <span className="h-1.5 w-1.5 rounded-full bg-cyan-400" />
+            {signals.map(
+              (signal) => (
+                <div
+                  key={signal}
+                  className="flex items-center gap-2 text-sm text-slate-400"
+                >
+                  <span className="h-1.5 w-1.5 rounded-full bg-cyan-400" />
 
-                <span>{signal}</span>
-              </div>
-            ))}
+                  <span>
+                    {signal}
+                  </span>
+                </div>
+              )
+            )}
           </div>
 
           <motion.div
@@ -122,7 +128,7 @@ export default function Hero() {
                 href={primaryHref}
                 className="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-7 py-4 text-base font-semibold text-white shadow-[0_0_35px_rgba(37,99,235,0.32)] transition hover:-translate-y-0.5 hover:bg-blue-500"
               >
-                {primaryLabel}
+                Start Your Journey
 
                 <ArrowRight
                   size={18}
@@ -141,9 +147,18 @@ export default function Hero() {
             </a>
           </motion.div>
 
-          <p className="mt-5 text-sm text-slate-500">
-            Start free. Build your Compass in minutes.
-          </p>
+          {isLoaded && userId ? (
+            <p className="mt-5 max-w-2xl text-sm leading-6 text-slate-500">
+              Your direction can evolve. Revisit
+              onboarding anytime to redefine your
+              goal, update your North Star, and
+              receive a new mission from Atlas.
+            </p>
+          ) : (
+            <p className="mt-5 text-sm text-slate-500">
+              Start free. Build your Compass in minutes.
+            </p>
+          )}
         </motion.div>
 
         {/* Compass visualization */}
@@ -193,7 +208,12 @@ export default function Hero() {
 
                 <motion.div
                   animate={{
-                    rotate: [-8, 7, -4, 0],
+                    rotate: [
+                      -8,
+                      7,
+                      -4,
+                      0,
+                    ],
                   }}
                   transition={{
                     duration: 5,

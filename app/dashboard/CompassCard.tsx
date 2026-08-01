@@ -32,6 +32,25 @@ function ArrowIcon() {
   );
 }
 
+function AtlasIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      className="h-4 w-4 shrink-0 text-cyan-300"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth="1.8"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M12 3l2.3 6.7L21 12l-6.7 2.3L12 21l-2.3-6.7L3 12l6.7-2.3L12 3z"
+      />
+    </svg>
+  );
+}
+
 export default function CompassCard({
   northStar,
   alignment,
@@ -99,14 +118,27 @@ export default function CompassCard({
             />
           </div>
 
-          <Link
-            href="/atlas"
-            className="group mt-5 inline-flex items-center gap-2 rounded-xl bg-blue-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400/60"
-          >
-            Open Atlas
+          {/* Atlas assistance */}
 
-            <ArrowIcon />
-          </Link>
+          <div className="mt-5 flex max-w-2xl flex-col gap-3 sm:flex-row sm:items-center">
+            <Link
+              href="/atlas"
+              className="group inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-blue-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400/60"
+            >
+              Open Atlas
+
+              <ArrowIcon />
+            </Link>
+
+            <div className="flex items-start gap-2 text-sm leading-5 text-slate-400 sm:items-center">
+              <AtlasIcon />
+
+              <p>
+                Atlas can help you research, plan, solve
+                obstacles, and make progress on your mission.
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Desktop compass */}

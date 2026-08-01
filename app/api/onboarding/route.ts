@@ -34,6 +34,13 @@ type ValidatedAnswers = {
   northStar: string;
 };
 
+type ExistingOnboardingContext = {
+  identity: string | null;
+  goal: string | null;
+  challenges: string[] | null;
+  north_star: string | null;
+};
+
 const validIdentities =
   new Set([
     "Student",
@@ -143,6 +150,53 @@ function validateAnswers(
     northStar:
       body.northStar.trim(),
   };
+}
+
+function buildOnboardingFact(
+  answers: ValidatedAnswers
+): string {
+  return [
+    `Identity: ${answers.identity}.`,
+
+    `Immediate goal: ${answers.goal}.`,
+
+    `Current challenges: ${answers.challenges.join(
+      ", "
+    )}.`,
+
+    `North Star: ${answers.northStar}`,
+  ].join(" ");
+}
+
+function buildExistingOnboardingFact(
+  context: ExistingOnboardingContext
+): string | null {
+  if (
+    !context.identity ||
+    !context.goal ||
+    !context.north_star
+  ) {
+    return null;
+  }
+
+  const challenges =
+    Array.isArray(
+      context.challenges
+    )
+      ? context.challenges
+      : [];
+
+  return [
+    `Identity: ${context.identity}.`,
+
+    `Immediate goal: ${context.goal}.`,
+
+    `Current challenges: ${challenges.join(
+      ", "
+    )}.`,
+
+    `North Star: ${context.north_star}`,
+  ].join(" ");
 }
 
 function buildFallbackMission(
@@ -326,11 +380,62 @@ export async function POST(
 
     /*
     |--------------------------------------------------------------------------
+    | DETECT A PREVIOUS JOURNEY
+    |--------------------------------------------------------------------------
+    */
+
+    const previousContextResult =
+      await (
+        supabaseServer as any
+      )
+        .from(
+          "atlas_onboarding_context"
+        )
+        .select(
+          "identity,goal,challenges,north_star"
+        )
+        .eq(
+          "user_id",
+          userId
+        )
+        .maybeSingle();
+
+    const previousContext =
+      (previousContextResult.data ??
+        null) as
+        ExistingOnboardingContext | null;
+
+    const previousContextError =
+      previousContextResult.error;
+
+    if (
+      previousContextError
+    ) {
+      console.error(
+        "Previous Onboarding Context Error:",
+        previousContextError
+      );
+
+      return NextResponse.json(
+        {
+          error:
+            "Atlas could not inspect your existing direction.",
+        },
+        {
+          status: 500,
+        }
+      );
+    }
+
+    const isRecalibration =
+      Boolean(
+        previousContext
+      );
+
+    /*
+    |--------------------------------------------------------------------------
     | SAVE LIVE PROFILE
     |--------------------------------------------------------------------------
-    |
-    | Upsert supports the rare case where the Clerk
-    | webhook has not created the profile yet.
     */
 
     const {
@@ -402,24 +507,47 @@ export async function POST(
 
     /*
     |--------------------------------------------------------------------------
-    | STORE A HUMAN-READABLE PERMANENT FACT
+    | UPDATE THE HUMAN-READABLE DIRECTION FACT
     |--------------------------------------------------------------------------
-    |
-    | Structured onboarding is authoritative.
-    | This fact remains useful for conversation memory.
     */
 
-    const onboardingFact = [
-      `Identity: ${answers.identity}.`,
+    if (previousContext) {
+      const previousFact =
+        buildExistingOnboardingFact(
+          previousContext
+        );
 
-      `Immediate goal: ${answers.goal}.`,
+      if (previousFact) {
+        const {
+          error:
+            oldFactDeleteError,
+        } = await supabaseServer
+          .from("atlas_facts")
+          .delete()
+          .eq(
+            "user_id",
+            userId
+          )
+          .eq(
+            "fact",
+            previousFact
+          );
 
-      `Current challenges: ${answers.challenges.join(
-        ", "
-      )}.`,
+        if (
+          oldFactDeleteError
+        ) {
+          console.error(
+            "Previous Onboarding Fact Delete Error:",
+            oldFactDeleteError
+          );
+        }
+      }
+    }
 
-      `North Star: ${answers.northStar}`,
-    ].join(" ");
+    const onboardingFact =
+      buildOnboardingFact(
+        answers
+      );
 
     const {
       data: existingFact,
@@ -427,7 +555,10 @@ export async function POST(
     } = await supabaseServer
       .from("atlas_facts")
       .select("id")
-      .eq("user_id", userId)
+      .eq(
+        "user_id",
+        userId
+      )
       .eq(
         "fact",
         onboardingFact
@@ -463,7 +594,7 @@ export async function POST(
 
     /*
     |--------------------------------------------------------------------------
-    | GENERATE THE FIRST TAILORED MISSION
+    | GENERATE THE NEW TAILORED MISSION
     |--------------------------------------------------------------------------
     */
 
@@ -501,6 +632,52 @@ export async function POST(
         answers
       );
 
+    /*
+    |--------------------------------------------------------------------------
+    | RETIRE THE PREVIOUS ACTIVE MISSION
+    |--------------------------------------------------------------------------
+    |
+    | Changing direction skips the former active
+    | mission without awarding XP.
+    */
+
+    const {
+      error:
+        missionRetirementError,
+    } = await supabaseServer
+      .from("atlas_missions")
+      .update({
+        status:
+          "skipped",
+      })
+      .eq(
+        "user_id",
+        userId
+      )
+      .eq(
+        "status",
+        "active"
+      );
+
+    if (
+      missionRetirementError
+    ) {
+      console.error(
+        "Previous Mission Retirement Error:",
+        missionRetirementError
+      );
+
+      return NextResponse.json(
+        {
+          error:
+            "Atlas could not safely replace your previous mission.",
+        },
+        {
+          status: 500,
+        }
+      );
+    }
+
     await createNewMission(
       userId,
       selectedMission.mission,
@@ -509,9 +686,19 @@ export async function POST(
 
     /*
     |--------------------------------------------------------------------------
-    | RECORD ONBOARDING MILESTONE
+    | RECORD THE JOURNEY MILESTONE
     |--------------------------------------------------------------------------
     */
+
+    const memoryTitle =
+      isRecalibration
+        ? "Direction Recalibrated"
+        : "ASCEND Journey Started";
+
+    const memoryMessage =
+      isRecalibration
+        ? `The user intentionally updated their ASCEND direction. ${onboardingFact}`
+        : `ASCEND onboarding completed. ${onboardingFact}`;
 
     const {
       error: memoryError,
@@ -525,13 +712,15 @@ export async function POST(
           "system",
 
         memory_type:
-          "onboarding",
+          isRecalibration
+            ? "direction"
+            : "onboarding",
 
         title:
-          "ASCEND Journey Started",
+          memoryTitle,
 
         message:
-          `ASCEND onboarding completed. ${onboardingFact}`,
+          memoryMessage,
 
         metadata: {
           identity:
@@ -545,6 +734,24 @@ export async function POST(
 
           north_star:
             answers.northStar,
+
+          recalibration:
+            isRecalibration,
+
+          previous_identity:
+            previousContext
+              ?.identity ??
+            null,
+
+          previous_goal:
+            previousContext
+              ?.goal ??
+            null,
+
+          previous_north_star:
+            previousContext
+              ?.north_star ??
+            null,
         },
       });
 
@@ -557,6 +764,9 @@ export async function POST(
 
     return NextResponse.json({
       success: true,
+
+      recalibrated:
+        isRecalibration,
 
       profile: {
         identity:
