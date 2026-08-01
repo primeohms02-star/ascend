@@ -20,9 +20,12 @@ import {
   supabaseServer,
 } from "@/lib/supabase-server";
 
+import {
+  loadOnboardingContext as loadStructuredOnboardingContext,
+} from "@/lib/atlas/onboardingContext";
+
 export type DailyMission = {
   title: string;
-
   description: string;
 };
 
@@ -41,7 +44,6 @@ function getMissionPath(
     explorer: "Explorer",
 
     student: "Scholar",
-
     scholar: "Scholar",
 
     "recent graduate":
@@ -142,6 +144,40 @@ function parseMission(
 async function loadOnboardingContext(
   userId: string
 ): Promise<string> {
+  /*
+   * Structured onboarding is authoritative for users
+   * who complete the current onboarding flow.
+   */
+  const structuredContext =
+    await loadStructuredOnboardingContext(
+      userId
+    );
+
+  if (structuredContext) {
+    return `
+Identity:
+${structuredContext.identity}
+
+Immediate goal:
+${structuredContext.goal}
+
+Current challenges:
+${structuredContext.challenges
+  .map(
+    (challenge) =>
+      `- ${challenge}`
+  )
+  .join("\n")}
+
+North Star:
+${structuredContext.north_star}
+    `.trim();
+  }
+
+  /*
+   * Compatibility fallback for users who completed
+   * onboarding before structured storage existed.
+   */
   const {
     data,
     error,
@@ -149,39 +185,30 @@ async function loadOnboardingContext(
     .from("atlas_facts")
     .select("fact")
     .eq("user_id", userId)
-    .order(
-      "created_at",
-      {
-        ascending: false,
-      }
+    .ilike(
+      "fact",
+      "%Immediate goal:%"
     )
-    .limit(10);
+    .ilike(
+      "fact",
+      "%Current challenges:%"
+    )
+    .order("created_at", {
+      ascending: false,
+    })
+    .limit(1)
+    .maybeSingle();
 
   if (error) {
     console.error(
-      "Mission context load error:",
+      "Legacy Mission Context Load Error:",
       error
     );
 
-    return "";
+    throw error;
   }
 
-  const onboardingFact =
-    data?.find(
-      (item) =>
-        typeof item.fact ===
-          "string" &&
-        item.fact.includes(
-          "Immediate goal:"
-        ) &&
-        item.fact.includes(
-          "Current challenges:"
-        )
-    )?.fact;
-
-  return (
-    onboardingFact ?? ""
-  );
+  return data?.fact ?? "";
 }
 
 function getAvailableMissions(
@@ -211,7 +238,9 @@ function selectFallbackMission(
   available: MissionTemplate[],
   path: MissionPath
 ): DailyMission {
-  if (available.length > 0) {
+  if (
+    available.length > 0
+  ) {
     return available[
       Math.floor(
         Math.random() *
@@ -220,74 +249,75 @@ function selectFallbackMission(
     ];
   }
 
-  const fallbackByPath: Record<
-    MissionPath,
-    DailyMission
-  > = {
-    Explorer: {
-      title:
-        "Aligned Opportunity",
+  const fallbackByPath:
+    Record<
+      MissionPath,
+      DailyMission
+    > = {
+      Explorer: {
+        title:
+          "Aligned Opportunity",
 
-      description:
-        "Find one opportunity connected to your North Star, identify its three most important requirements and complete one action that improves your readiness.",
-    },
+        description:
+          "Find one opportunity connected to your North Star, identify its three most important requirements and complete one action that improves your readiness.",
+      },
 
-    Scholar: {
-      title:
-        "Learning Evidence",
+      Scholar: {
+        title:
+          "Learning Evidence",
 
-      description:
-        "Complete one focused learning activity connected to your North Star and create a short piece of evidence showing what you learned.",
-    },
+        description:
+          "Complete one focused learning activity connected to your North Star and create a short piece of evidence showing what you learned.",
+      },
 
-    Builder: {
-      title:
-        "Customer Evidence",
+      Builder: {
+        title:
+          "Customer Evidence",
 
-      description:
-        "Test one important business assumption with a potential customer and record what the conversation changes about your plan.",
-    },
+        description:
+          "Test one important business assumption with a potential customer and record what the conversation changes about your plan.",
+      },
 
-    Leader: {
-      title:
-        "Visible Leadership",
+      Leader: {
+        title:
+          "Visible Leadership",
 
-      description:
-        "Take responsibility for one meaningful outcome and document the action you took and the result it created.",
-    },
+        description:
+          "Take responsibility for one meaningful outcome and document the action you took and the result it created.",
+      },
 
-    Pioneer: {
-      title:
-        "Transition Evidence",
+      Pioneer: {
+        title:
+          "Transition Evidence",
 
-      description:
-        "Complete one practical action that demonstrates your readiness for the career or industry you want to enter.",
-    },
+        description:
+          "Complete one practical action that demonstrates your readiness for the career or industry you want to enter.",
+      },
 
-    Creator: {
-      title:
-        "Creative Evidence",
+      Creator: {
+        title:
+          "Creative Evidence",
 
-      description:
-        "Create and publish one useful piece of work connected to the audience and direction you want to build.",
-    },
+        description:
+          "Create and publish one useful piece of work connected to the audience and direction you want to build.",
+      },
 
-    Freelancer: {
-      title:
-        "Client Progress",
+      Freelancer: {
+        title:
+          "Client Progress",
 
-      description:
-        "Present one clear service offer to a potential client and record their response or feedback.",
-    },
+        description:
+          "Present one clear service offer to a potential client and record their response or feedback.",
+      },
 
-    Impact: {
-      title:
-        "Impact Evidence",
+      Impact: {
+        title:
+          "Impact Evidence",
 
-      description:
-        "Complete one action that creates or documents measurable progress for the people or problem you want to serve.",
-    },
-  };
+        description:
+          "Complete one action that creates or documents measurable progress for the people or problem you want to serve.",
+      },
+    };
 
   return fallbackByPath[
     path
@@ -307,7 +337,9 @@ export async function getDailyMission(
       userId
     ),
 
-    loadBrainState(userId),
+    loadBrainState(
+      userId
+    ),
 
     loadOnboardingContext(
       userId
@@ -315,10 +347,14 @@ export async function getDailyMission(
   ]);
 
   const path =
-    getMissionPath(journey);
+    getMissionPath(
+      journey
+    );
 
   const decision =
-    decideNextAction(brain);
+    decideNextAction(
+      brain
+    );
 
   let available =
     getAvailableMissions(
@@ -326,6 +362,10 @@ export async function getDailyMission(
       completedTitles
     );
 
+  /*
+   * A discipline priority should avoid unnecessarily
+   * complex missions while momentum is rebuilding.
+   */
   if (
     decision.priority ===
     "discipline"
@@ -368,7 +408,8 @@ export async function getDailyMission(
 
           messages: [
             {
-              role: "system",
+              role:
+                "system",
 
               content: `
 You are ATLAS, the strategic mission engine inside ASCEND.
@@ -386,11 +427,14 @@ ${path}
 North Star:
 ${brain.northStar}
 
-Journey progress:
+Progress within the current Ascension level:
 ${brain.progress}%
 
 Current strategic priority:
 ${decision.priority}
+
+Reason for this priority:
+${decision.explanation}
 
 Onboarding context:
 ${
@@ -406,13 +450,17 @@ ${
 
 AVAILABLE CURATED MISSION IDEAS
 
-${available
-  .slice(0, 5)
-  .map(
-    (mission) =>
-      `- ${mission.title}: ${mission.description}`
-  )
-  .join("\n")}
+${
+  available.length > 0
+    ? available
+        .slice(0, 5)
+        .map(
+          (mission) =>
+            `- ${mission.title}: ${mission.description}`
+        )
+        .join("\n")
+    : "No unused curated mission remains for this pathway."
+}
 
 RULES
 
@@ -447,9 +495,13 @@ DESCRIPTION:
       "";
 
     const generatedMission =
-      parseMission(text);
+      parseMission(
+        text
+      );
 
-    if (generatedMission) {
+    if (
+      generatedMission
+    ) {
       const alreadyCompleted =
         completedTitles.some(
           (title) =>
@@ -461,13 +513,15 @@ DESCRIPTION:
             )
         );
 
-      if (!alreadyCompleted) {
+      if (
+        !alreadyCompleted
+      ) {
         return generatedMission;
       }
     }
   } catch (error) {
     console.error(
-      "Personalized mission generation failed:",
+      "Personalized Mission Generation Failed:",
       error
     );
   }

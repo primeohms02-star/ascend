@@ -16,57 +16,57 @@ import {
   generateMission,
 } from "@/lib/atlas/brain";
 
+import {
+  saveOnboardingContext,
+} from "@/lib/atlas/onboardingContext";
+
 type OnboardingRequest = {
   identity?: unknown;
-
   goal?: unknown;
-
   challenges?: unknown;
-
   northStar?: unknown;
 };
 
 type ValidatedAnswers = {
   identity: string;
-
   goal: string;
-
   challenges: string[];
-
   northStar: string;
 };
 
-const validIdentities = new Set([
-  "Student",
-  "Recent Graduate",
-  "Job Seeker",
-  "Early-Career Professional",
-  "Experienced Professional",
-  "Career Changer",
-  "Freelancer",
-  "Founder or Entrepreneur",
-  "Creator",
-  "Researcher or Academic",
-  "Social Impact Professional",
-  "Skilled or Technical Professional",
-  "Exploring",
-]);
+const validIdentities =
+  new Set([
+    "Student",
+    "Recent Graduate",
+    "Job Seeker",
+    "Early-Career Professional",
+    "Experienced Professional",
+    "Career Changer",
+    "Freelancer",
+    "Founder or Entrepreneur",
+    "Creator",
+    "Researcher or Academic",
+    "Social Impact Professional",
+    "Skilled or Technical Professional",
+    "Exploring",
+  ]);
 
-const validGoals = new Set([
-  "Find a Job",
-  "Find an Internship",
-  "Win a Scholarship",
-  "Join a Fellowship",
-  "Find Grants or Funding",
-  "Build a Business",
-  "Learn New Skills",
-  "Change Careers",
-  "Advance My Career",
-  "Grow My Freelance Career",
-  "Grow as a Creator",
-  "Build My Network",
-  "Discover My Purpose",
-]);
+const validGoals =
+  new Set([
+    "Find a Job",
+    "Find an Internship",
+    "Win a Scholarship",
+    "Join a Fellowship",
+    "Find Grants or Funding",
+    "Build a Business",
+    "Learn New Skills",
+    "Change Careers",
+    "Advance My Career",
+    "Grow My Freelance Career",
+    "Grow as a Creator",
+    "Build My Network",
+    "Discover My Purpose",
+  ]);
 
 function validateAnswers(
   body: OnboardingRequest
@@ -84,7 +84,9 @@ function validateAnswers(
   if (
     typeof body.goal !==
       "string" ||
-    !validGoals.has(body.goal)
+    !validGoals.has(
+      body.goal
+    )
   ) {
     return null;
   }
@@ -115,19 +117,28 @@ function validateAnswers(
     return null;
   }
 
+  const challenges =
+    body.challenges
+      .map((challenge) =>
+        challenge.trim()
+      )
+      .filter(Boolean)
+      .slice(0, 14);
+
+  if (
+    challenges.length === 0
+  ) {
+    return null;
+  }
+
   return {
     identity:
       body.identity.trim(),
 
-    goal: body.goal.trim(),
+    goal:
+      body.goal.trim(),
 
-    challenges:
-      body.challenges
-        .map((challenge) =>
-          challenge.trim()
-        )
-        .filter(Boolean)
-        .slice(0, 14),
+    challenges,
 
     northStar:
       body.northStar.trim(),
@@ -143,49 +154,47 @@ function buildFallbackMission(
   const firstChallenge =
     answers.challenges[0];
 
-  const missionByGoal: Record<
-    string,
-    string
-  > = {
-    "Find a Job":
-      "Identify three roles that align with your North Star, choose the strongest match, and tailor the first section of your resume to its requirements.",
+  const missionByGoal:
+    Record<string, string> = {
+      "Find a Job":
+        "Identify three roles that align with your North Star, choose the strongest match, and tailor the first section of your resume to its requirements.",
 
-    "Find an Internship":
-      "Find three relevant internships, compare their requirements, and prepare one tailored application for the strongest match.",
+      "Find an Internship":
+        "Find three relevant internships, compare their requirements, and prepare one tailored application for the strongest match.",
 
-    "Win a Scholarship":
-      "Identify three scholarships that match your background and North Star, then create a requirement checklist for the strongest opportunity.",
+      "Win a Scholarship":
+        "Identify three scholarships that match your background and North Star, then create a requirement checklist for the strongest opportunity.",
 
-    "Join a Fellowship":
-      "Find three fellowships aligned with your direction, compare their eligibility requirements, and outline your application for the strongest match.",
+      "Join a Fellowship":
+        "Find three fellowships aligned with your direction, compare their eligibility requirements, and outline your application for the strongest match.",
 
-    "Find Grants or Funding":
-      "Identify three relevant funding opportunities and write a one-paragraph explanation of the problem your project or venture will solve.",
+      "Find Grants or Funding":
+        "Identify three relevant funding opportunities and write a one-paragraph explanation of the problem your project or venture will solve.",
 
-    "Build a Business":
-      "Define the specific customer problem your business will solve and speak with one potential customer to test your most important assumption.",
+      "Build a Business":
+        "Define the specific customer problem your business will solve and speak with one potential customer to test your most important assumption.",
 
-    "Learn New Skills":
-      "Identify the three most important skills required by your North Star and complete one focused learning session on the highest-priority skill.",
+      "Learn New Skills":
+        "Identify the three most important skills required by your North Star and complete one focused learning session on the highest-priority skill.",
 
-    "Change Careers":
-      "Choose one target role in your intended career, compare its requirements with your current experience, and identify your three most important skill gaps.",
+      "Change Careers":
+        "Choose one target role in your intended career, compare its requirements with your current experience, and identify your three most important skill gaps.",
 
-    "Advance My Career":
-      "Identify the next role or responsibility you want, document its key requirements, and choose one visible action that demonstrates your readiness.",
+      "Advance My Career":
+        "Identify the next role or responsibility you want, document its key requirements, and choose one visible action that demonstrates your readiness.",
 
-    "Grow My Freelance Career":
-      "Define one clear freelance service, identify the client problem it solves, and create a short offer you can present to one potential client.",
+      "Grow My Freelance Career":
+        "Define one clear freelance service, identify the client problem it solves, and create a short offer you can present to one potential client.",
 
-    "Grow as a Creator":
-      "Choose one audience problem connected to your direction and publish one useful piece of work that demonstrates your creative value.",
+      "Grow as a Creator":
+        "Choose one audience problem connected to your direction and publish one useful piece of work that demonstrates your creative value.",
 
-    "Build My Network":
-      "Identify three people whose work aligns with your North Star and send one thoughtful, personalized message requesting a focused conversation.",
+      "Build My Network":
+        "Identify three people whose work aligns with your North Star and send one thoughtful, personalized message requesting a focused conversation.",
 
-    "Discover My Purpose":
-      "Write down three moments when you felt useful, energized or deeply engaged, then identify the common strength or impact connecting them.",
-  };
+      "Discover My Purpose":
+        "Write down three moments when you felt useful, energized or deeply engaged, then identify the common strength or impact connecting them.",
+    };
 
   const mission =
     missionByGoal[
@@ -209,7 +218,8 @@ function parseMission(
 } | null {
   if (
     !response ||
-    response.trim() === "NONE"
+    response.trim() ===
+      "NONE"
   ) {
     return null;
   }
@@ -294,10 +304,13 @@ export async function POST(
     }
 
     const body =
-      (await request.json()) as OnboardingRequest;
+      (await request.json()) as
+        OnboardingRequest;
 
     const answers =
-      validateAnswers(body);
+      validateAnswers(
+        body
+      );
 
     if (!answers) {
       return NextResponse.json(
@@ -313,8 +326,11 @@ export async function POST(
 
     /*
     |--------------------------------------------------------------------------
-    | UPDATE LIVE PROFILE
+    | SAVE LIVE PROFILE
     |--------------------------------------------------------------------------
+    |
+    | Upsert supports the rare case where the Clerk
+    | webhook has not created the profile yet.
     */
 
     const {
@@ -322,26 +338,31 @@ export async function POST(
       error: profileError,
     } = await supabaseServer
       .from("profiles")
-      .update({
-        journey:
-          answers.identity,
+      .upsert(
+        {
+          clerk_id:
+            userId,
 
-        north_star:
-          answers.northStar,
-      })
-      .eq(
-        "clerk_id",
-        userId
+          journey:
+            answers.identity,
+
+          north_star:
+            answers.northStar,
+        },
+        {
+          onConflict:
+            "clerk_id",
+        }
       )
       .select("clerk_id")
-      .maybeSingle();
+      .single();
 
     if (
       profileError ||
       !updatedProfile
     ) {
       console.error(
-        "Onboarding profile update error:",
+        "Onboarding Profile Save Error:",
         profileError
       );
 
@@ -358,34 +379,86 @@ export async function POST(
 
     /*
     |--------------------------------------------------------------------------
-    | STORE ONBOARDING AS LONG-TERM CONTEXT
+    | SAVE STRUCTURED ONBOARDING CONTEXT
     |--------------------------------------------------------------------------
+    */
+
+    await saveOnboardingContext(
+      userId,
+      {
+        identity:
+          answers.identity,
+
+        goal:
+          answers.goal,
+
+        challenges:
+          answers.challenges,
+
+        northStar:
+          answers.northStar,
+      }
+    );
+
+    /*
+    |--------------------------------------------------------------------------
+    | STORE A HUMAN-READABLE PERMANENT FACT
+    |--------------------------------------------------------------------------
+    |
+    | Structured onboarding is authoritative.
+    | This fact remains useful for conversation memory.
     */
 
     const onboardingFact = [
       `Identity: ${answers.identity}.`,
+
       `Immediate goal: ${answers.goal}.`,
+
       `Current challenges: ${answers.challenges.join(
         ", "
       )}.`,
+
       `North Star: ${answers.northStar}`,
     ].join(" ");
 
     const {
-      error: factError,
+      data: existingFact,
+      error: factLookupError,
     } = await supabaseServer
       .from("atlas_facts")
-      .insert({
-        user_id: userId,
+      .select("id")
+      .eq("user_id", userId)
+      .eq(
+        "fact",
+        onboardingFact
+      )
+      .limit(1)
+      .maybeSingle();
 
-        fact: onboardingFact,
-      });
-
-    if (factError) {
+    if (factLookupError) {
       console.error(
-        "Onboarding fact save error:",
-        factError
+        "Onboarding Fact Lookup Error:",
+        factLookupError
       );
+    } else if (!existingFact) {
+      const {
+        error: factError,
+      } = await supabaseServer
+        .from("atlas_facts")
+        .insert({
+          user_id:
+            userId,
+
+          fact:
+            onboardingFact,
+        });
+
+      if (factError) {
+        console.error(
+          "Onboarding Fact Save Error:",
+          factError
+        );
+      }
     }
 
     /*
@@ -417,7 +490,7 @@ export async function POST(
         );
     } catch (error) {
       console.error(
-        "Atlas onboarding mission generation failed:",
+        "Atlas Onboarding Mission Generation Failed:",
         error
       );
     }
@@ -445,17 +518,39 @@ export async function POST(
     } = await supabaseServer
       .from("atlas_memory")
       .insert({
-        user_id: userId,
+        user_id:
+          userId,
 
-        role: "system",
+        role:
+          "system",
+
+        memory_type:
+          "onboarding",
+
+        title:
+          "ASCEND Journey Started",
 
         message:
           `ASCEND onboarding completed. ${onboardingFact}`,
+
+        metadata: {
+          identity:
+            answers.identity,
+
+          goal:
+            answers.goal,
+
+          challenges:
+            answers.challenges,
+
+          north_star:
+            answers.northStar,
+        },
       });
 
     if (memoryError) {
       console.error(
-        "Onboarding memory error:",
+        "Onboarding Memory Error:",
         memoryError
       );
     }
@@ -474,7 +569,8 @@ export async function POST(
           answers.northStar,
       },
 
-      mission: selectedMission,
+      mission:
+        selectedMission,
     });
   } catch (error) {
     console.error(
