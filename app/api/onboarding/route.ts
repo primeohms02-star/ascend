@@ -8,19 +8,22 @@ import {
 } from "@clerk/nextjs/server";
 
 import {
-  supabaseServer,
-} from "@/lib/supabase-server";
-
-import {
-  createNewMission,
   generateMission,
 } from "@/lib/atlas/brain";
 
 import {
-  saveOnboardingContext,
+  getMissionOperation,
+  replaceMissionForOnboarding,
+  type OnboardingReplacementResult,
+} from "@/lib/atlas/missionService";
+
+import {
+  loadOnboardingContext,
+  type AtlasOnboardingContext,
 } from "@/lib/atlas/onboardingContext";
 
 type OnboardingRequest = {
+  operationId?: unknown;
   identity?: unknown;
   goal?: unknown;
   challenges?: unknown;
@@ -34,12 +37,8 @@ type ValidatedAnswers = {
   northStar: string;
 };
 
-type ExistingOnboardingContext = {
-  identity: string | null;
-  goal: string | null;
-  challenges: string[] | null;
-  north_star: string | null;
-};
+const uuidPattern =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 const validIdentities =
   new Set([
@@ -154,7 +153,7 @@ function validateAnswers(
 
 function buildOnboardingFact(
   answers: ValidatedAnswers
-): string {
+) {
   return [
     `Identity: ${answers.identity}.`,
 
@@ -169,29 +168,19 @@ function buildOnboardingFact(
 }
 
 function buildExistingOnboardingFact(
-  context: ExistingOnboardingContext
-): string | null {
-  if (
-    !context.identity ||
-    !context.goal ||
-    !context.north_star
-  ) {
+  context:
+    AtlasOnboardingContext | null
+) {
+  if (!context) {
     return null;
   }
-
-  const challenges =
-    Array.isArray(
-      context.challenges
-    )
-      ? context.challenges
-      : [];
 
   return [
     `Identity: ${context.identity}.`,
 
     `Immediate goal: ${context.goal}.`,
 
-    `Current challenges: ${challenges.join(
+    `Current challenges: ${context.challenges.join(
       ", "
     )}.`,
 
@@ -201,13 +190,7 @@ function buildExistingOnboardingFact(
 
 function buildFallbackMission(
   answers: ValidatedAnswers
-): {
-  mission: string;
-  reason: string;
-} {
-  const firstChallenge =
-    answers.challenges[0];
-
+) {
   const missionByGoal:
     Record<string, string> = {
       "Find a Job":
@@ -250,26 +233,21 @@ function buildFallbackMission(
         "Write down three moments when you felt useful, energized or deeply engaged, then identify the common strength or impact connecting them.",
     };
 
-  const mission =
-    missionByGoal[
-      answers.goal
-    ] ??
-    "Choose one concrete action that moves you closer to your North Star and complete it within the next 24 hours.";
-
   return {
-    mission,
+    mission:
+      missionByGoal[
+        answers.goal
+      ] ??
+      "Choose one concrete action that moves you closer to your North Star and complete it within the next 24 hours.",
 
     reason:
-      `You described yourself as ${answers.identity} and selected “${answers.goal}” as your immediate goal. Your current challenge is “${firstChallenge}.” This mission creates concrete evidence of progress toward your North Star: ${answers.northStar}`,
+      `You described yourself as ${answers.identity} and selected “${answers.goal}” as your immediate goal. Your current challenge is “${answers.challenges[0]}.” This mission creates concrete evidence of progress toward your North Star: ${answers.northStar}`,
   };
 }
 
 function parseMission(
   response: string
-): {
-  mission: string;
-  reason: string;
-} | null {
+) {
   if (
     !response ||
     response.trim() ===
@@ -303,7 +281,7 @@ function parseMission(
 
 function buildAtlasContext(
   answers: ValidatedAnswers
-): string {
+) {
   return `
 The user has explicitly completed ASCEND onboarding.
 
@@ -326,16 +304,32 @@ ${answers.northStar}
 
 Create one concrete first mission.
 
-The mission must:
-- Directly support the immediate goal.
-- Move the user toward the North Star.
-- Consider the user's current identity and experience stage.
-- Address at least one stated challenge.
-- Be realistically completable within one day.
-- Produce visible evidence of progress.
-- Avoid generic productivity or lifestyle advice.
-- Avoid giving several unrelated tasks.
+The mission must directly support the immediate goal, move the user toward
+the North Star, address at least one stated challenge, be realistically
+completable within one day, and produce visible evidence of progress.
+
+Return exactly MISSION: followed by the mission and REASON: followed by why.
 `;
+}
+
+function jsonResult(
+  result: OnboardingReplacementResult
+) {
+  return NextResponse.json({
+    success: true,
+
+    operationId:
+      result.operationId,
+
+    replayed:
+      result.replayed,
+
+    isRecalibration:
+      result.isRecalibration,
+
+    mission:
+      result.activeMission,
+  });
 }
 
 export async function POST(
@@ -378,351 +372,94 @@ export async function POST(
       );
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | DETECT A PREVIOUS JOURNEY
-    |--------------------------------------------------------------------------
-    */
-
-    const previousContextResult =
-      await (
-        supabaseServer as any
+    if (
+      typeof body.operationId !==
+        "string" ||
+      !uuidPattern.test(
+        body.operationId
       )
-        .from(
-          "atlas_onboarding_context"
-        )
-        .select(
-          "identity,goal,challenges,north_star"
-        )
-        .eq(
-          "user_id",
-          userId
-        )
-        .maybeSingle();
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "A valid operation ID is required.",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    const operationId =
+      body.operationId;
+
+    /*
+     * A repeated onboarding request returns the
+     * original atomic result before AI is called.
+     */
+    const existingResult =
+      await getMissionOperation<OnboardingReplacementResult>(
+        userId,
+        operationId,
+        "onboarding_replace"
+      );
+
+    if (existingResult) {
+      return jsonResult(
+        existingResult
+      );
+    }
 
     const previousContext =
-      (previousContextResult.data ??
-        null) as
-        ExistingOnboardingContext | null;
-
-    const previousContextError =
-      previousContextResult.error;
-
-    if (
-      previousContextError
-    ) {
-      console.error(
-        "Previous Onboarding Context Error:",
-        previousContextError
-      );
-
-      return NextResponse.json(
-        {
-          error:
-            "Atlas could not inspect your existing direction.",
-        },
-        {
-          status: 500,
-        }
-      );
-    }
-
-    const isRecalibration =
-      Boolean(
-        previousContext
-      );
-
-    /*
-    |--------------------------------------------------------------------------
-    | SAVE LIVE PROFILE
-    |--------------------------------------------------------------------------
-    */
-
-    const {
-      data: updatedProfile,
-      error: profileError,
-    } = await supabaseServer
-      .from("profiles")
-      .upsert(
-        {
-          clerk_id:
-            userId,
-
-          journey:
-            answers.identity,
-
-          north_star:
-            answers.northStar,
-        },
-        {
-          onConflict:
-            "clerk_id",
-        }
-      )
-      .select("clerk_id")
-      .single();
-
-    if (
-      profileError ||
-      !updatedProfile
-    ) {
-      console.error(
-        "Onboarding Profile Save Error:",
-        profileError
-      );
-
-      return NextResponse.json(
-        {
-          error:
-            "Atlas could not update your profile.",
-        },
-        {
-          status: 500,
-        }
-      );
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | SAVE STRUCTURED ONBOARDING CONTEXT
-    |--------------------------------------------------------------------------
-    */
-
-    await saveOnboardingContext(
-      userId,
-      {
-        identity:
-          answers.identity,
-
-        goal:
-          answers.goal,
-
-        challenges:
-          answers.challenges,
-
-        northStar:
-          answers.northStar,
-      }
-    );
-
-    /*
-    |--------------------------------------------------------------------------
-    | UPDATE THE HUMAN-READABLE DIRECTION FACT
-    |--------------------------------------------------------------------------
-    */
-
-    if (previousContext) {
-      const previousFact =
-        buildExistingOnboardingFact(
-          previousContext
-        );
-
-      if (previousFact) {
-        const {
-          error:
-            oldFactDeleteError,
-        } = await supabaseServer
-          .from("atlas_facts")
-          .delete()
-          .eq(
-            "user_id",
-            userId
-          )
-          .eq(
-            "fact",
-            previousFact
-          );
-
-        if (
-          oldFactDeleteError
-        ) {
-          console.error(
-            "Previous Onboarding Fact Delete Error:",
-            oldFactDeleteError
-          );
-        }
-      }
-    }
-
-    const onboardingFact =
-      buildOnboardingFact(
-        answers
-      );
-
-    const {
-      data: existingFact,
-      error: factLookupError,
-    } = await supabaseServer
-      .from("atlas_facts")
-      .select("id")
-      .eq(
-        "user_id",
+      await loadOnboardingContext(
         userId
-      )
-      .eq(
-        "fact",
-        onboardingFact
-      )
-      .limit(1)
-      .maybeSingle();
-
-    if (factLookupError) {
-      console.error(
-        "Onboarding Fact Lookup Error:",
-        factLookupError
       );
-    } else if (!existingFact) {
-      const {
-        error: factError,
-      } = await supabaseServer
-        .from("atlas_facts")
-        .insert({
-          user_id:
-            userId,
-
-          fact:
-            onboardingFact,
-        });
-
-      if (factError) {
-        console.error(
-          "Onboarding Fact Save Error:",
-          factError
-        );
-      }
-    }
 
     /*
-    |--------------------------------------------------------------------------
-    | GENERATE THE NEW TAILORED MISSION
-    |--------------------------------------------------------------------------
-    */
-
-    let generatedMission:
-      | {
-          mission: string;
-          reason: string;
-        }
-      | null = null;
-
-    try {
-      const missionResponse =
-        await generateMission(
-          null,
-          answers.northStar,
-          buildAtlasContext(
-            answers
-          )
-        );
-
-      generatedMission =
-        parseMission(
-          missionResponse
-        );
-    } catch (error) {
-      console.error(
-        "Atlas Onboarding Mission Generation Failed:",
-        error
-      );
-    }
-
-    const selectedMission =
-      generatedMission ??
+     * Mission generation occurs before any profile,
+     * direction or mission state is modified.
+     */
+    let selectedMission =
       buildFallbackMission(
         answers
       );
 
-    /*
-    |--------------------------------------------------------------------------
-    | RETIRE THE PREVIOUS ACTIVE MISSION
-    |--------------------------------------------------------------------------
-    |
-    | Changing direction skips the former active
-    | mission without awarding XP.
-    */
+    try {
+      const generated =
+        parseMission(
+          await generateMission(
+            null,
+            answers.northStar,
+            buildAtlasContext(
+              answers
+            )
+          )
+        );
 
-    const {
-      error:
-        missionRetirementError,
-    } = await supabaseServer
-      .from("atlas_missions")
-      .update({
-        status:
-          "skipped",
-      })
-      .eq(
-        "user_id",
-        userId
-      )
-      .eq(
-        "status",
-        "active"
-      );
-
-    if (
-      missionRetirementError
+      if (generated) {
+        selectedMission =
+          generated;
+      }
+    } catch (
+      generationError
     ) {
       console.error(
-        "Previous Mission Retirement Error:",
-        missionRetirementError
-      );
-
-      return NextResponse.json(
-        {
-          error:
-            "Atlas could not safely replace your previous mission.",
-        },
-        {
-          status: 500,
-        }
+        "Onboarding Mission Generation Error:",
+        generationError
       );
     }
 
-    await createNewMission(
-      userId,
-      selectedMission.mission,
-      selectedMission.reason
-    );
-
-    /*
-    |--------------------------------------------------------------------------
-    | RECORD THE JOURNEY MILESTONE
-    |--------------------------------------------------------------------------
-    */
-
-    const memoryTitle =
-      isRecalibration
-        ? "Direction Recalibrated"
-        : "ASCEND Journey Started";
-
-    const memoryMessage =
-      isRecalibration
-        ? `The user intentionally updated their ASCEND direction. ${onboardingFact}`
-        : `ASCEND onboarding completed. ${onboardingFact}`;
-
-    const {
-      error: memoryError,
-    } = await supabaseServer
-      .from("atlas_memory")
-      .insert({
-        user_id:
+    try {
+      /*
+       * Profile, onboarding context, direction fact,
+       * previous mission replacement, new mission and
+       * timeline memory are committed together.
+       */
+      const result =
+        await replaceMissionForOnboarding({
           userId,
+          operationId,
 
-        role:
-          "system",
-
-        memory_type:
-          isRecalibration
-            ? "direction"
-            : "onboarding",
-
-        title:
-          memoryTitle,
-
-        message:
-          memoryMessage,
-
-        metadata: {
           identity:
             answers.identity,
 
@@ -732,66 +469,87 @@ export async function POST(
           challenges:
             answers.challenges,
 
-          north_star:
+          northStar:
             answers.northStar,
 
-          recalibration:
-            isRecalibration,
+          directionFact:
+            buildOnboardingFact(
+              answers
+            ),
 
-          previous_identity:
-            previousContext
-              ?.identity ??
-            null,
+          previousDirectionFact:
+            buildExistingOnboardingFact(
+              previousContext
+            ),
 
-          previous_goal:
-            previousContext
-              ?.goal ??
-            null,
+          mission:
+            selectedMission.mission,
 
-          previous_north_star:
-            previousContext
-              ?.north_star ??
-            null,
-        },
-      });
+          reason:
+            selectedMission.reason,
+        });
 
-    if (memoryError) {
+      return jsonResult(
+        result
+      );
+    } catch (
+      transactionError
+    ) {
       console.error(
-        "Onboarding Memory Error:",
-        memoryError
+        "Onboarding Mission Response Error:",
+        transactionError
+      );
+
+      /*
+       * Recover a transaction that committed before
+       * its HTTP response was received.
+       */
+      try {
+        const recoveredResult =
+          await getMissionOperation<OnboardingReplacementResult>(
+            userId,
+            operationId,
+            "onboarding_replace"
+          );
+
+        if (recoveredResult) {
+          return jsonResult(
+            recoveredResult
+          );
+        }
+      } catch (
+        recoveryError
+      ) {
+        console.error(
+          "Onboarding Mission Recovery Error:",
+          recoveryError
+        );
+      }
+
+      return NextResponse.json(
+        {
+          error:
+            "ASCEND temporarily lost contact with the mission service. Retry this same onboarding request safely.",
+
+          retryable: true,
+
+          operationId,
+        },
+        {
+          status: 503,
+        }
       );
     }
-
-    return NextResponse.json({
-      success: true,
-
-      recalibrated:
-        isRecalibration,
-
-      profile: {
-        identity:
-          answers.identity,
-
-        goal:
-          answers.goal,
-
-        northStar:
-          answers.northStar,
-      },
-
-      mission:
-        selectedMission,
-    });
   } catch (error) {
     console.error(
-      "Onboarding Error:",
+      "Onboarding Route Error:",
       error
     );
 
     return NextResponse.json(
       {
         error:
-          "Atlas could not complete your onboarding.",
+          "Atlas could not complete onboarding.",
       },
       {
         status: 500,

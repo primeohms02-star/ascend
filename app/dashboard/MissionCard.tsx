@@ -19,8 +19,17 @@ function TargetIcon() {
       stroke="currentColor"
       strokeWidth="1.8"
     >
-      <circle cx="12" cy="12" r="8" />
-      <circle cx="12" cy="12" r="4" />
+      <circle
+        cx="12"
+        cy="12"
+        r="8"
+      />
+
+      <circle
+        cx="12"
+        cy="12"
+        r="4"
+      />
 
       <path
         strokeLinecap="round"
@@ -94,37 +103,49 @@ export default function MissionCard({
           <p className="text-base font-semibold leading-7 text-white">
             {title}
           </p>
+
+          {!available && (
+            <p className="mt-2 text-sm leading-6 text-slate-400">
+              Start or update your ASCEND journey to give
+              Atlas the direction it needs to prepare your
+              next mission.
+            </p>
+          )}
         </div>
 
-        {available && description && (
-          <details className="group mt-4 rounded-2xl border border-white/10 bg-slate-950/30">
-            <summary className="cursor-pointer list-none px-4 py-3 text-sm font-medium text-slate-300 transition hover:text-white">
-              <span className="flex items-center justify-between gap-4">
-                Why this mission matters
+        {available &&
+          description && (
+            <details className="group mt-4 rounded-2xl border border-white/10 bg-slate-950/30">
+              <summary className="cursor-pointer list-none px-4 py-3 text-sm font-medium text-slate-300 transition hover:text-white">
+                <span className="flex items-center justify-between gap-4">
+                  Why this mission matters
 
-                <span className="text-slate-500 transition group-open:rotate-180">
-                  ↓
+                  <span className="text-slate-500 transition group-open:rotate-180">
+                    ↓
+                  </span>
                 </span>
-              </span>
-            </summary>
+              </summary>
 
-            <p className="border-t border-white/10 px-4 py-4 text-sm leading-6 text-slate-400">
-              {description}
-            </p>
-          </details>
-        )}
+              <p className="border-t border-white/10 px-4 py-4 text-sm leading-6 text-slate-400">
+                {description}
+              </p>
+            </details>
+          )}
 
         <div className="mt-5">
-          {available && missionId ? (
+          {available &&
+          missionId ? (
             <CompleteMissionButton
-              missionId={missionId}
+              missionId={
+                missionId
+              }
             />
           ) : (
             <Link
-              href="/compass"
-              className="group inline-flex items-center gap-2 rounded-xl border border-orange-400/25 bg-orange-400/10 px-4 py-2.5 text-sm font-semibold text-orange-300 transition hover:bg-orange-400/15"
+              href="/onboarding"
+              className="group inline-flex items-center gap-2 rounded-xl border border-orange-400/25 bg-orange-400/10 px-4 py-2.5 text-sm font-semibold text-orange-300 transition hover:bg-orange-400/15 focus:outline-none focus:ring-2 focus:ring-orange-400/50"
             >
-              Review Your Direction
+              Start a New Journey
 
               <ArrowIcon />
             </Link>

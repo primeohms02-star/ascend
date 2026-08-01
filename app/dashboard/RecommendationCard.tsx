@@ -1,6 +1,8 @@
 import Link from "next/link";
 
-import type { Recommendation } from "@/lib/engine/recommendations";
+import type {
+  Recommendation,
+} from "@/lib/engine/recommendations";
 
 type Props = {
   recommendation?: Recommendation;
@@ -55,19 +57,20 @@ export default function RecommendationCard({
         </p>
 
         <h2 className="mt-2 text-xl font-semibold text-white">
-          Review your direction
+          Start your ASCEND journey
         </h2>
 
         <p className="mt-2 text-sm leading-6 text-slate-400">
-          Open Compass to help Atlas determine the most
-          useful next action.
+          Complete onboarding so Atlas can understand your
+          identity, goal, challenges and North Star before
+          preparing a strategic mission.
         </p>
 
         <Link
-          href="/compass"
-          className="group mt-5 inline-flex items-center gap-2 rounded-xl bg-cyan-400 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300"
+          href="/onboarding"
+          className="group mt-5 inline-flex items-center gap-2 rounded-xl bg-cyan-400 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300 focus:outline-none focus:ring-2 focus:ring-cyan-300 focus:ring-offset-2 focus:ring-offset-slate-950"
         >
-          Open Compass
+          Start Your Journey
 
           <ArrowIcon />
         </Link>
@@ -112,10 +115,18 @@ export default function RecommendationCard({
         </p>
 
         <Link
-          href={recommendation.href}
+          href={
+            recommendation.href ===
+            "/compass"
+              ? "/onboarding"
+              : recommendation.href
+          }
           className="group mt-5 inline-flex items-center gap-2 rounded-xl bg-cyan-400 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300 focus:outline-none focus:ring-2 focus:ring-cyan-300 focus:ring-offset-2 focus:ring-offset-slate-950"
         >
-          {recommendation.action}
+          {recommendation.href ===
+          "/compass"
+            ? "Start Your Journey"
+            : recommendation.action}
 
           <ArrowIcon />
         </Link>

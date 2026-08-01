@@ -447,19 +447,31 @@ export default function CompassSVG() {
 
           const radius = 142;
 
-          const x =
-            250 +
-            Math.cos(
-              radians
-            ) *
-              radius;
+         /*
+ * Round calculated SVG coordinates so the server
+ * and browser produce identical attribute values.
+ */
+const x =
+  Number(
+    (
+      250 +
+      Math.cos(
+        radians
+      ) *
+        radius
+    ).toFixed(6)
+  );
 
-          const y =
-            250 +
-            Math.sin(
-              radians
-            ) *
-              radius;
+const y =
+  Number(
+    (
+      250 +
+      Math.sin(
+        radians
+      ) *
+        radius
+    ).toFixed(6)
+  );
 
           return (
             <text

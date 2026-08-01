@@ -2,10 +2,13 @@
 
 import {
   useEffect,
+  useRef,
   useState,
 } from "react";
 
-import { useRouter } from "next/navigation";
+import {
+  useRouter,
+} from "next/navigation";
 
 type CompleteMissionButtonProps = {
   missionId: string;
@@ -23,7 +26,8 @@ type CompletionResult = {
 export default function CompleteMissionButton({
   missionId,
 }: CompleteMissionButtonProps) {
-  const router = useRouter();
+  const router =
+    useRouter();
 
   const [loading, setLoading] =
     useState(false);
@@ -35,16 +39,32 @@ export default function CompleteMissionButton({
     useState("");
 
   const [result, setResult] =
-    useState<CompletionResult | null>(null);
+    useState<CompletionResult | null>(
+      null
+    );
+
+  /*
+   * The same operation ID is retained when a request
+   * fails and the user retries. This makes completion
+   * safe if Supabase committed before the response
+   * connection was lost.
+   */
+  const operationId =
+    useRef<string | null>(
+      null
+    );
 
   /*
    * Reset local state when Atlas supplies a new
-   * active mission after the Dashboard refreshes.
+   * authoritative active mission.
    */
   useEffect(() => {
     setCompleted(false);
     setError("");
     setResult(null);
+
+    operationId.current =
+      null;
   }, [missionId]);
 
   async function completeMission() {
@@ -60,21 +80,31 @@ export default function CompleteMissionButton({
       setLoading(true);
       setError("");
 
-      const response = await fetch(
-        "/api/missions/complete",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type":
-              "application/json",
-          },
-          body: JSON.stringify({
-            missionId,
-          }),
-        }
-      );
+      operationId.current ??=
+        crypto.randomUUID();
 
-      const data = await response.json();
+      const response =
+        await fetch(
+          "/api/missions/complete",
+          {
+            method: "POST",
+
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+
+            body: JSON.stringify({
+              missionId,
+
+              operationId:
+                operationId.current,
+            }),
+          }
+        );
+
+      const data =
+        await response.json();
 
       if (!response.ok) {
         throw new Error(
@@ -94,8 +124,10 @@ export default function CompleteMissionButton({
       });
 
       /*
-       * Refresh Server Component data without a
-       * full browser reload.
+       * Refresh Server Component data without a full
+       * browser reload. The dashboard will receive
+       * the replacement active mission created by
+       * the same database transaction.
        */
       router.refresh();
     } catch (error) {
@@ -113,7 +145,9 @@ export default function CompleteMissionButton({
     <div>
       <button
         type="button"
-        onClick={completeMission}
+        onClick={
+          completeMission
+        }
         disabled={
           loading ||
           completed ||
@@ -133,8 +167,13 @@ export default function CompleteMissionButton({
           aria-live="polite"
           className="mt-3 rounded-xl border border-emerald-400/20 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-300"
         >
-          +{result.xpAwarded ?? 0} XP earned
-          {result.ascension?.level
+          +
+          {result.xpAwarded ??
+            0}{" "}
+          XP earned
+
+          {result.ascension
+            ?.level
             ? ` • Level ${result.ascension.level}`
             : ""}
         </div>

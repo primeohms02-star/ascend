@@ -8,34 +8,69 @@ import {
 } from "@clerk/nextjs/server";
 
 import {
-  getProfile,
-} from "@/lib/supabase/profiles";
+  calculateAscension,
+} from "@/lib/atlas/ascension";
 
 import {
-  saveMission,
-} from "@/lib/supabase/atlasMission";
+  completeMissionLifecycle,
+  getMissionOperation,
+  type CompletionResult,
+} from "@/lib/atlas/missionService";
 
 import {
   getDailyMission,
 } from "@/lib/engine/mission";
 
 import {
-  calculateAscension,
-} from "@/lib/atlas/ascension";
-
-import {
-  completeMissionTransaction,
-} from "@/lib/atlas/completeMissionTransaction";
-
-import {
-  recordMemory,
-} from "@/lib/atlas/recordMemory";
-
-import {
-  updatePreference,
-} from "@/lib/atlas/opportunities/preferences";
+  getProfile,
+} from "@/lib/supabase/profiles";
 
 const MISSION_XP_REWARD = 15;
+
+const uuidPattern =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function jsonResult(
+  result: CompletionResult
+) {
+  const ascension =
+    calculateAscension(
+      Number(
+        result.progress
+          .ascension_score ?? 0
+      )
+    );
+
+  return NextResponse.json({
+    success: true,
+
+    operationId:
+      result.operationId,
+
+    replayed:
+      result.replayed,
+
+    completedMission:
+      result.completedMission,
+
+    nextMission:
+      result.activeMission,
+
+    xpAwarded:
+      result.xpAwarded,
+
+    progress:
+      result.progress,
+
+    momentum:
+      result.momentum,
+
+    streak:
+      result.streak,
+
+    ascension,
+  });
+}
 
 export async function POST(
   request: NextRequest
@@ -47,7 +82,8 @@ export async function POST(
     if (!userId) {
       return NextResponse.json(
         {
-          error: "Unauthorized",
+          error:
+            "Unauthorized",
         },
         {
           status: 401,
@@ -56,16 +92,17 @@ export async function POST(
     }
 
     const body =
-      await request.json();
-
-    const missionId =
-      body.missionId;
+      (await request.json()) as {
+        missionId?: unknown;
+        operationId?: unknown;
+      };
 
     if (
-      typeof missionId !==
+      typeof body.missionId !==
         "string" ||
-      missionId.trim().length ===
-        0
+      !uuidPattern.test(
+        body.missionId
+      )
     ) {
       return NextResponse.json(
         {
@@ -78,169 +115,154 @@ export async function POST(
       );
     }
 
-    /*
-     * Mission completion, XP, daily streak and
-     * momentum now succeed or fail together inside
-     * one database transaction.
-     */
-    const transaction =
-      await completeMissionTransaction(
-        userId,
-        missionId.trim(),
-        MISSION_XP_REWARD
-      );
-
-    if (!transaction) {
+    if (
+      typeof body.operationId !==
+        "string" ||
+      !uuidPattern.test(
+        body.operationId
+      )
+    ) {
       return NextResponse.json(
         {
           error:
-            "This mission has already been completed or is no longer active.",
+            "A valid operation ID is required.",
         },
         {
-          status: 409,
+          status: 400,
         }
       );
     }
 
-    const {
-      completedMission,
-      progress,
-      momentum,
-    } = transaction;
+    const missionId =
+      body.missionId;
 
-    const ascension =
-      calculateAscension(
-        Number(
-          progress
-            .ascension_score ?? 0
-        )
-      );
-
-    const profile =
-      await getProfile(userId);
+    const operationId =
+      body.operationId;
 
     /*
-     * Preference learning is useful but is not part
-     * of the critical completion transaction.
+     * A retry after a committed response timeout
+     * returns the stored result without invoking AI
+     * or awarding XP again.
      */
-    if (profile?.journey) {
-      try {
-        await updatePreference(
-          userId,
-          profile.journey,
-          3
-        );
-      } catch (
-        preferenceError
-      ) {
-        console.error(
-          "Mission Preference Update Error:",
-          preferenceError
-        );
-      }
-    }
-
-    /*
-     * Timeline memory is non-critical. Failure here
-     * must not reverse genuine completion progress.
-     */
-    try {
-      await recordMemory(
+    const existingResult =
+      await getMissionOperation<CompletionResult>(
         userId,
-        "mission",
-        "Mission Completed",
-        `Completed: ${completedMission.mission}`,
-        {
-          mission_id:
-            completedMission.id,
-
-          mission:
-            completedMission.mission,
-
-          xp_awarded:
-            MISSION_XP_REWARD,
-
-          current_streak:
-            momentum
-              .current_streak ?? 0,
-
-          longest_streak:
-            momentum
-              .longest_streak ?? 0,
-
-          completed_missions:
-            momentum
-              .completed_missions ?? 0,
-
-          ascension_score:
-            ascension.score,
-
-          ascension_level:
-            ascension.level,
-
-          completed_at:
-            completedMission
-              .completed_at ??
-            new Date().toISOString(),
-        }
+        operationId,
+        "complete"
       );
+
+    if (existingResult) {
+      return jsonResult(
+        existingResult
+      );
+    }
+
+    let journey:
+      | string
+      | null = null;
+
+    try {
+      const profile =
+        await getProfile(
+          userId
+        );
+
+      journey =
+        profile?.journey ??
+        null;
     } catch (
-      memoryError
+      profileError
     ) {
       console.error(
-        "Mission Memory Error:",
-        memoryError
+        "Mission Profile Read Error:",
+        profileError
       );
     }
 
     /*
-     * The next mission is generated only after the
-     * atomic completion transaction succeeds.
+     * AI generation happens before any lifecycle
+     * write. A generation failure leaves the active
+     * mission untouched.
      */
-    let nextMission = null;
+    const proposedMission =
+      await getDailyMission(
+        journey ??
+          "Purpose Discovery",
+        userId
+      );
 
-    if (profile) {
+    try {
+      const result =
+        await completeMissionLifecycle({
+          userId,
+          missionId,
+          operationId,
+
+          nextMission:
+            proposedMission.title,
+
+          nextReason:
+            proposedMission.description,
+
+          xpReward:
+            MISSION_XP_REWARD,
+        });
+
+      return jsonResult(
+        result
+      );
+    } catch (
+      transactionError
+    ) {
+      console.error(
+        "Mission Completion Response Error:",
+        transactionError
+      );
+
+      /*
+       * Supabase may commit before the HTTP response
+       * is lost. The operation record is the
+       * authoritative recovery proof.
+       */
       try {
-        const generatedMission =
-          await getDailyMission(
-            profile.journey ??
-              "Purpose Discovery",
-            userId
+        const recoveredResult =
+          await getMissionOperation<CompletionResult>(
+            userId,
+            operationId,
+            "complete"
           );
 
-        nextMission =
-          await saveMission(
-            userId,
-            generatedMission.title,
-            generatedMission.description
+        if (recoveredResult) {
+          return jsonResult(
+            recoveredResult
           );
+        }
       } catch (
-        missionError
+        recoveryError
       ) {
         console.error(
-          "Next Mission Generation Error:",
-          missionError
+          "Mission Completion Recovery Error:",
+          recoveryError
         );
       }
+
+      return NextResponse.json(
+        {
+          error:
+            "ASCEND temporarily lost contact with the mission service. Retry this same completion safely.",
+
+          retryable: true,
+
+          operationId,
+        },
+        {
+          status: 503,
+        }
+      );
     }
-
-    return NextResponse.json({
-      success: true,
-
-      completedMission,
-
-      xpAwarded:
-        MISSION_XP_REWARD,
-
-      ascension,
-
-      momentum,
-
-      nextMission,
-    });
   } catch (error) {
     console.error(
-      "Complete Mission API Error:",
+      "Mission Completion Route Error:",
       error
     );
 

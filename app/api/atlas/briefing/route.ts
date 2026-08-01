@@ -31,7 +31,8 @@ export async function GET() {
     if (!userId) {
       return NextResponse.json(
         {
-          error: "Unauthorized",
+          error:
+            "Unauthorized",
         },
         {
           status: 401,
@@ -55,10 +56,11 @@ export async function GET() {
       mission?.mission ??
       "No active mission";
 
-    const streak = Number(
-      atlas.momentum
-        ?.current_streak ?? 0
-    );
+    const streak =
+      Number(
+        atlas.momentum
+          ?.current_streak ?? 0
+      );
 
     const greeting =
       getGreeting();
@@ -68,7 +70,10 @@ export async function GET() {
         ? streak > 0
           ? `Your current mission is “${missionTitle}”. You have recorded ${streak} consecutive mission completions.`
           : `Your current mission is “${missionTitle}”.`
-        : "You currently have no active mission. Review your direction while Atlas prepares the next valid step.";
+        : atlas.profile
+              ?.north_star
+          ? "You currently have no active mission. Start your journey again to confirm your direction and allow Atlas to prepare a newly aligned mission."
+          : "You currently have no active mission. Complete onboarding so Atlas can understand your direction and prepare your first mission.";
 
     const notification =
       buildNotification({
@@ -78,8 +83,11 @@ export async function GET() {
 
     let oracle =
       mission
-        ? "Continue executing your current mission. Ordinary conversations will not replace it."
-        : "Atlas will create a mission only after a valid mission lifecycle event.";
+        ? "Continue executing your current mission. Atlas can help you research, plan and overcome obstacles while you remain responsible for completing it."
+        : atlas.profile
+              ?.north_star
+          ? "Your existing progress remains preserved. Updating your journey will replace only your current direction and prepare a new active mission."
+          : "Start your ASCEND journey to define your North Star and receive your first strategic mission.";
 
     let isNew = false;
 

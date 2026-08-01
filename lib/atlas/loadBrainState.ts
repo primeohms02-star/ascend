@@ -13,7 +13,7 @@ import {
 import {
   getActiveMission,
   getCompletedMissionTitles,
-} from "@/lib/supabase/atlasMission";
+} from "@/lib/atlas/missionService";
 
 import {
   getReflections,
@@ -43,13 +43,24 @@ export async function loadBrainState(
     progressRecord,
   ] = await Promise.all([
     loadProfile(userId),
+
     loadMomentum(userId),
-    getActiveMission(userId),
-    getReflections(userId),
+
+    getActiveMission(
+      userId
+    ),
+
+    getReflections(
+      userId
+    ),
+
     getCompletedMissionTitles(
       userId
     ),
-    getProgress(userId),
+
+    getProgress(
+      userId
+    ),
   ]);
 
   if (profileResult.error) {
@@ -98,6 +109,7 @@ export async function loadBrainState(
       momentum,
 
       strategy: null,
+
       knowledge: null,
 
       reflections,
@@ -107,6 +119,7 @@ export async function loadBrainState(
       activeMission,
 
       opportunities: [],
+
       recommendations: [],
 
       patterns: {

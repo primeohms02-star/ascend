@@ -7,7 +7,9 @@ import {
   useState,
 } from "react";
 
-import { motion } from "framer-motion";
+import {
+  motion,
+} from "framer-motion";
 
 import type {
   OnboardingAnswers,
@@ -15,7 +17,6 @@ import type {
 
 type Props = {
   answers: OnboardingAnswers;
-
   onComplete: () => void;
 };
 
@@ -45,9 +46,21 @@ export default function StepBuilding({
   const submitted =
     useRef(false);
 
+  /*
+   * Keep one operation ID for the initial request
+   * and every retry of this onboarding submission.
+   */
+  const operationId =
+    useRef<string | null>(
+      null
+    );
+
   const submitOnboarding =
     useCallback(async () => {
       setError("");
+
+      operationId.current ??=
+        crypto.randomUUID();
 
       try {
         const response =
@@ -61,9 +74,12 @@ export default function StepBuilding({
                   "application/json",
               },
 
-              body: JSON.stringify(
-                answers
-              ),
+              body: JSON.stringify({
+                ...answers,
+
+                operationId:
+                  operationId.current,
+              }),
             }
           );
 
@@ -125,7 +141,13 @@ export default function StepBuilding({
   ]);
 
   function retry() {
-    submitted.current = false;
+    /*
+     * Do not replace operationId here. Reusing it
+     * allows the server to return the original result
+     * if the transaction already committed.
+     */
+    submitted.current =
+      false;
 
     setActiveMessage(0);
 
@@ -185,6 +207,7 @@ export default function StepBuilding({
                       activeMessage
                         ? 1
                         : 0,
+
                     y:
                       index ===
                       activeMessage

@@ -15,8 +15,8 @@ import {
 } from "@/lib/supabase/memory";
 
 import {
-  getMissions,
-} from "@/lib/supabase/missions";
+  getMissionHistory,
+} from "@/lib/atlas/missionService";
 
 import {
   getReflections,
@@ -70,15 +70,29 @@ import {
   calculateAscension,
 } from "@/lib/atlas/ascension";
 
-export async function getCurrentUserBrain() {
-  const { userId } =
-    await auth();
+export async function getCurrentUserBrain(
+  authenticatedClerkId?: string
+) {
+  let clerkId =
+    authenticatedClerkId;
 
-  if (!userId) {
-    redirect("/sign-in");
+  /*
+   * Server routes that have already authenticated
+   * the user should pass the Clerk ID directly.
+   *
+   * The fallback remains for older pages such as
+   * /welcome that call this function directly.
+   */
+  if (!clerkId) {
+    const { userId } =
+      await auth();
+
+    if (!userId) {
+      redirect("/sign-in");
+    }
+
+    clerkId = userId;
   }
-
-  const clerkId = userId;
 
   /*
    * All context reads are performed without creating
@@ -92,12 +106,29 @@ export async function getCurrentUserBrain() {
     identityRecord,
     reflections,
   ] = await Promise.all([
-    getProfile(clerkId),
-    getMemory(clerkId),
-    getMissions(clerkId),
-    getProgress(clerkId),
-    getIdentity(clerkId),
-    getReflections(clerkId),
+    getProfile(
+      clerkId
+    ),
+
+    getMemory(
+      clerkId
+    ),
+
+    getMissionHistory(
+      clerkId
+    ),
+
+    getProgress(
+      clerkId
+    ),
+
+    getIdentity(
+      clerkId
+    ),
+
+    getReflections(
+      clerkId
+    ),
   ]);
 
   /*
@@ -107,8 +138,11 @@ export async function getCurrentUserBrain() {
    */
   const profile =
     storedProfile ?? {
-      clerk_id: clerkId,
+      clerk_id:
+        clerkId,
+
       full_name: "",
+
       email: "",
 
       journey:
@@ -117,33 +151,43 @@ export async function getCurrentUserBrain() {
       north_star: "",
 
       progress: 0,
+
       completed_steps: 0,
 
       current_streak: 0,
+
       longest_streak: 0,
-      last_mission_date: null,
+
+      last_mission_date:
+        null,
     };
 
   const memory =
     storedMemory ?? {
-      user_id: clerkId,
+      user_id:
+        clerkId,
 
       strengths: [],
+
       weaknesses: [],
 
-      last_mission: null,
+      last_mission:
+        null,
 
       current_streak: 0,
+
       longest_streak: 0,
 
       missions_completed: 0,
+
       missions_missed: 0,
     };
 
   const ascension =
     calculateAscension(
       Number(
-        progress.ascension_score ?? 0
+        progress
+          .ascension_score ?? 0
       )
     );
 
@@ -157,8 +201,11 @@ export async function getCurrentUserBrain() {
       ascension.level,
 
     discipline: 0,
+
     execution: 0,
+
     learning: 0,
+
     leadership: 0,
 
     confidence:
@@ -177,7 +224,8 @@ export async function getCurrentUserBrain() {
             "",
 
           mood:
-            reflection.mood ?? 3,
+            reflection.mood ??
+            3,
         })
       )
     );
@@ -210,7 +258,8 @@ export async function getCurrentUserBrain() {
 
   const currentStreak =
     Number(
-      memory.current_streak ?? 0
+      memory
+        .current_streak ?? 0
     );
 
   const journey =
@@ -223,6 +272,7 @@ export async function getCurrentUserBrain() {
 
   const brain = {
     journey,
+
     northStar,
 
     progress:
@@ -246,10 +296,13 @@ export async function getCurrentUserBrain() {
     ascension,
 
     memory,
+
     missions,
+
     reflections,
 
     patterns,
+
     adaptive,
 
     /*
@@ -257,6 +310,7 @@ export async function getCurrentUserBrain() {
      * components. It is not the current mission.
      */
     adaptiveMission,
+
     adaptiveOracle,
 
     prediction:
@@ -281,6 +335,7 @@ export async function getCurrentUserBrain() {
     dailyBriefing:
       buildDailyBriefing({
         journey,
+
         northStar,
 
         missionTitle:
@@ -301,11 +356,12 @@ export async function getCurrentUserBrain() {
     recommendations: [],
 
     /*
-     * This compatibility field now follows the
+     * This compatibility field follows the
      * authoritative active mission.
      */
     missionTitle:
-      activeMission?.mission ??
+      activeMission
+        ?.mission ??
       "No active mission",
 
     activeMission,

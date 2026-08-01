@@ -18,6 +18,10 @@ export async function getAtlasDashboard(
       clerkId
     );
 
+  /*
+   * Only an active mission can be displayed as the
+   * user's current mission.
+   */
   const currentMission =
     atlas.missions?.find(
       (mission: any) =>
@@ -54,7 +58,8 @@ export async function getAtlasDashboard(
       description:
         currentMission.mission,
 
-      priority: "high",
+      priority:
+        "high",
 
       category:
         "Current Mission",
@@ -70,44 +75,48 @@ export async function getAtlasDashboard(
   ) {
     recommendedNext = {
       id:
-        "define-north-star",
+        "start-journey",
 
       title:
         "Define Your North Star",
 
       description:
-        "Atlas needs a clear long-term direction before it can prepare a meaningful strategic mission.",
+        "Complete ASCEND onboarding so Atlas can understand your identity, immediate goal, challenges and long-term direction.",
 
-      priority: "high",
+      priority:
+        "high",
 
-      category: "Compass",
+      category:
+        "Direction",
 
       action:
-        "Open Compass",
+        "Start Your Journey",
 
-      href: "/compass",
+      href:
+        "/onboarding",
     };
   } else {
     recommendedNext = {
       id:
-        "explore-opportunities",
+        "recalibrate-direction",
 
       title:
-        "Explore Your Next Opportunity",
+        "Prepare Your Next Mission",
 
       description:
-        "Review opportunities connected to your direction while waiting for the next valid mission lifecycle event.",
+        "Start the journey process again to confirm or update your direction and allow Atlas to prepare a newly aligned mission.",
 
-      priority: "high",
+      priority:
+        "high",
 
       category:
-        "Opportunities",
+        "Direction",
 
       action:
-        "Explore Opportunities",
+        "Update Your Journey",
 
       href:
-        "/opportunities",
+        "/onboarding",
     };
   }
 
@@ -115,7 +124,7 @@ export async function getAtlasDashboard(
     atlas.timeline ?? [];
 
   /*
-   * Display the three most recent milestones.
+   * Display only the three most recent milestones.
    */
   const timelinePreview =
     completeTimeline.slice(
@@ -140,9 +149,9 @@ export async function getAtlasDashboard(
         "Discover your purpose",
 
       /*
-       * This is progress within the current Ascension
-       * level. It is not presented as a scientifically
-       * calculated North Star-alignment score.
+       * This represents progress within the current
+       * Ascension level, not a scientific measurement
+       * of alignment with the user's North Star.
        */
       alignment:
         ascension.progressPercent,
@@ -157,7 +166,7 @@ export async function getAtlasDashboard(
       description:
         currentMission
           ?.reason ??
-        "Use the recommended next action until a valid mission lifecycle event creates another mission.",
+        "Start or update your journey so Atlas can prepare a mission aligned with your current direction.",
 
       missionId:
         currentMission?.id ??
@@ -170,9 +179,6 @@ export async function getAtlasDashboard(
     },
 
     progress: {
-      /*
-       * Progress within the current Ascension level.
-       */
       progress:
         ascension.progressPercent,
 

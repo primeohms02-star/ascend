@@ -6,7 +6,7 @@ import {
 
 import {
   getCompletedMissionTitles,
-} from "@/lib/supabase/atlasMission";
+} from "@/lib/atlas/missionService";
 
 import {
   loadBrainState,

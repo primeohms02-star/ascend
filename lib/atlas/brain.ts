@@ -15,10 +15,6 @@ import {
 } from "./groq";
 
 import {
-  createMission,
-} from "./missions";
-
-import {
   loadConversation,
   loadAtlasMemories,
   saveUserMessage,
@@ -68,7 +64,9 @@ export async function loadAtlasContext(
   clerkId: string
 ) {
   const brain =
-    await getCurrentUserBrain();
+    await getCurrentUserBrain(
+      clerkId
+    );
 
   const [
     onboardingContext,
@@ -169,7 +167,9 @@ export async function buildAtlasContext(
 
   const mission =
     atlas.missions?.find(
-      (storedMission: any) =>
+      (
+        storedMission: any
+      ) =>
         storedMission.status ===
         "active"
     ) ?? null;
@@ -448,7 +448,9 @@ export async function runAtlasBrain({
     ...(atlas.memory ?? [])
       .slice(-12)
       .filter(
-        (storedMessage: any) =>
+        (
+          storedMessage: any
+        ) =>
           storedMessage.role ===
             "user" ||
           storedMessage.role ===
@@ -457,7 +459,9 @@ export async function runAtlasBrain({
             "atlas"
       )
       .map(
-        (storedMessage: any) => ({
+        (
+          storedMessage: any
+        ) => ({
           role:
             storedMessage.role ===
             "atlas"
@@ -498,7 +502,9 @@ export async function runAtlasBrain({
 
   const mission =
     atlas.missions?.find(
-      (storedMission: any) =>
+      (
+        storedMission: any
+      ) =>
         storedMission.status ===
         "active"
     ) ?? null;
@@ -618,8 +624,11 @@ Return only one concise fact or NONE.
 */
 
 export async function generateMission(
-  currentMission: string | null,
+  currentMission:
+    string | null,
+
   northStar: string,
+
   userMessage: string
 ) {
   const completion =
@@ -733,22 +742,4 @@ export async function persistAtlasResponse({
       fact
     );
   }
-}
-
-/*
-|--------------------------------------------------------------------------
-| CREATE MISSION
-|--------------------------------------------------------------------------
-*/
-
-export async function createNewMission(
-  clerkId: string,
-  mission: string,
-  reason: string
-) {
-  return await createMission(
-    clerkId,
-    mission,
-    reason
-  );
 }
