@@ -1,107 +1,261 @@
 "use client";
 
-import { motion } from "framer-motion";
+import {
+  motion,
+  useReducedMotion,
+} from "framer-motion";
 
 export default function NorthStar() {
+  const reduceMotion =
+    useReducedMotion();
+
   return (
     <motion.div
-      initial={{
-        opacity: 0,
-        scale: 0.8,
-      }}
+      initial={
+        reduceMotion
+          ? false
+          : {
+              opacity: 0,
+              scale: 0.75,
+            }
+      }
       animate={{
-        opacity: [0.85, 1, 0.85],
-        scale: [1, 1.12, 1],
+        opacity: 1,
+        scale: 1,
       }}
       transition={{
-        duration: 5,
-        repeat: Infinity,
-        ease: "easeInOut",
+        duration: 1.2,
+        ease: [
+          0.22,
+          1,
+          0.36,
+          1,
+        ],
       }}
-      className="absolute left-1/2 top-8 -translate-x-1/2"
+      className="pointer-events-none absolute left-1/2 top-7 -translate-x-1/2"
+      aria-hidden="true"
     >
-      <div className="relative flex items-center justify-center">
-
-        {/* Outer Glow */}
+      <div className="relative flex h-20 w-20 items-center justify-center">
+        {/* Wide restrained glow */}
 
         <motion.div
-          animate={{
-            scale: [1, 1.5, 1],
-            opacity: [0.15, 0.35, 0.15],
-          }}
+          animate={
+            reduceMotion
+              ? undefined
+              : {
+                  scale: [
+                    1,
+                    1.3,
+                    1,
+                  ],
+                  opacity: [
+                    0.16,
+                    0.32,
+                    0.16,
+                  ],
+                }
+          }
           transition={{
             duration: 5,
             repeat: Infinity,
             ease: "easeInOut",
           }}
-          className="absolute h-36 w-36 rounded-full bg-blue-400 blur-[70px]"
+          className="absolute h-28 w-28 rounded-full bg-blue-400/45 blur-[48px]"
         />
 
-        {/* Inner Glow */}
+        {/* Concentrated cyan light */}
 
         <motion.div
-          animate={{
-            scale: [1, 1.25, 1],
-            opacity: [0.4, 0.8, 0.4],
-          }}
+          animate={
+            reduceMotion
+              ? undefined
+              : {
+                  scale: [
+                    1,
+                    1.15,
+                    1,
+                  ],
+                  opacity: [
+                    0.38,
+                    0.72,
+                    0.38,
+                  ],
+                }
+          }
           transition={{
-            duration: 3,
+            duration: 3.5,
             repeat: Infinity,
             ease: "easeInOut",
           }}
-          className="absolute h-20 w-20 rounded-full bg-cyan-300 blur-[35px]"
+          className="absolute h-10 w-10 rounded-full bg-cyan-200/50 blur-[18px]"
         />
 
-        {/* Star Rays */}
+        {/* Long vertical ray */}
 
-        <div className="absolute h-20 w-[2px] rounded-full bg-gradient-to-b from-transparent via-blue-300 to-transparent opacity-70" />
+        <div className="absolute h-20 w-px bg-gradient-to-b from-transparent via-blue-200/80 to-transparent" />
 
-        <div className="absolute h-[2px] w-20 rounded-full bg-gradient-to-r from-transparent via-blue-300 to-transparent opacity-70" />
+        {/* Horizontal ray */}
 
-        <div className="absolute h-16 w-[2px] rotate-45 rounded-full bg-gradient-to-b from-transparent via-cyan-300 to-transparent opacity-50" />
+        <div className="absolute h-px w-20 bg-gradient-to-r from-transparent via-cyan-200/70 to-transparent" />
 
-        <div className="absolute h-16 w-[2px] -rotate-45 rounded-full bg-gradient-to-b from-transparent via-cyan-300 to-transparent opacity-50" />
+        {/* Diagonal rays */}
 
-        {/* Main Star */}
+        <div className="absolute h-14 w-px rotate-45 bg-gradient-to-b from-transparent via-blue-300/40 to-transparent" />
+
+        <div className="absolute h-14 w-px -rotate-45 bg-gradient-to-b from-transparent via-blue-300/40 to-transparent" />
+
+        {/* Premium four-point North Star */}
 
         <motion.svg
-          animate={{
-            rotate: [0, 3, 0, -3, 0],
-          }}
+          viewBox="0 0 100 100"
+          className="relative h-11 w-11 drop-shadow-[0_0_13px_rgba(125,211,252,0.95)]"
+          animate={
+            reduceMotion
+              ? undefined
+              : {
+                  rotate: [
+                    0,
+                    2,
+                    0,
+                    -2,
+                    0,
+                  ],
+                  scale: [
+                    1,
+                    1.06,
+                    1,
+                  ],
+                }
+          }
           transition={{
-            duration: 8,
+            duration: 7,
             repeat: Infinity,
             ease: "easeInOut",
           }}
-          width="34"
-          height="34"
-          viewBox="0 0 24 24"
-          fill="#F8FAFF"
-          className="relative drop-shadow-[0_0_18px_rgba(96,165,250,0.95)]"
         >
-          <path d="M12 2l2.7 6.2L21 9l-4.5 4.2L17.8 20 12 16.9 6.2 20l1.3-6.8L3 9l6.3-.8L12 2z" />
+          <defs>
+            <linearGradient
+              id="north-star-metal"
+              x1="0%"
+              y1="0%"
+              x2="100%"
+              y2="100%"
+            >
+              <stop
+                offset="0%"
+                stopColor="#FFFFFF"
+              />
+
+              <stop
+                offset="30%"
+                stopColor="#BFDBFE"
+              />
+
+              <stop
+                offset="58%"
+                stopColor="#60A5FA"
+              />
+
+              <stop
+                offset="82%"
+                stopColor="#E2E8F0"
+              />
+
+              <stop
+                offset="100%"
+                stopColor="#3B82F6"
+              />
+            </linearGradient>
+
+            <radialGradient
+              id="north-star-core"
+            >
+              <stop
+                offset="0%"
+                stopColor="#FFFFFF"
+              />
+
+              <stop
+                offset="45%"
+                stopColor="#BAE6FD"
+              />
+
+              <stop
+                offset="100%"
+                stopColor="#3B82F6"
+              />
+            </radialGradient>
+          </defs>
+
+          {/* Metallic star body */}
+
+          <path
+            d="M50 2 L58 41 L98 50 L58 59 L50 98 L42 59 L2 50 L42 41 Z"
+            fill="url(#north-star-metal)"
+            stroke="#E0F2FE"
+            strokeOpacity="0.85"
+            strokeWidth="1"
+          />
+
+          {/* Dimensional shaded side */}
+
+          <path
+            d="M50 2 L50 50 L42 41 Z"
+            fill="#FFFFFF"
+            opacity="0.78"
+          />
+
+          <path
+            d="M98 50 L50 50 L58 41 Z"
+            fill="#1D4ED8"
+            opacity="0.42"
+          />
+
+          <path
+            d="M50 98 L50 50 L58 59 Z"
+            fill="#172554"
+            opacity="0.52"
+          />
+
+          <path
+            d="M2 50 L50 50 L42 59 Z"
+            fill="#60A5FA"
+            opacity="0.42"
+          />
+
+          {/* Sapphire centre */}
+
+          <circle
+            cx="50"
+            cy="50"
+            r="7"
+            fill="url(#north-star-core)"
+            stroke="#FFFFFF"
+            strokeOpacity="0.72"
+          />
         </motion.svg>
 
-        {/* Orbiting Sparkles */}
+        {/* Slow calibration orbit */}
 
         <motion.div
-          animate={{
-            rotate: 360,
-          }}
+          animate={
+            reduceMotion
+              ? undefined
+              : {
+                  rotate: 360,
+                }
+          }
           transition={{
-            duration: 18,
+            duration: 24,
             repeat: Infinity,
             ease: "linear",
           }}
-          className="absolute h-24 w-24"
+          className="absolute h-[72px] w-[72px] rounded-full border border-dashed border-cyan-200/10"
         >
-          <div className="absolute left-0 top-1/2 h-1.5 w-1.5 rounded-full bg-white shadow-[0_0_10px_white]" />
+          <div className="absolute left-1/2 top-[-2px] h-1 w-1 -translate-x-1/2 rounded-full bg-cyan-100 shadow-[0_0_8px_white]" />
 
-          <div className="absolute right-0 top-1/3 h-1 w-1 rounded-full bg-cyan-200 shadow-[0_0_8px_white]" />
-
-          <div className="absolute bottom-0 left-1/2 h-1.5 w-1.5 rounded-full bg-blue-200 shadow-[0_0_10px_white]" />
+          <div className="absolute bottom-[5px] right-[8px] h-1 w-1 rounded-full bg-blue-200/80 shadow-[0_0_7px_rgba(147,197,253,0.9)]" />
         </motion.div>
-
       </div>
     </motion.div>
   );
