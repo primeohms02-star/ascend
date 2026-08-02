@@ -1,14 +1,37 @@
-import { RankedOpportunity } from "./types";
-import { OpportunityProfile } from "./profile";
-import { matchOpportunities } from "./matcher";
-import { recommend } from "./recommender";
-import { fetchAllSources } from "./connector";
-import { filterOpportunities } from "./filter";
-import { rankOpportunities } from "./intelligence";
+import type {
+  RankedOpportunity,
+} from "./types";
+
+import type {
+  OpportunityProfile,
+} from "./profile";
+
+import {
+  matchOpportunities,
+} from "./matcher";
+
+import {
+  recommend,
+} from "./recommender";
+
+import {
+  fetchAllSources,
+} from "./connector";
+
+import {
+  filterOpportunities,
+} from "./filter";
+
+import {
+  rankOpportunities,
+} from "./intelligence";
 
 export async function discoverOpportunities(
-  profile: OpportunityProfile
-): Promise<RankedOpportunity[]> {
+  profile:
+    OpportunityProfile
+): Promise<
+  RankedOpportunity[]
+> {
   console.log(
     "Searching opportunities for:",
     profile.careerGoal
@@ -25,7 +48,7 @@ export async function discoverOpportunities(
   const filtered =
     filterOpportunities(
       opportunities,
-      profile.careerGoal
+      profile
     );
 
   console.log(
@@ -45,7 +68,9 @@ export async function discoverOpportunities(
   );
 
   const recommended =
-    recommend(matched);
+    recommend(
+      matched
+    );
 
   console.log(
     "Recommended:",
@@ -63,10 +88,13 @@ export async function discoverOpportunities(
     ranked.length
   );
 
-  // Do not block the opportunity feed by writing
-  // every full description into Supabase here.
-  // The complete ranked collection is maintained
-  // by the server snapshot in service.ts.
+  /*
+   * Do not block the opportunity feed by
+   * writing every description into Supabase.
+   *
+   * The complete ranked collection is
+   * maintained by the server snapshot.
+   */
 
   return ranked;
 }

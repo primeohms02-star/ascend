@@ -55,9 +55,9 @@ import {
 } from "../compass/results";
 
 /*
-|--------------------------------------------------------------------------
+|---------------------------------------------------------------------------
 | LOAD COMPLETE ATLAS CONTEXT
-|--------------------------------------------------------------------------
+|---------------------------------------------------------------------------
 */
 
 export async function loadAtlasContext(
@@ -132,16 +132,23 @@ export async function loadAtlasContext(
     onboardingContext,
 
     strategy,
+
     knowledge,
+
     facts,
+
     reflection,
+
     momentum,
+
     journey,
 
     compassAnswers,
+
     compassResults,
 
     memory,
+
     atlasMemories,
 
     timeline:
@@ -152,9 +159,9 @@ export async function loadAtlasContext(
 }
 
 /*
-|--------------------------------------------------------------------------
+|---------------------------------------------------------------------------
 | BUILD COMPLETE SYSTEM PROMPT
-|--------------------------------------------------------------------------
+|---------------------------------------------------------------------------
 */
 
 export async function buildAtlasContext(
@@ -248,6 +255,19 @@ ${atlas.onboardingContext?.identity ?? "Not available"}
 Immediate goal:
 ${atlas.onboardingContext?.goal ?? "Not available"}
 
+Current declared skills:
+${
+  atlas.onboardingContext
+    ?.skills?.length
+    ? atlas.onboardingContext.skills
+        .map(
+          (skill) =>
+            `- ${skill}`
+        )
+        .join("\n")
+    : "Not available"
+}
+
 Current challenges:
 ${
   atlas.onboardingContext
@@ -264,7 +284,9 @@ ${
 Onboarding North Star:
 ${atlas.onboardingContext?.north_star ?? "Not available"}
 
-Use all onboarding fields together.
+Use all onboarding fields together, including the user's declared skills.
+
+Never assume the user has a skill that is not present in live onboarding context.
 
 Never generate strategy using only the final North Star sentence.
 
@@ -414,14 +436,15 @@ Every response should help the user understand, decide, reflect or act more clea
 
   return {
     ...atlas,
+
     systemPrompt,
   };
 }
 
 /*
-|--------------------------------------------------------------------------
+|---------------------------------------------------------------------------
 | RUN ATLAS
-|--------------------------------------------------------------------------
+|---------------------------------------------------------------------------
 */
 
 export async function runAtlasBrain({
@@ -429,6 +452,7 @@ export async function runAtlasBrain({
   message,
 }: {
   clerkId: string;
+
   message: string;
 }) {
   const atlas =
@@ -445,7 +469,9 @@ export async function runAtlasBrain({
         atlas.systemPrompt,
     },
 
-    ...(atlas.memory ?? [])
+    ...(
+      atlas.memory ?? []
+    )
       .slice(-12)
       .filter(
         (
@@ -487,9 +513,11 @@ export async function runAtlasBrain({
       model:
         "llama-3.3-70b-versatile",
 
-      temperature: 0.7,
+      temperature:
+        0.7,
 
-      max_completion_tokens: 600,
+      max_completion_tokens:
+        600,
 
       messages:
         conversation as any,
@@ -532,9 +560,9 @@ export async function runAtlasBrain({
 }
 
 /*
-|--------------------------------------------------------------------------
+|---------------------------------------------------------------------------
 | EXTRACT PERMANENT MEMORY
-|--------------------------------------------------------------------------
+|---------------------------------------------------------------------------
 */
 
 export async function extractPermanentMemory(
@@ -547,7 +575,8 @@ export async function extractPermanentMemory(
 
       temperature: 0,
 
-      max_completion_tokens: 120,
+      max_completion_tokens:
+        120,
 
       messages: [
         {
@@ -618,9 +647,9 @@ Return only one concise fact or NONE.
 }
 
 /*
-|--------------------------------------------------------------------------
+|---------------------------------------------------------------------------
 | GENERATE STRATEGIC MISSION
-|--------------------------------------------------------------------------
+|---------------------------------------------------------------------------
 */
 
 export async function generateMission(
@@ -638,7 +667,8 @@ export async function generateMission(
 
       temperature: 0,
 
-      max_completion_tokens: 220,
+      max_completion_tokens:
+        220,
 
       messages: [
         {
@@ -661,7 +691,8 @@ Rules:
 - Connect it directly to the user's long-term direction.
 - Make it specific, actionable and evidence-producing.
 - Keep it realistically completable within one day.
-- Respect all identity, goal and challenge context included in the user message.
+- Respect all identity, goal, declared skill and challenge context included in the user message.
+- Never assume the user has a skill they did not declare.
 - Do not repeat the current mission.
 
 If the current mission remains appropriate, return exactly:
@@ -702,9 +733,9 @@ ${userMessage}
 }
 
 /*
-|--------------------------------------------------------------------------
+|---------------------------------------------------------------------------
 | SAVE CONVERSATION
-|--------------------------------------------------------------------------
+|---------------------------------------------------------------------------
 */
 
 export async function persistAtlasResponse({
@@ -715,9 +746,13 @@ export async function persistAtlasResponse({
   fact,
 }: {
   clerkId: string;
+
   profile: any;
+
   userMessage: string;
+
   reply: string;
+
   fact: string;
 }) {
   await saveUserMessage(

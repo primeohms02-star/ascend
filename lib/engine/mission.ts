@@ -26,6 +26,7 @@ import {
 
 export type DailyMission = {
   title: string;
+
   description: string;
 };
 
@@ -37,69 +38,74 @@ function getMissionPath(
       .trim()
       .toLowerCase();
 
-  const paths: Record<
-    string,
-    MissionPath
-  > = {
-    explorer: "Explorer",
+  const paths:
+    Record<
+      string,
+      MissionPath
+    > = {
+      explorer:
+        "Explorer",
 
-    student: "Scholar",
-    scholar: "Scholar",
+      student:
+        "Scholar",
 
-    "recent graduate":
-      "Explorer",
+      scholar:
+        "Scholar",
 
-    "job seeker":
-      "Explorer",
+      "recent graduate":
+        "Explorer",
 
-    "early-career professional":
-      "Explorer",
+      "job seeker":
+        "Explorer",
 
-    "experienced professional":
-      "Leader",
+      "early-career professional":
+        "Explorer",
 
-    professional:
-      "Explorer",
+      "experienced professional":
+        "Leader",
 
-    "career changer":
-      "Pioneer",
+      professional:
+        "Explorer",
 
-    pioneer:
-      "Pioneer",
+      "career changer":
+        "Pioneer",
 
-    freelancer:
-      "Freelancer",
+      pioneer:
+        "Pioneer",
 
-    "founder or entrepreneur":
-      "Builder",
+      freelancer:
+        "Freelancer",
 
-    founder:
-      "Builder",
+      "founder or entrepreneur":
+        "Builder",
 
-    entrepreneur:
-      "Builder",
+      founder:
+        "Builder",
 
-    builder:
-      "Builder",
+      entrepreneur:
+        "Builder",
 
-    creator:
-      "Creator",
+      builder:
+        "Builder",
 
-    "researcher or academic":
-      "Scholar",
+      creator:
+        "Creator",
 
-    "social impact professional":
-      "Impact",
+      "researcher or academic":
+        "Scholar",
 
-    "skilled or technical professional":
-      "Explorer",
+      "social impact professional":
+        "Impact",
 
-    exploring:
-      "Explorer",
+      "skilled or technical professional":
+        "Explorer",
 
-    leader:
-      "Leader",
-  };
+      exploring:
+        "Explorer",
+
+      leader:
+        "Leader",
+    };
 
   return (
     paths[normalized] ??
@@ -137,6 +143,7 @@ function parseMission(
 
   return {
     title,
+
     description,
   };
 }
@@ -145,15 +152,40 @@ async function loadOnboardingContext(
   userId: string
 ): Promise<string> {
   /*
-   * Structured onboarding is authoritative for users
-   * who complete the current onboarding flow.
+   * Structured onboarding is authoritative
+   * for users who complete the current flow.
    */
+
   const structuredContext =
     await loadStructuredOnboardingContext(
       userId
     );
 
-  if (structuredContext) {
+  if (
+    structuredContext
+  ) {
+    const skills =
+      structuredContext
+        .skills.length > 0
+        ? structuredContext.skills
+            .map(
+              (skill) =>
+                `- ${skill}`
+            )
+            .join("\n")
+        : "- Still being identified";
+
+    const challenges =
+      structuredContext
+        .challenges.length > 0
+        ? structuredContext.challenges
+            .map(
+              (challenge) =>
+                `- ${challenge}`
+            )
+            .join("\n")
+        : "- None provided";
+
     return `
 Identity:
 ${structuredContext.identity}
@@ -161,13 +193,11 @@ ${structuredContext.identity}
 Immediate goal:
 ${structuredContext.goal}
 
+Current declared skills:
+${skills}
+
 Current challenges:
-${structuredContext.challenges
-  .map(
-    (challenge) =>
-      `- ${challenge}`
-  )
-  .join("\n")}
+${challenges}
 
 North Star:
 ${structuredContext.north_star}
@@ -175,16 +205,21 @@ ${structuredContext.north_star}
   }
 
   /*
-   * Compatibility fallback for users who completed
-   * onboarding before structured storage existed.
+   * Compatibility fallback for users who
+   * completed onboarding before structured
+   * storage existed.
    */
+
   const {
     data,
     error,
   } = await supabaseServer
     .from("atlas_facts")
     .select("fact")
-    .eq("user_id", userId)
+    .eq(
+      "user_id",
+      userId
+    )
     .ilike(
       "fact",
       "%Immediate goal:%"
@@ -193,9 +228,12 @@ ${structuredContext.north_star}
       "fact",
       "%Current challenges:%"
     )
-    .order("created_at", {
-      ascending: false,
-    })
+    .order(
+      "created_at",
+      {
+        ascending: false,
+      }
+    )
     .limit(1)
     .maybeSingle();
 
@@ -208,7 +246,9 @@ ${structuredContext.north_star}
     throw error;
   }
 
-  return data?.fact ?? "";
+  return (
+    data?.fact ?? ""
+  );
 }
 
 function getAvailableMissions(
@@ -235,8 +275,11 @@ function getAvailableMissions(
 }
 
 function selectFallbackMission(
-  available: MissionTemplate[],
-  path: MissionPath
+  available:
+    MissionTemplate[],
+
+  path:
+    MissionPath
 ): DailyMission {
   if (
     available.length > 0
@@ -363,9 +406,11 @@ export async function getDailyMission(
     );
 
   /*
-   * A discipline priority should avoid unnecessarily
-   * complex missions while momentum is rebuilding.
+   * A discipline priority should avoid
+   * unnecessarily complex missions while
+   * momentum is rebuilding.
    */
+
   if (
     decision.priority ===
     "discipline"
@@ -391,27 +436,29 @@ export async function getDailyMission(
       .join("\n");
 
   try {
-    const { groq } =
-      await import(
-        "@/lib/atlas/groq"
-      );
+    const {
+      groq,
+    } = await import(
+      "@/lib/atlas/groq"
+    );
 
     const completion =
-      await groq.chat.completions.create(
-        {
-          model:
-            "llama-3.3-70b-versatile",
+      await groq.chat.completions.create({
+        model:
+          "llama-3.3-70b-versatile",
 
-          temperature: 0.35,
+        temperature:
+          0.35,
 
-          max_completion_tokens: 260,
+        max_completion_tokens:
+          260,
 
-          messages: [
-            {
-              role:
-                "system",
+        messages: [
+          {
+            role:
+              "system",
 
-              content: `
+            content: `
 You are ATLAS, the strategic mission engine inside ASCEND.
 
 Create exactly ONE mission for today.
@@ -465,7 +512,8 @@ ${
 RULES
 
 - The mission must directly advance the user's North Star.
-- Respect the user's identity, immediate goal and challenges.
+- Respect the user's identity, immediate goal, declared skills and challenges.
+- Never assume the user has a skill they did not declare.
 - It must be realistically completable within one day.
 - It must produce visible evidence of progress.
 - It must contain one coherent outcome, not several unrelated tasks.
@@ -484,15 +532,14 @@ TITLE:
 DESCRIPTION:
 ...
 `,
-            },
-          ],
-        }
-      );
+          },
+        ],
+      });
 
     const text =
       completion.choices[0]
-        ?.message?.content ??
-      "";
+        ?.message
+        ?.content ?? "";
 
     const generatedMission =
       parseMission(

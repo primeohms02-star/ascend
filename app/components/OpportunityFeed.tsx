@@ -8,7 +8,13 @@ import {
 
 import OpportunityCard from "@/app/opportunities/components/OpportunityCard";
 
-import { explainOpportunity } from "@/lib/atlas/opportunities/explainer";
+import {
+  explainOpportunity,
+} from "@/lib/atlas/opportunities/explainer";
+
+import type {
+  OpportunityProfile,
+} from "@/lib/atlas/opportunities/profile";
 
 import type {
   RankedOpportunity,
@@ -20,7 +26,12 @@ type Props = {
 };
 
 type OpportunityPageResponse = {
-  opportunities: RankedOpportunity[];
+  opportunities:
+    RankedOpportunity[];
+
+  profile:
+    OpportunityProfile;
+
   total: number;
   page: number;
   pageSize: number;
@@ -30,46 +41,6 @@ type OpportunityPageResponse = {
 };
 
 const PAGE_SIZE = 10;
-
-const temporaryProfile = {
-  clerkId: "temporary",
-
-  careerGoal: "AI Engineer",
-
-  skills: [
-    "Python",
-    "React",
-    "Git",
-    "TypeScript",
-  ],
-
-  interests: [
-    "Artificial Intelligence",
-    "Technology",
-  ],
-
-  experienceLevel:
-    "intermediate" as const,
-
-  education: "",
-
-  location: "Nigeria",
-
-  preferredCountries: [
-    "Nigeria",
-  ],
-
-  remoteOnly: false,
-
-  industries: [
-    "Technology",
-    "AI",
-  ],
-
-  languages: [
-    "English",
-  ],
-};
 
 function LoadingCard() {
   return (
@@ -168,20 +139,39 @@ export default function OpportunityFeed({
   const feedTopRef =
     useRef<HTMLDivElement>(null);
 
-  const [opportunities, setOpportunities] =
-    useState<RankedOpportunity[]>([]);
+  const [
+    opportunities,
+    setOpportunities,
+  ] = useState<
+    RankedOpportunity[]
+  >([]);
 
-  const [total, setTotal] =
-    useState(0);
+  const [
+    profile,
+    setProfile,
+  ] = useState<
+    OpportunityProfile | null
+  >(null);
 
-  const [page, setPage] =
-    useState(1);
+  const [
+    total,
+    setTotal,
+  ] = useState(0);
 
-  const [totalPages, setTotalPages] =
-    useState(1);
+  const [
+    page,
+    setPage,
+  ] = useState(1);
 
-  const [hasNextPage, setHasNextPage] =
-    useState(false);
+  const [
+    totalPages,
+    setTotalPages,
+  ] = useState(1);
+
+  const [
+    hasNextPage,
+    setHasNextPage,
+  ] = useState(false);
 
   const [
     hasPreviousPage,
@@ -193,35 +183,50 @@ export default function OpportunityFeed({
     setDebouncedSearch,
   ] = useState(search);
 
-  const [loading, setLoading] =
-    useState(true);
+  const [
+    loading,
+    setLoading,
+  ] = useState(true);
 
-  const [error, setError] =
-    useState("");
+  const [
+    error,
+    setError,
+  ] = useState("");
 
-  const [reloadKey, setReloadKey] =
-    useState(0);
+  const [
+    reloadKey,
+    setReloadKey,
+  ] = useState(0);
 
-  // Reset pagination whenever the selected
-  // category or search text changes.
+  /*
+   * Reset pagination whenever
+   * the filter or search changes.
+   */
 
   useEffect(() => {
     setPage(1);
   }, [search, filter]);
 
-  // Avoid making an API request on every
-  // individual search keystroke.
+  /*
+   * Avoid making a request after
+   * every individual keystroke.
+   */
 
   useEffect(() => {
-    const timeout = window.setTimeout(
-      () => {
-        setDebouncedSearch(search.trim());
-      },
-      350
-    );
+    const timeout =
+      window.setTimeout(
+        () => {
+          setDebouncedSearch(
+            search.trim()
+          );
+        },
+        350
+      );
 
     return () => {
-      window.clearTimeout(timeout);
+      window.clearTimeout(
+        timeout
+      );
     };
   }, [search]);
 
@@ -236,8 +241,12 @@ export default function OpportunityFeed({
 
         const params =
           new URLSearchParams({
-            page: String(page),
-            limit: String(PAGE_SIZE),
+            page:
+              String(page),
+
+            limit:
+              String(PAGE_SIZE),
+
             filter,
           });
 
@@ -248,13 +257,17 @@ export default function OpportunityFeed({
           );
         }
 
-        const response = await fetch(
-          `/api/opportunities?${params.toString()}`,
-          {
-            signal: controller.signal,
-            cache: "no-store",
-          }
-        );
+        const response =
+          await fetch(
+            `/api/opportunities?${params.toString()}`,
+            {
+              signal:
+                controller.signal,
+
+              cache:
+                "no-store",
+            }
+          );
 
         const data =
           await response.json();
@@ -270,6 +283,13 @@ export default function OpportunityFeed({
           !data ||
           !Array.isArray(
             data.opportunities
+          ) ||
+          !data.profile ||
+          typeof data.profile
+            .careerGoal !==
+            "string" ||
+          !Array.isArray(
+            data.profile.skills
           )
         ) {
           throw new Error(
@@ -278,15 +298,24 @@ export default function OpportunityFeed({
         }
 
         const result =
-          data as OpportunityPageResponse;
+          data as
+            OpportunityPageResponse;
 
         setOpportunities(
           result.opportunities
         );
 
-        setTotal(result.total);
+        setProfile(
+          result.profile
+        );
 
-        setPage(result.page);
+        setTotal(
+          result.total
+        );
+
+        setPage(
+          result.page
+        );
 
         setTotalPages(
           result.totalPages
@@ -301,8 +330,10 @@ export default function OpportunityFeed({
         );
       } catch (error) {
         if (
-          error instanceof DOMException &&
-          error.name === "AbortError"
+          error instanceof
+            DOMException &&
+          error.name ===
+            "AbortError"
         ) {
           return;
         }
@@ -314,7 +345,8 @@ export default function OpportunityFeed({
         );
       } finally {
         if (
-          !controller.signal.aborted
+          !controller.signal
+            .aborted
         ) {
           setLoading(false);
         }
@@ -338,7 +370,8 @@ export default function OpportunityFeed({
   ) {
     if (
       nextPage < 1 ||
-      nextPage > totalPages ||
+      nextPage >
+        totalPages ||
       nextPage === page
     ) {
       return;
@@ -348,10 +381,11 @@ export default function OpportunityFeed({
 
     window.requestAnimationFrame(
       () => {
-        feedTopRef.current?.scrollIntoView({
-          behavior: "smooth",
-          block: "start",
-        });
+        feedTopRef.current
+          ?.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+          });
       }
     );
   }
@@ -373,8 +407,9 @@ export default function OpportunityFeed({
             </span>
 
             <p className="text-sm text-cyan-200">
-              Atlas is discovering and
-              ranking matched opportunities...
+              Atlas is discovering
+              and ranking matched
+              opportunities...
             </p>
           </div>
         </div>
@@ -393,7 +428,8 @@ export default function OpportunityFeed({
         className="scroll-mt-24 rounded-3xl border border-rose-400/20 bg-rose-400/[0.06] px-6 py-12 text-center"
       >
         <h3 className="text-lg font-semibold text-white">
-          Atlas could not load opportunities
+          Atlas could not load
+          opportunities
         </h3>
 
         <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-rose-200/80">
@@ -429,26 +465,63 @@ export default function OpportunityFeed({
         </div>
 
         <h3 className="mt-5 text-xl font-semibold text-white">
-          No matching opportunities
+          No matching
+          opportunities
         </h3>
 
         <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-400">
-          Try changing your search or
-          selecting a different filter.
+          Try changing your search
+          or selecting a different
+          filter.
         </p>
       </div>
     );
   }
 
-  const firstResult =
-    (page - 1) * PAGE_SIZE + 1;
+  if (!profile) {
+    return (
+      <div
+        ref={feedTopRef}
+        className="scroll-mt-24 rounded-3xl border border-rose-400/20 bg-rose-400/[0.06] px-6 py-12 text-center"
+      >
+        <h3 className="text-lg font-semibold text-white">
+          Atlas could not prepare
+          your opportunity profile
+        </h3>
 
-  const lastResult = Math.min(
-    firstResult +
-      opportunities.length -
-      1,
-    total
-  );
+        <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-rose-200/80">
+          Please reload the page and
+          try again.
+        </p>
+
+        <button
+          type="button"
+          onClick={() =>
+            setReloadKey(
+              (current) =>
+                current + 1
+            )
+          }
+          className="mt-6 rounded-xl bg-rose-400 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-rose-300"
+        >
+          Try Again
+        </button>
+      </div>
+    );
+  }
+
+  const firstResult =
+    (page - 1) *
+      PAGE_SIZE +
+    1;
+
+  const lastResult =
+    Math.min(
+      firstResult +
+        opportunities.length -
+        1,
+      total
+    );
 
   return (
     <div
@@ -462,7 +535,8 @@ export default function OpportunityFeed({
         >
           Showing{" "}
           <span className="font-semibold text-white">
-            {firstResult}–{lastResult}
+            {firstResult}–
+            {lastResult}
           </span>{" "}
           of{" "}
           <span className="font-semibold text-white">
@@ -480,7 +554,8 @@ export default function OpportunityFeed({
           )}
 
           <span className="rounded-full border border-slate-700 bg-slate-900/60 px-3 py-1 text-xs font-medium text-slate-300">
-            Page {page} of {totalPages}
+            Page {page} of{" "}
+            {totalPages}
           </span>
         </div>
       </div>
@@ -491,7 +566,7 @@ export default function OpportunityFeed({
             const insight =
               explainOpportunity(
                 opportunity,
-                temporaryProfile
+                profile
               );
 
             return (
@@ -515,7 +590,9 @@ export default function OpportunityFeed({
           <button
             type="button"
             onClick={() =>
-              changePage(page - 1)
+              changePage(
+                page - 1
+              )
             }
             disabled={
               !hasPreviousPage
@@ -533,16 +610,21 @@ export default function OpportunityFeed({
             </p>
 
             <p className="mt-1 text-xs text-slate-500">
-              {total} matched opportunities
+              {total} matched
+              opportunities
             </p>
           </div>
 
           <button
             type="button"
             onClick={() =>
-              changePage(page + 1)
+              changePage(
+                page + 1
+              )
             }
-            disabled={!hasNextPage}
+            disabled={
+              !hasNextPage
+            }
             className="inline-flex items-center justify-center gap-2 rounded-xl bg-cyan-400 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:opacity-40"
           >
             Next

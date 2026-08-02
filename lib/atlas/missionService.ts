@@ -14,12 +14,21 @@ export type MissionStatus =
 
 export type MissionRecord = {
   id: string;
+
   user_id: string;
+
   mission: string;
+
   reason: string | null;
-  status: MissionStatus | null;
-  created_at: string | null;
-  completed_at: string | null;
+
+  status:
+    MissionStatus | null;
+
+  created_at:
+    string | null;
+
+  completed_at:
+    string | null;
 };
 
 export type MissionOperationType =
@@ -28,53 +37,90 @@ export type MissionOperationType =
 
 export type MissionOperationResult = {
   operationId: string;
+
   replayed: boolean;
-  activeMission: MissionRecord;
+
+  activeMission:
+    MissionRecord;
 };
 
 export type CompletionResult =
   MissionOperationResult & {
-    completedMission: MissionRecord;
+    completedMission:
+      MissionRecord;
 
     xpAwarded: number;
 
     progress: {
       user_id: string;
-      ascension_score: number;
+
+      ascension_score:
+        number;
+
       level: number;
-      updated_at?: string | null;
+
+      updated_at?:
+        string | null;
     };
 
     momentum: {
       user_id: string;
-      current_streak: number | null;
-      longest_streak: number | null;
-      completed_missions: number | null;
-      skipped_missions: number | null;
-      ascension_score: number | null;
-      updated_at?: string | null;
+
+      current_streak:
+        number | null;
+
+      longest_streak:
+        number | null;
+
+      completed_missions:
+        number | null;
+
+      skipped_missions:
+        number | null;
+
+      ascension_score:
+        number | null;
+
+      updated_at?:
+        string | null;
     };
 
     streak: {
       user_id: string;
-      current_streak: number;
-      longest_streak: number;
-      last_mission_date: string | null;
-      updated_at?: string | null;
+
+      current_streak:
+        number;
+
+      longest_streak:
+        number;
+
+      last_mission_date:
+        string | null;
+
+      updated_at?:
+        string | null;
     };
   };
 
 export type OnboardingReplacementResult =
   MissionOperationResult & {
-    isRecalibration: boolean;
-    previousMission: MissionRecord | null;
+    isRecalibration:
+      boolean;
+
+    previousMission:
+      MissionRecord | null;
   };
 
 type StoredOperation = {
   operation_id: string;
+
   user_id: string;
-  operation_type: MissionOperationType;
-  result: MissionOperationResult;
+
+  operation_type:
+    MissionOperationType;
+
+  result:
+    MissionOperationResult;
 };
 
 function cleanRequired(
@@ -94,35 +140,39 @@ function cleanRequired(
 }
 
 export async function getMissionOperation<
-  Result extends MissionOperationResult,
+  Result extends
+    MissionOperationResult,
 >(
   userId: string,
   operationId: string,
-  operationType: MissionOperationType
+  operationType:
+    MissionOperationType
 ): Promise<Result | null> {
-  const { data, error } =
-    await (
-      supabaseServer as any
+  const {
+    data,
+    error,
+  } = await (
+    supabaseServer as any
+  )
+    .from(
+      "atlas_mission_operations"
     )
-      .from(
-        "atlas_mission_operations"
-      )
-      .select(
-        "operation_id,user_id,operation_type,result"
-      )
-      .eq(
-        "operation_id",
-        operationId
-      )
-      .eq(
-        "user_id",
-        userId
-      )
-      .eq(
-        "operation_type",
-        operationType
-      )
-      .maybeSingle();
+    .select(
+      "operation_id,user_id,operation_type,result"
+    )
+    .eq(
+      "operation_id",
+      operationId
+    )
+    .eq(
+      "user_id",
+      userId
+    )
+    .eq(
+      "operation_type",
+      operationType
+    )
+    .maybeSingle();
 
   if (error) {
     console.error(
@@ -134,7 +184,9 @@ export async function getMissionOperation<
   }
 
   const operation =
-    data as StoredOperation | null;
+    data as
+      | StoredOperation
+      | null;
 
   if (!operation) {
     return null;
@@ -142,26 +194,31 @@ export async function getMissionOperation<
 
   return {
     ...operation.result,
+
     replayed: true,
   } as Result;
 }
 
 export async function getActiveMission(
   userId: string
-): Promise<MissionRecord | null> {
-  const { data, error } =
-    await supabaseServer
-      .from("atlas_missions")
-      .select("*")
-      .eq(
-        "user_id",
-        userId
-      )
-      .eq(
-        "status",
-        "active"
-      )
-      .maybeSingle();
+): Promise<
+  MissionRecord | null
+> {
+  const {
+    data,
+    error,
+  } = await supabaseServer
+    .from("atlas_missions")
+    .select("*")
+    .eq(
+      "user_id",
+      userId
+    )
+    .eq(
+      "status",
+      "active"
+    )
+    .maybeSingle();
 
   if (error) {
     console.error(
@@ -179,23 +236,27 @@ export async function getActiveMission(
 
 export async function getLatestMission(
   userId: string
-): Promise<MissionRecord | null> {
-  const { data, error } =
-    await supabaseServer
-      .from("atlas_missions")
-      .select("*")
-      .eq(
-        "user_id",
-        userId
-      )
-      .order(
-        "created_at",
-        {
-          ascending: false,
-        }
-      )
-      .limit(1)
-      .maybeSingle();
+): Promise<
+  MissionRecord | null
+> {
+  const {
+    data,
+    error,
+  } = await supabaseServer
+    .from("atlas_missions")
+    .select("*")
+    .eq(
+      "user_id",
+      userId
+    )
+    .order(
+      "created_at",
+      {
+        ascending: false,
+      }
+    )
+    .limit(1)
+    .maybeSingle();
 
   if (error) {
     console.error(
@@ -213,21 +274,25 @@ export async function getLatestMission(
 
 export async function getMissionHistory(
   userId: string
-): Promise<MissionRecord[]> {
-  const { data, error } =
-    await supabaseServer
-      .from("atlas_missions")
-      .select("*")
-      .eq(
-        "user_id",
-        userId
-      )
-      .order(
-        "created_at",
-        {
-          ascending: false,
-        }
-      );
+): Promise<
+  MissionRecord[]
+> {
+  const {
+    data,
+    error,
+  } = await supabaseServer
+    .from("atlas_missions")
+    .select("*")
+    .eq(
+      "user_id",
+      userId
+    )
+    .order(
+      "created_at",
+      {
+        ascending: false,
+      }
+    );
 
   if (error) {
     console.error(
@@ -246,26 +311,28 @@ export async function getMissionHistory(
 export async function getCompletedMissionTitles(
   userId: string
 ): Promise<string[]> {
-  const { data, error } =
-    await supabaseServer
-      .from("atlas_missions")
-      .select(
-        "mission,completed_at"
-      )
-      .eq(
-        "user_id",
-        userId
-      )
-      .eq(
-        "status",
-        "completed"
-      )
-      .order(
-        "completed_at",
-        {
-          ascending: true,
-        }
-      );
+  const {
+    data,
+    error,
+  } = await supabaseServer
+    .from("atlas_missions")
+    .select(
+      "mission,completed_at"
+    )
+    .eq(
+      "user_id",
+      userId
+    )
+    .eq(
+      "status",
+      "completed"
+    )
+    .order(
+      "completed_at",
+      {
+        ascending: true,
+      }
+    );
 
   if (error) {
     console.error(
@@ -287,75 +354,92 @@ export async function getCompletedMissionTitles(
 export async function replaceMissionForOnboarding(
   input: {
     userId: string;
+
     operationId: string;
+
     identity: string;
+
     goal: string;
+
+    skills: string[];
+
     challenges: string[];
+
     northStar: string;
+
     directionFact: string;
-    previousDirectionFact: string | null;
+
+    previousDirectionFact:
+      string | null;
+
     mission: string;
+
     reason: string;
   }
 ): Promise<OnboardingReplacementResult> {
-  const { data, error } =
-    await (
-      supabaseServer as any
-    ).rpc(
-      "replace_atlas_mission",
-      {
-        p_user_id:
-          cleanRequired(
-            input.userId,
-            "User ID"
-          ),
+  const {
+    data,
+    error,
+  } = await (
+    supabaseServer as any
+  ).rpc(
+    "replace_atlas_mission",
+    {
+      p_user_id:
+        cleanRequired(
+          input.userId,
+          "User ID"
+        ),
 
-        p_operation_id:
-          input.operationId,
+      p_operation_id:
+        input.operationId,
 
-        p_identity:
-          cleanRequired(
-            input.identity,
-            "Identity"
-          ),
+      p_identity:
+        cleanRequired(
+          input.identity,
+          "Identity"
+        ),
 
-        p_goal:
-          cleanRequired(
-            input.goal,
-            "Goal"
-          ),
+      p_goal:
+        cleanRequired(
+          input.goal,
+          "Goal"
+        ),
 
-        p_challenges:
-          input.challenges,
+      p_skills:
+        input.skills,
 
-        p_north_star:
-          cleanRequired(
-            input.northStar,
-            "North Star"
-          ),
+      p_challenges:
+        input.challenges,
 
-        p_direction_fact:
-          cleanRequired(
-            input.directionFact,
-            "Direction fact"
-          ),
+      p_north_star:
+        cleanRequired(
+          input.northStar,
+          "North Star"
+        ),
 
-        p_previous_direction_fact:
-          input.previousDirectionFact,
+      p_direction_fact:
+        cleanRequired(
+          input.directionFact,
+          "Direction fact"
+        ),
 
-        p_mission:
-          cleanRequired(
-            input.mission,
-            "Mission"
-          ),
+      p_previous_direction_fact:
+        input.previousDirectionFact,
 
-        p_reason:
-          cleanRequired(
-            input.reason,
-            "Mission reason"
-          ),
-      }
-    );
+      p_mission:
+        cleanRequired(
+          input.mission,
+          "Mission"
+        ),
+
+      p_reason:
+        cleanRequired(
+          input.reason,
+          "Mission reason"
+        ),
+    }
+  );
 
   if (error) {
     console.error(
@@ -379,52 +463,59 @@ export async function replaceMissionForOnboarding(
 export async function completeMissionLifecycle(
   input: {
     userId: string;
+
     missionId: string;
+
     operationId: string;
+
     nextMission: string;
+
     nextReason: string;
+
     xpReward: number;
   }
 ): Promise<CompletionResult> {
-  const { data, error } =
-    await (
-      supabaseServer as any
-    ).rpc(
-      "complete_atlas_mission",
-      {
-        p_user_id:
-          cleanRequired(
-            input.userId,
-            "User ID"
-          ),
+  const {
+    data,
+    error,
+  } = await (
+    supabaseServer as any
+  ).rpc(
+    "complete_atlas_mission",
+    {
+      p_user_id:
+        cleanRequired(
+          input.userId,
+          "User ID"
+        ),
 
-        p_mission_id:
-          input.missionId,
+      p_mission_id:
+        input.missionId,
 
-        p_operation_id:
-          input.operationId,
+      p_operation_id:
+        input.operationId,
 
-        p_next_mission:
-          cleanRequired(
-            input.nextMission,
-            "Next mission"
-          ),
+      p_next_mission:
+        cleanRequired(
+          input.nextMission,
+          "Next mission"
+        ),
 
-        p_next_reason:
-          cleanRequired(
-            input.nextReason,
-            "Next mission reason"
-          ),
+      p_next_reason:
+        cleanRequired(
+          input.nextReason,
+          "Next mission reason"
+        ),
 
-        p_xp_reward:
-          Math.max(
-            0,
-            Math.floor(
-              input.xpReward
-            )
-          ),
-      }
-    );
+      p_xp_reward:
+        Math.max(
+          0,
+          Math.floor(
+            input.xpReward
+          )
+        ),
+    }
+  );
 
   if (error) {
     console.error(
@@ -441,5 +532,6 @@ export async function completeMissionLifecycle(
     );
   }
 
-  return data as CompletionResult;
+  return data as
+    CompletionResult;
 }

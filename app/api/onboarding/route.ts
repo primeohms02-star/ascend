@@ -22,18 +22,33 @@ import {
   type AtlasOnboardingContext,
 } from "@/lib/atlas/onboardingContext";
 
+import {
+  invalidateOpportunitySnapshot,
+} from "@/lib/atlas/opportunities/service";
+
 type OnboardingRequest = {
   operationId?: unknown;
+
   identity?: unknown;
+
   goal?: unknown;
+
+  skills?: unknown;
+
   challenges?: unknown;
+
   northStar?: unknown;
 };
 
 type ValidatedAnswers = {
   identity: string;
+
   goal: string;
+
+  skills: string[];
+
   challenges: string[];
+
   northStar: string;
 };
 
@@ -74,6 +89,58 @@ const validGoals =
     "Discover My Purpose",
   ]);
 
+function cleanSkills(
+  value: unknown
+): string[] | null {
+  if (
+    !Array.isArray(value) ||
+    value.length > 20 ||
+    !value.every(
+      (skill) =>
+        typeof skill ===
+        "string"
+    )
+  ) {
+    return null;
+  }
+
+  const uniqueSkills =
+    new Map<
+      string,
+      string
+    >();
+
+  for (
+    const skillValue of value
+  ) {
+    const skill =
+      (
+        skillValue as string
+      )
+        .trim()
+        .replace(
+          /\s+/g,
+          " "
+        );
+
+    if (
+      skill.length < 2 ||
+      skill.length > 60
+    ) {
+      return null;
+    }
+
+    uniqueSkills.set(
+      skill.toLowerCase(),
+      skill
+    );
+  }
+
+  return Array.from(
+    uniqueSkills.values()
+  ).slice(0, 20);
+}
+
 function validateAnswers(
   body: OnboardingRequest
 ): ValidatedAnswers | null {
@@ -97,6 +164,15 @@ function validateAnswers(
     return null;
   }
 
+  const skills =
+    cleanSkills(
+      body.skills
+    );
+
+  if (!skills) {
+    return null;
+  }
+
   if (
     !Array.isArray(
       body.challenges
@@ -115,9 +191,11 @@ function validateAnswers(
   if (
     typeof body.northStar !==
       "string" ||
-    body.northStar.trim()
+    body.northStar
+      .trim()
       .length < 20 ||
-    body.northStar.trim()
+    body.northStar
+      .trim()
       .length > 1200
   ) {
     return null;
@@ -126,7 +204,12 @@ function validateAnswers(
   const challenges =
     body.challenges
       .map((challenge) =>
-        challenge.trim()
+        challenge
+          .trim()
+          .replace(
+            /\s+/g,
+            " "
+          )
       )
       .filter(Boolean)
       .slice(0, 14);
@@ -144,11 +227,21 @@ function validateAnswers(
     goal:
       body.goal.trim(),
 
+    skills,
+
     challenges,
 
     northStar:
       body.northStar.trim(),
   };
+}
+
+function formatSkills(
+  skills: string[]
+): string {
+  return skills.length > 0
+    ? skills.join(", ")
+    : "Still being identified";
 }
 
 function buildOnboardingFact(
@@ -158,6 +251,10 @@ function buildOnboardingFact(
     `Identity: ${answers.identity}.`,
 
     `Immediate goal: ${answers.goal}.`,
+
+    `Current skills: ${formatSkills(
+      answers.skills
+    )}.`,
 
     `Current challenges: ${answers.challenges.join(
       ", "
@@ -179,6 +276,10 @@ function buildExistingOnboardingFact(
     `Identity: ${context.identity}.`,
 
     `Immediate goal: ${context.goal}.`,
+
+    `Current skills: ${formatSkills(
+      context.skills ?? []
+    )}.`,
 
     `Current challenges: ${context.challenges.join(
       ", "
@@ -233,6 +334,13 @@ function buildFallbackMission(
         "Write down three moments when you felt useful, energized or deeply engaged, then identify the common strength or impact connecting them.",
     };
 
+  const skillsContext =
+    answers.skills.length > 0
+      ? ` Atlas can build from your current skills in ${answers.skills.join(
+          ", "
+        )}.`
+      : "";
+
   return {
     mission:
       missionByGoal[
@@ -241,7 +349,7 @@ function buildFallbackMission(
       "Choose one concrete action that moves you closer to your North Star and complete it within the next 24 hours.",
 
     reason:
-      `You described yourself as ${answers.identity} and selected “${answers.goal}” as your immediate goal. Your current challenge is “${answers.challenges[0]}.” This mission creates concrete evidence of progress toward your North Star: ${answers.northStar}`,
+      `You described yourself as ${answers.identity} and selected “${answers.goal}” as your immediate goal.${skillsContext} Your current challenge is “${answers.challenges[0]}.” This mission creates concrete evidence of progress toward your North Star: ${answers.northStar}`,
   };
 }
 
@@ -282,6 +390,16 @@ function parseMission(
 function buildAtlasContext(
   answers: ValidatedAnswers
 ) {
+  const skills =
+    answers.skills.length > 0
+      ? answers.skills
+          .map(
+            (skill) =>
+              `- ${skill}`
+          )
+          .join("\n")
+      : "- The user is still identifying their skills.";
+
   return `
 The user has explicitly completed ASCEND onboarding.
 
@@ -290,6 +408,9 @@ ${answers.identity}
 
 Immediate goal:
 ${answers.goal}
+
+Current declared skills:
+${skills}
 
 Current challenges:
 ${answers.challenges
@@ -305,15 +426,19 @@ ${answers.northStar}
 Create one concrete first mission.
 
 The mission must directly support the immediate goal, move the user toward
-the North Star, address at least one stated challenge, be realistically
-completable within one day, and produce visible evidence of progress.
+the North Star, consider the user's current skills, address at least one
+stated challenge, be realistically completable within one day, and produce
+visible evidence of progress.
+
+Do not assume the user has skills they did not declare.
 
 Return exactly MISSION: followed by the mission and REASON: followed by why.
 `;
 }
 
 function jsonResult(
-  result: OnboardingReplacementResult
+  result:
+    OnboardingReplacementResult
 ) {
   return NextResponse.json({
     success: true,
@@ -336,8 +461,9 @@ export async function POST(
   request: NextRequest
 ) {
   try {
-    const { userId } =
-      await auth();
+    const {
+      userId,
+    } = await auth();
 
     if (!userId) {
       return NextResponse.json(
@@ -352,13 +478,12 @@ export async function POST(
     }
 
     const body =
-      (await request.json()) as
-        OnboardingRequest;
+      (
+        await request.json()
+      ) as OnboardingRequest;
 
     const answers =
-      validateAnswers(
-        body
-      );
+      validateAnswers(body);
 
     if (!answers) {
       return NextResponse.json(
@@ -393,10 +518,6 @@ export async function POST(
     const operationId =
       body.operationId;
 
-    /*
-     * A repeated onboarding request returns the
-     * original atomic result before AI is called.
-     */
     const existingResult =
       await getMissionOperation<OnboardingReplacementResult>(
         userId,
@@ -415,10 +536,6 @@ export async function POST(
         userId
       );
 
-    /*
-     * Mission generation occurs before any profile,
-     * direction or mission state is modified.
-     */
     let selectedMission =
       buildFallbackMission(
         answers
@@ -450,14 +567,10 @@ export async function POST(
     }
 
     try {
-      /*
-       * Profile, onboarding context, direction fact,
-       * previous mission replacement, new mission and
-       * timeline memory are committed together.
-       */
       const result =
         await replaceMissionForOnboarding({
           userId,
+
           operationId,
 
           identity:
@@ -465,6 +578,9 @@ export async function POST(
 
           goal:
             answers.goal,
+
+          skills:
+            answers.skills,
 
           challenges:
             answers.challenges,
@@ -489,9 +605,11 @@ export async function POST(
             selectedMission.reason,
         });
 
-      return jsonResult(
-        result
+      invalidateOpportunitySnapshot(
+        userId
       );
+
+      return jsonResult(result);
     } catch (
       transactionError
     ) {
@@ -500,10 +618,6 @@ export async function POST(
         transactionError
       );
 
-      /*
-       * Recover a transaction that committed before
-       * its HTTP response was received.
-       */
       try {
         const recoveredResult =
           await getMissionOperation<OnboardingReplacementResult>(
@@ -512,7 +626,13 @@ export async function POST(
             "onboarding_replace"
           );
 
-        if (recoveredResult) {
+        if (
+          recoveredResult
+        ) {
+          invalidateOpportunitySnapshot(
+            userId
+          );
+
           return jsonResult(
             recoveredResult
           );
