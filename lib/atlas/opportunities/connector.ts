@@ -2,44 +2,80 @@ import { Opportunity } from "./types";
 
 import { fetchRemoteOK } from "./remoteok";
 
-import { normalizeOpportunity } from "./normalize";
-import { deduplicateOpportunities } from "./deduplicate";
+import {
+  normalizeOpportunity,
+} from "./normalize";
 
-import { OpportunityConnector } from "./connectors/types";
+import {
+  deduplicateOpportunities,
+} from "./deduplicate";
 
-import { WellfoundConnector } from "./connectors/wellfound";
-import { WeWorkRemotelyConnector } from "./connectors/weworkremotely";
-import { CourseraConnector } from "./connectors/coursera";
-import { USAJobsConnector } from "./connectors/usajobs";
-import { RemotiveConnector } from "./connectors/remotive";
-import { OpportunityDeskConnector } from "./connectors/opportunitydesk";
-import { OpportunityForAfricaConnector } from "./connectors/opportunityforafrica";
+import {
+  OpportunityConnector,
+} from "./connectors/types";
 
-import { MyJobMagConnector } from "./connectors/myjobmag";
+import {
+  WellfoundConnector,
+} from "./connectors/wellfound";
+
+import {
+  WeWorkRemotelyConnector,
+} from "./connectors/weworkremotely";
+
+import {
+  CourseraConnector,
+} from "./connectors/coursera";
+
+import {
+  USAJobsConnector,
+} from "./connectors/usajobs";
+
+import {
+  RemotiveConnector,
+} from "./connectors/remotive";
+
+import {
+  OpportunityDeskConnector,
+} from "./connectors/opportunitydesk";
+
+import {
+  OpportunityForAfricaConnector,
+} from "./connectors/opportunityforafrica";
+
+import {
+  MyJobMagConnector,
+} from "./connectors/myjobmag";
+
+import {
+  ScholarshipRegionConnector,
+} from "./connectors/scholarshipregion";
 
 const CONNECTOR_TIMEOUT = 20000;
 
-const RemoteOKConnector: OpportunityConnector = {
-  name: "RemoteOK",
+const RemoteOKConnector: OpportunityConnector =
+  {
+    name: "RemoteOK",
 
-  async fetch(): Promise<Opportunity[]> {
-    return fetchRemoteOK();
-  },
+    async fetch(): Promise<
+      Opportunity[]
+    > {
+      return fetchRemoteOK();
+    },
 
-  async getOpportunityById(
-    id: string
-  ): Promise<Opportunity | null> {
-    const opportunities =
-      await fetchRemoteOK();
+    async getOpportunityById(
+      id: string
+    ): Promise<Opportunity | null> {
+      const opportunities =
+        await fetchRemoteOK();
 
-    return (
-      opportunities.find(
-        (opportunity) =>
-          opportunity.id === id
-      ) ?? null
-    );
-  },
-};
+      return (
+        opportunities.find(
+          (opportunity) =>
+            opportunity.id === id
+        ) ?? null
+      );
+    },
+  };
 
 const connectors = {
   remoteok: RemoteOKConnector,
@@ -61,8 +97,11 @@ const connectors = {
   opportunityforafrica:
     OpportunityForAfricaConnector,
 
-  
-  myjobmag: MyJobMagConnector,
+  myjobmag:
+    MyJobMagConnector,
+
+  scholarshipregion:
+    ScholarshipRegionConnector,
 };
 
 type ConnectorName =
@@ -75,16 +114,14 @@ function withTimeout<T>(
 ): Promise<T> {
   return new Promise<T>(
     (resolve, reject) => {
-      const timeoutId = setTimeout(
-        () => {
+      const timeoutId =
+        setTimeout(() => {
           reject(
             new Error(
               `${connectorName} timed out after ${timeout}ms`
             )
           );
-        },
-        timeout
-      );
+        }, timeout);
 
       promise
         .then((result) => {
