@@ -54,7 +54,14 @@ import {
   HotNigerianJobsConnector,
 } from "./connectors/hotnigerianjobs";
 
+import {
+  OpportunitiesForAfricansConnector,
+} from "./connectors/opportunitiesforafricans";
+
 const CONNECTOR_TIMEOUT = 20000;
+
+const HOT_NIGERIAN_JOBS_TIMEOUT =
+  30000;
 
 const RemoteOKConnector: OpportunityConnector =
   {
@@ -114,6 +121,9 @@ const connectors = {
 
   hotnigerianjobs:
     HotNigerianJobsConnector,
+
+  opportunitiesforafricans:
+    OpportunitiesForAfricansConnector,
 };
 
 type ConnectorName =
@@ -159,10 +169,17 @@ async function fetchConnector(
   connector: OpportunityConnector
 ): Promise<Opportunity[]> {
   try {
+    const timeout =
+      name ===
+      "hotnigerianjobs"
+        ? HOT_NIGERIAN_JOBS_TIMEOUT
+        : CONNECTOR_TIMEOUT;
+
     const opportunities =
       await withTimeout(
         connector.fetch(),
-        name
+        name,
+        timeout
       );
 
     console.log(
@@ -245,11 +262,18 @@ export async function getOpportunityById(
   }
 
   try {
+    const timeout =
+      normalizedSource ===
+      "hotnigerianjobs"
+        ? HOT_NIGERIAN_JOBS_TIMEOUT
+        : CONNECTOR_TIMEOUT;
+
     return await withTimeout(
       connector.getOpportunityById(
         id
       ),
-      normalizedSource
+      normalizedSource,
+      timeout
     );
   } catch (error) {
     console.error(

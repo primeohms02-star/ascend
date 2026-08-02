@@ -1,11 +1,11 @@
 import { Opportunity } from "../types";
-import { OpportunityConnector } from "./types";
 
-const HOT_NIGERIAN_JOBS_FEED =
-  "https://www.hotnigerianjobs.com/feed/";
+import {
+  OpportunityConnector,
+} from "./types";
 
-const MAX_FEED_ITEMS = 200;
-const MAX_OPPORTUNITIES = 150;
+const OPPORTUNITIES_FOR_AFRICANS_FEED =
+  "https://www.opportunitiesforafricans.com/feed/";
 
 const REQUEST_HEADERS = {
   Accept:
@@ -68,10 +68,11 @@ function getXmlValue(
   block: string,
   tag: string
 ): string {
-  const escapedTag = tag.replace(
-    /[.*+?^${}()|[\]\\]/g,
-    "\\$&"
-  );
+  const escapedTag =
+    tag.replace(
+      /[.*+?^${}()|[\]\\]/g,
+      "\\$&"
+    );
 
   return (
     new RegExp(
@@ -81,16 +82,29 @@ function getXmlValue(
   );
 }
 
+function getCategories(
+  block: string
+): string[] {
+  return Array.from(
+    block.matchAll(
+      /<category(?:\s[^>]*)?>([\s\S]*?)<\/category>/gi
+    ),
+    (match) =>
+      cleanText(match[1])
+  ).filter(Boolean);
+}
+
 function createId(
+  guid: string,
   url: string
 ): string {
-  const postingId =
-    /\/hotjobs\/(\d+)\//i.exec(
-      url
+  const postId =
+    /[?&]p=(\d+)/i.exec(
+      guid
     )?.[1];
 
-  if (postingId) {
-    return `hotnigerianjobs-${postingId}`;
+  if (postId) {
+    return `opportunitiesforafricans-${postId}`;
   }
 
   let hash = 0;
@@ -102,20 +116,7 @@ function createId(
       0;
   }
 
-  return `hotnigerianjobs-${Math.abs(hash)}`;
-}
-
-function isRoundup(
-  title: string
-): boolean {
-  return (
-    /job recruitment\s*\(\d+\s+positions?\)/i.test(
-      title
-    ) ||
-    /massive recruitment/i.test(
-      title
-    )
-  );
+  return `opportunitiesforafricans-${Math.abs(hash)}`;
 }
 
 function detectCategory(
@@ -125,7 +126,7 @@ function detectCategory(
     text.toLowerCase();
 
   if (
-    /\b(intern|internship)\b/.test(
+    /\b(internship|internships|trainee|immersion)\b/.test(
       value
     )
   ) {
@@ -133,7 +134,7 @@ function detectCategory(
   }
 
   if (
-    /\b(fellowship|fellow)\b/.test(
+    /\bfellowship\b/.test(
       value
     )
   ) {
@@ -141,7 +142,7 @@ function detectCategory(
   }
 
   if (
-    /\b(scholarship|bursary)\b/.test(
+    /\b(scholarship|scholars program|scholars programme)\b/.test(
       value
     )
   ) {
@@ -149,79 +150,107 @@ function detectCategory(
   }
 
   if (
-    /\b(volunteer|volunteering)\b/.test(
+    /\b(grant|funding)\b/.test(
       value
     )
   ) {
-    return "volunteering";
+    return "grant";
   }
 
   if (
-    /\b(trainee|graduate programme|graduate program)\b/.test(
+    /\b(contest|competition|challenge|prize)\b/.test(
       value
     )
   ) {
-    return "internship";
+    return "competition";
   }
 
-  return "job";
-}
-
-function extractCompany(
-  title: string,
-  description: string
-): string {
-  const descriptionCompany =
-    /^(.+?)\s+(?:is|are)\s+recruiting\b/i.exec(
-      description
-    )?.[1];
-
-  if (descriptionCompany) {
-    return descriptionCompany.trim();
+  if (
+    /\b(accelerator|incubator)\b/.test(
+      value
+    )
+  ) {
+    return "accelerator";
   }
 
-  const titleCompany =
-    /\s+at\s+(.+)$/i.exec(
-      title
-    )?.[1];
+  if (
+    /\b(training|course|lab)\b/.test(
+      value
+    )
+  ) {
+    return "course";
+  }
 
-  return (
-    titleCompany?.trim() ||
-    "Hot Nigerian Jobs Employer"
-  );
+  return "programme";
 }
 
-function extractLocation(
-  description: string
-): string {
-  const location =
-    /(?:position|role|job)\s+is\s+located\s+in\s+(.+?)(?:\.\s|\.?$|\s+Salary:|\s+Interested candidates)/i.exec(
-      description
-    )?.[1];
-
-  return (
-    location?.trim() ||
-    "Nigeria"
-  );
-}
-
-function extractSalary(
+function extractDeadline(
   description: string
 ): string | undefined {
-  const salary =
-    /\bSalary:\s*(.+?)(?:\.\s|\.?$|\s+Interested candidates)/i.exec(
+  const value =
+    /Application Deadline:\s*(.+?)(?=\s+Applications?\s+(?:are|is)\s+now\s+open|$)/i.exec(
       description
-    )?.[1];
+    )?.[1]?.trim();
 
-  return (
-    salary?.trim() ||
-    undefined
+  if (
+    !value ||
+    /^unspecified\.?$/i.test(
+      value
+    )
+  ) {
+    return undefined;
+  }
+
+  return value.replace(
+    /\.$/,
+    ""
   );
+}
+
+function detectLocation(
+  text: string,
+  categories: string[]
+): string {
+  const categoryText =
+    categories.join(" ");
+
+  if (
+    /\bnigeria(?:n)?\b/i.test(
+      `${categoryText} ${text}`
+    )
+  ) {
+    return "Nigeria";
+  }
+
+  const countries = [
+    "Ghana",
+    "Kenya",
+    "Rwanda",
+    "South Africa",
+    "Uganda",
+    "Tanzania",
+    "Ethiopia",
+    "Senegal",
+  ];
+
+  const country =
+    countries.find(
+      (name) =>
+        new RegExp(
+          `\\b${name}\\b`,
+          "i"
+        ).test(
+          categoryText
+        )
+    );
+
+  return country || "Africa";
 }
 
 function buildTags(
   text: string,
-  category: string
+  category: string,
+  categories: string[]
 ): string[] {
   const value =
     text.toLowerCase();
@@ -229,48 +258,72 @@ function buildTags(
   const tags =
     new Set<string>([
       category,
-      "Nigeria",
       "Africa",
     ]);
 
-  const candidates: Array<
-    [string, string]
-  > = [
-    ["remote", "Remote"],
-    ["hybrid", "Hybrid"],
-    ["graduate", "Graduate"],
-    ["entry level", "Entry Level"],
-    ["software", "Software"],
-    ["developer", "Development"],
-    ["data", "Data"],
-    ["technology", "Technology"],
-    ["engineering", "Engineering"],
-    ["finance", "Finance"],
-    ["bank", "Banking"],
-    ["account", "Accounting"],
-    ["marketing", "Marketing"],
-    ["sales", "Sales"],
-    ["health", "Healthcare"],
-    ["medical", "Healthcare"],
-    ["education", "Education"],
-    ["human resources", "HR"],
-    ["oil & gas", "Oil and Gas"],
-    ["oil and gas", "Oil and Gas"],
-    ["ngo", "NGO"],
-    [
-      "customer service",
-      "Customer Service",
-    ],
-  ];
-
   for (
-    const [keyword, tag] of candidates
+    const categoryName of
+      categories.slice(0, 6)
   ) {
     if (
-      value.includes(keyword)
+      categoryName.length <= 45
     ) {
-      tags.add(tag);
+      tags.add(
+        categoryName
+      );
     }
+  }
+
+  if (
+    /\bnigeria(?:n)?\b/.test(
+      value
+    )
+  ) {
+    tags.add("Nigeria");
+  }
+
+  if (
+    value.includes(
+      "fully funded"
+    )
+  ) {
+    tags.add("Fully Funded");
+  }
+
+  if (
+    value.includes(
+      "graduate"
+    )
+  ) {
+    tags.add("Graduate");
+  }
+
+  if (
+    value.includes(
+      "entrepreneur"
+    ) ||
+    value.includes("sme")
+  ) {
+    tags.add(
+      "Entrepreneurship"
+    );
+  }
+
+  if (
+    value.includes("youth")
+  ) {
+    tags.add("Youth");
+  }
+
+  if (
+    value.includes(
+      "leadership"
+    ) ||
+    value.includes(
+      "leaders"
+    )
+  ) {
+    tags.add("Leadership");
   }
 
   return Array.from(tags);
@@ -286,12 +339,21 @@ function mapFeedItem(
     )
   );
 
-  const url = decodeEntities(
-    getXmlValue(
-      block,
-      "link"
-    )
-  );
+  const url =
+    decodeEntities(
+      getXmlValue(
+        block,
+        "link"
+      )
+    );
+
+  const guid =
+    decodeEntities(
+      getXmlValue(
+        block,
+        "guid"
+      )
+    );
 
   const description =
     cleanText(
@@ -301,20 +363,22 @@ function mapFeedItem(
       )
     );
 
+  const categories =
+    getCategories(block);
+
   if (
     !title ||
     !url ||
-    !description ||
-    isRoundup(title)
+    !description
   ) {
     return null;
   }
 
-  const searchable =
-    `${title} ${description}`;
-
-  const normalized =
-    searchable.toLowerCase();
+  const searchable = [
+    title,
+    description,
+    ...categories,
+  ].join(" ");
 
   const category =
     detectCategory(
@@ -322,41 +386,33 @@ function mapFeedItem(
     );
 
   return {
-    id: createId(url),
+    id: createId(
+      guid,
+      url
+    ),
 
     title,
 
     company:
-      extractCompany(
-        title,
-        description
-      ),
+      "Opportunities for Africans",
 
     description,
 
     category,
 
     source:
-      "hotnigerianjobs",
+      "opportunitiesforafricans",
 
     location:
-      extractLocation(
-        description
+      detectLocation(
+        searchable,
+        categories
       ),
 
-    remote:
-      normalized.includes(
-        "remote"
-      ) ||
-      normalized.includes(
-        "work from home"
-      ) ||
-      normalized.includes(
-        "hybrid"
-      ),
+    remote: false,
 
-    salary:
-      extractSalary(
+    deadline:
+      extractDeadline(
         description
       ),
 
@@ -364,33 +420,32 @@ function mapFeedItem(
 
     tags: buildTags(
       searchable,
-      category
+      category,
+      categories
     ),
   };
 }
 
-async function fetchHotNigerianJobs(): Promise<
+async function fetchOpportunitiesForAfricans(): Promise<
   Opportunity[]
 > {
   try {
     const response =
       await fetch(
-        HOT_NIGERIAN_JOBS_FEED,
+        OPPORTUNITIES_FOR_AFRICANS_FEED,
         {
           headers:
             REQUEST_HEADERS,
 
           redirect: "follow",
 
-         next: {
-            revalidate: 900,
-          },
+          cache: "no-store",
         }
       );
 
     if (!response.ok) {
       console.error(
-        "Hot Nigerian Jobs feed error:",
+        "Opportunities for Africans feed error:",
         response.status
       );
 
@@ -401,20 +456,15 @@ async function fetchHotNigerianJobs(): Promise<
       await response.text();
 
     const blocks =
-      (
-        xml.match(
-          /<item\b[\s\S]*?<\/item>/gi
-        ) ?? []
-      ).slice(
-        0,
-        MAX_FEED_ITEMS
-      );
+      xml.match(
+        /<item\b[\s\S]*?<\/item>/gi
+      ) ?? [];
 
     if (
       blocks.length === 0
     ) {
       console.error(
-        "Hot Nigerian Jobs returned unexpected content:",
+        "Opportunities for Africans returned unexpected content:",
         xml.slice(0, 300)
       );
 
@@ -439,13 +489,6 @@ async function fetchHotNigerianJobs(): Promise<
           opportunity
         );
       }
-
-      if (
-        unique.size >=
-        MAX_OPPORTUNITIES
-      ) {
-        break;
-      }
     }
 
     return Array.from(
@@ -453,7 +496,7 @@ async function fetchHotNigerianJobs(): Promise<
     );
   } catch (error) {
     console.error(
-      "Hot Nigerian Jobs fetch failed:",
+      "Opportunities for Africans fetch failed:",
       error
     );
 
@@ -461,19 +504,19 @@ async function fetchHotNigerianJobs(): Promise<
   }
 }
 
-export const HotNigerianJobsConnector: OpportunityConnector =
+export const OpportunitiesForAfricansConnector: OpportunityConnector =
   {
     name:
-      "Hot Nigerian Jobs",
+      "Opportunities for Africans",
 
     fetch:
-      fetchHotNigerianJobs,
+      fetchOpportunitiesForAfricans,
 
     async getOpportunityById(
       id: string
     ): Promise<Opportunity | null> {
       const opportunities =
-        await fetchHotNigerianJobs();
+        await fetchOpportunitiesForAfricans();
 
       return (
         opportunities.find(
