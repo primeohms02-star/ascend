@@ -50,6 +50,10 @@ import {
   ScholarshipRegionConnector,
 } from "./connectors/scholarshipregion";
 
+import {
+  HotNigerianJobsConnector,
+} from "./connectors/hotnigerianjobs";
+
 const CONNECTOR_TIMEOUT = 20000;
 
 const RemoteOKConnector: OpportunityConnector =
@@ -78,18 +82,23 @@ const RemoteOKConnector: OpportunityConnector =
   };
 
 const connectors = {
-  remoteok: RemoteOKConnector,
+  remoteok:
+    RemoteOKConnector,
 
-  wellfound: WellfoundConnector,
+  wellfound:
+    WellfoundConnector,
 
   weworkremotely:
     WeWorkRemotelyConnector,
 
-  coursera: CourseraConnector,
+  coursera:
+    CourseraConnector,
 
-  usajobs: USAJobsConnector,
+  usajobs:
+    USAJobsConnector,
 
-  remotive: RemotiveConnector,
+  remotive:
+    RemotiveConnector,
 
   opportunitydesk:
     OpportunityDeskConnector,
@@ -102,6 +111,9 @@ const connectors = {
 
   scholarshipregion:
     ScholarshipRegionConnector,
+
+  hotnigerianjobs:
+    HotNigerianJobsConnector,
 };
 
 type ConnectorName =
@@ -125,11 +137,17 @@ function withTimeout<T>(
 
       promise
         .then((result) => {
-          clearTimeout(timeoutId);
+          clearTimeout(
+            timeoutId
+          );
+
           resolve(result);
         })
         .catch((error) => {
-          clearTimeout(timeoutId);
+          clearTimeout(
+            timeoutId
+          );
+
           reject(error);
         });
     }
@@ -165,28 +183,38 @@ async function fetchConnector(
 export async function fetchAllSources(): Promise<
   Opportunity[]
 > {
-  const entries = Object.entries(
-    connectors
-  ) as Array<
-    [
-      ConnectorName,
-      OpportunityConnector
-    ]
-  >;
+  const entries =
+    Object.entries(
+      connectors
+    ) as Array<
+      [
+        ConnectorName,
+        OpportunityConnector
+      ]
+    >;
 
-  const results = await Promise.all(
-    entries.map(
-      ([name, connector]) =>
-        fetchConnector(
-          name,
-          connector
-        )
-    )
-  );
+  const results =
+    await Promise.all(
+      entries.map(
+        (
+          [
+            name,
+            connector,
+          ]
+        ) =>
+          fetchConnector(
+            name,
+            connector
+          )
+      )
+    );
 
-  const normalized = results
-    .flat()
-    .map(normalizeOpportunity);
+  const normalized =
+    results
+      .flat()
+      .map(
+        normalizeOpportunity
+      );
 
   return deduplicateOpportunities(
     normalized
@@ -198,7 +226,9 @@ export async function getOpportunityById(
   source: string
 ): Promise<Opportunity | null> {
   const normalizedSource =
-    source.trim().toLowerCase();
+    source
+      .trim()
+      .toLowerCase();
 
   const connector =
     connectors[
@@ -216,7 +246,9 @@ export async function getOpportunityById(
 
   try {
     return await withTimeout(
-      connector.getOpportunityById(id),
+      connector.getOpportunityById(
+        id
+      ),
       normalizedSource
     );
   } catch (error) {
