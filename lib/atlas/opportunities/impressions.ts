@@ -1,15 +1,10 @@
-import { createClient } from "@supabase/supabase-js";
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+import { supabaseServer } from "@/lib/supabase-server";
 
 export async function recordImpression(
   clerkId: string,
   opportunityId: string
 ) {
-  const { data } = await supabase
+  const { data } = await supabaseServer
     .from("atlas_opportunity_impressions")
     .select("*")
     .eq("clerk_id", clerkId)
@@ -17,7 +12,7 @@ export async function recordImpression(
     .single();
 
   if (!data) {
-    await supabase
+    await supabaseServer
       .from("atlas_opportunity_impressions")
       .insert({
         clerk_id: clerkId,
@@ -28,10 +23,11 @@ export async function recordImpression(
     return;
   }
 
-  await supabase
+  await supabaseServer
     .from("atlas_opportunity_impressions")
     .update({
-      impressions: data.impressions + 1,
+      impressions:
+        (data.impressions ?? 0) + 1,
       last_seen: new Date().toISOString(),
     })
     .eq("id", data.id);

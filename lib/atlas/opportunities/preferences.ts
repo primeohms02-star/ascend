@@ -1,16 +1,11 @@
-import { createClient } from "@supabase/supabase-js";
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+import { supabaseServer } from "@/lib/supabase-server";
 
 export async function updatePreference(
   clerkId: string,
   category: string,
   delta: number
 ) {
-  const { data } = await supabase
+  const { data } = await supabaseServer
     .from("atlas_preferences")
     .select("*")
     .eq("clerk_id", clerkId)
@@ -18,16 +13,18 @@ export async function updatePreference(
     .single();
 
   if (!data) {
-    await supabase.from("atlas_preferences").insert({
-      clerk_id: clerkId,
-      category,
-      score: delta,
-    });
+    await supabaseServer
+      .from("atlas_preferences")
+      .insert({
+        clerk_id: clerkId,
+        category,
+        score: delta,
+      });
 
     return;
   }
 
-  await supabase
+  await supabaseServer
     .from("atlas_preferences")
     .update({
       score: data.score + delta,

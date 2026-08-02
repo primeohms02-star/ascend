@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase";
+import { supabaseServer } from "@/lib/supabase-server";
 
 import type { Opportunity } from "./types";
 
@@ -53,7 +53,7 @@ export async function saveOpportunity(
   opportunity: Opportunity,
   status: OpportunityStatus = "saved"
 ) {
-  return supabase
+  return supabaseServer
     .from("atlas_opportunity_memory")
     .upsert(
       {
@@ -76,7 +76,7 @@ export async function updateOpportunityStatus(
   opportunityId: string,
   status: OpportunityStatus
 ) {
-  return supabase
+  return supabaseServer
     .from("atlas_opportunity_memory")
     .update({
       status,
@@ -89,7 +89,7 @@ export async function updateOpportunityStatus(
 export async function getOpportunityMemory(
   userId: string
 ): Promise<OpportunityMemoryRecord[]> {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseServer
     .from("atlas_opportunity_memory")
     .select("*")
     .eq("user_id", userId)
@@ -115,7 +115,7 @@ export async function getOpportunitiesByCategory(
 ): Promise<OpportunityMemoryRecord[]> {
   const statuses = CATEGORY_STATUSES[category];
 
-  const { data, error } = await supabase
+  const { data, error } = await supabaseServer
     .from("atlas_opportunity_memory")
     .select("*")
     .eq("user_id", userId)
@@ -144,7 +144,7 @@ export async function getOpportunityLibraryCounts(
     appliedResult,
     completedResult,
   ] = await Promise.all([
-    supabase
+    supabaseServer
       .from("atlas_opportunity_memory")
       .select("*", {
         count: "exact",
@@ -153,7 +153,7 @@ export async function getOpportunityLibraryCounts(
       .eq("user_id", userId)
       .in("status", CATEGORY_STATUSES.saved),
 
-    supabase
+    supabaseServer
       .from("atlas_opportunity_memory")
       .select("*", {
         count: "exact",
@@ -162,7 +162,7 @@ export async function getOpportunityLibraryCounts(
       .eq("user_id", userId)
       .in("status", CATEGORY_STATUSES.applied),
 
-    supabase
+    supabaseServer
       .from("atlas_opportunity_memory")
       .select("*", {
         count: "exact",
