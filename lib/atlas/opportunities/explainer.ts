@@ -1,5 +1,10 @@
-import type { RankedOpportunity } from "./types";
-import type { OpportunityProfile } from "./profile";
+import type {
+  RankedOpportunity,
+} from "./types";
+
+import type {
+  OpportunityProfile,
+} from "./profile";
 
 export type OpportunityExplanation = {
   matchScore: number;
@@ -26,14 +31,248 @@ export type OpportunityExplanation = {
   };
 };
 
-function normalize(value?: string): string {
-  return value?.trim().toLowerCase() ?? "";
+type SkillSignal = {
+  name: string;
+  pattern: RegExp;
+  aliases?: string[];
+};
+
+function normalize(
+  value?: string
+): string {
+  return (
+    value
+      ?.trim()
+      .toLowerCase() ?? ""
+  );
 }
 
-function clampScore(score: number): number {
+const SKILL_SIGNALS: SkillSignal[] =
+  [
+    {
+      name: "Python",
+      pattern: /\bpython\b/i,
+    },
+    {
+      name: "JavaScript",
+      pattern:
+        /\bjavascript\b/i,
+    },
+    {
+      name: "TypeScript",
+      pattern:
+        /\btypescript\b/i,
+    },
+    {
+      name: "React",
+      pattern:
+        /\breact(?:\.js|js)?\b/i,
+    },
+    {
+      name: "Node.js",
+      pattern:
+        /\bnode(?:\.js|js)\b/i,
+    },
+    {
+      name: "SQL",
+      pattern: /\bsql\b/i,
+    },
+    {
+      name: "Git",
+      pattern: /\bgit\b/i,
+    },
+    {
+      name:
+        "Microsoft Excel",
+      pattern:
+        /\b(?:microsoft\s+)?excel\b/i,
+    },
+    {
+      name: "Power BI",
+      pattern:
+        /\bpower\s*bi\b/i,
+    },
+    {
+      name: "Data Analysis",
+      pattern:
+        /\bdata\s+analys(?:is|t|tics)\b/i,
+    },
+    {
+      name:
+        "Machine Learning",
+      pattern:
+        /\bmachine\s+learning\b/i,
+    },
+    {
+      name:
+        "Artificial Intelligence",
+
+      pattern:
+        /\b(?:artificial\s+intelligence|ai)\b/i,
+
+      aliases: ["AI"],
+    },
+    {
+      name:
+        "Cloud Computing",
+
+      pattern:
+        /\bcloud\s+computing\b/i,
+    },
+    {
+      name: "AWS",
+
+      pattern:
+        /\baws\b|amazon\s+web\s+services/i,
+    },
+    {
+      name: "Cybersecurity",
+
+      pattern:
+        /\bcyber\s*security\b/i,
+    },
+    {
+      name:
+        "Project Management",
+
+      pattern:
+        /\bproject\s+management\b/i,
+    },
+    {
+      name:
+        "Product Management",
+
+      pattern:
+        /\bproduct\s+management\b/i,
+    },
+    {
+      name:
+        "Financial Analysis",
+
+      pattern:
+        /\bfinancial\s+analysis\b/i,
+    },
+    {
+      name: "Accounting",
+
+      pattern:
+        /\baccounting\b/i,
+    },
+    {
+      name:
+        "Customer Service",
+
+      pattern:
+        /\bcustomer\s+service\b/i,
+    },
+    {
+      name: "Sales",
+
+      pattern:
+        /\bsales\b/i,
+    },
+    {
+      name:
+        "Digital Marketing",
+
+      pattern:
+        /\bdigital\s+marketing\b/i,
+    },
+    {
+      name:
+        "Social Media Marketing",
+
+      pattern:
+        /\bsocial\s+media\s+(?:marketing|management)\b/i,
+    },
+    {
+      name: "SEO",
+
+      pattern:
+        /\bseo\b|search\s+engine\s+optimisation|search\s+engine\s+optimization/i,
+    },
+    {
+      name:
+        "Graphic Design",
+
+      pattern:
+        /\bgraphic\s+design\b/i,
+    },
+    {
+      name:
+        "UI/UX Design",
+
+      pattern:
+        /\bui\s*\/\s*ux\b|\bux\s+design\b|\bui\s+design\b/i,
+    },
+    {
+      name: "Research",
+
+      pattern:
+        /\bresearch(?:ing)?\b/i,
+    },
+    {
+      name:
+        "Technical Writing",
+
+      pattern:
+        /\btechnical\s+writing\b/i,
+    },
+    {
+      name:
+        "Communication",
+
+      pattern:
+        /\bcommunication\s+skills?\b/i,
+    },
+    {
+      name: "Leadership",
+
+      pattern:
+        /\bleadership\s+skills?\b/i,
+    },
+    {
+      name:
+        "Problem Solving",
+
+      pattern:
+        /\bproblem[ -]solving\b/i,
+    },
+  ];
+
+function detectOpportunitySkills(
+  opportunityText: string
+): Array<{
+  name: string;
+  aliases: string[];
+}> {
+  return SKILL_SIGNALS
+    .filter(
+      ({ pattern }) =>
+        pattern.test(
+          opportunityText
+        )
+    )
+    .map(
+      ({
+        name,
+        aliases = [],
+      }) => ({
+        name,
+        aliases,
+      })
+    );
+}
+
+function clampScore(
+  score: number
+): number {
   return Math.max(
     0,
-    Math.min(100, Math.round(score))
+    Math.min(
+      100,
+      Math.round(score)
+    )
   );
 }
 
@@ -64,15 +303,24 @@ function matchesProfileDirection(
     .map(normalize)
     .filter(Boolean);
 
-  return directionSignals.some((signal) => {
-    const meaningfulWords = signal
-      .split(/\s+/)
-      .filter((word) => word.length >= 3);
+  return directionSignals.some(
+    (signal) => {
+      const meaningfulWords =
+        signal
+          .split(/\s+/)
+          .filter(
+            (word) =>
+              word.length >= 3
+          );
 
-    return meaningfulWords.some((word) =>
-      opportunityText.includes(word)
-    );
-  });
+      return meaningfulWords.some(
+        (word) =>
+          opportunityText.includes(
+            word
+          )
+      );
+    }
+  );
 }
 
 export function explainOpportunity(
@@ -80,14 +328,18 @@ export function explainOpportunity(
   profile: OpportunityProfile
 ): OpportunityExplanation {
   const reasons: string[] = [];
-  const missingSkills: string[] = [];
+
+  const missingSkills:
+    string[] = [];
 
   const score = clampScore(
     opportunity.score ?? 0
   );
 
   const opportunityText =
-    createOpportunityText(opportunity);
+    createOpportunityText(
+      opportunity
+    );
 
   /*
    * Direction alignment
@@ -114,9 +366,13 @@ export function explainOpportunity(
 
   const remoteMatch =
     opportunity.remote === true &&
-    (profile.remoteOnly === true ||
-      normalize(profile.location) ===
-        "remote");
+    (
+      profile.remoteOnly ===
+        true ||
+      normalize(
+        profile.location
+      ) === "remote"
+    );
 
   const remoteScore =
     remoteMatch ? 10 : 0;
@@ -128,41 +384,61 @@ export function explainOpportunity(
   }
 
   /*
-   * Skill alignment
+   * Genuine skill alignment
    */
 
-  const profileSkills = new Set(
-    (profile.skills ?? []).map(normalize)
-  );
+  const profileSkills =
+    new Set(
+      (
+        profile.skills ?? []
+      ).map(normalize)
+    );
+
+  const detectedSkills =
+    detectOpportunitySkills(
+      opportunityText
+    );
 
   let matchedSkills = 0;
 
-  for (const tag of opportunity.tags ?? []) {
-    const normalizedTag =
-      normalize(tag);
+  for (
+    const skill of
+      detectedSkills
+  ) {
+    const acceptedNames = [
+      skill.name,
+      ...skill.aliases,
+    ].map(normalize);
 
-    if (!normalizedTag) {
-      continue;
-    }
+    const hasSkill =
+      acceptedNames.some(
+        (name) =>
+          profileSkills.has(
+            name
+          )
+      );
 
-    if (
-      profileSkills.has(normalizedTag)
-    ) {
+    if (hasSkill) {
       matchedSkills += 1;
     } else {
-      missingSkills.push(tag);
+      missingSkills.push(
+        skill.name
+      );
     }
   }
 
-  const skillsScore = Math.min(
-    matchedSkills * 8,
-    40
-  );
+  const skillsScore =
+    Math.min(
+      matchedSkills * 8,
+      40
+    );
 
   if (matchedSkills > 0) {
     reasons.push(
       `${matchedSkills} matching skill${
-        matchedSkills === 1 ? "" : "s"
+        matchedSkills === 1
+          ? ""
+          : "s"
       }`
     );
   }
@@ -176,7 +452,9 @@ export function explainOpportunity(
     );
   }
 
-  if (reasons.length === 0) {
+  if (
+    reasons.length === 0
+  ) {
     reasons.push(
       "Contains signals worth investigating"
     );
@@ -191,10 +469,14 @@ export function explainOpportunity(
 
   if (score >= 85) {
     level = "Easy Win";
-  } else if (score >= 65) {
-    level = "Growth Opportunity";
+  } else if (
+    score >= 65
+  ) {
+    level =
+      "Growth Opportunity";
   } else {
-    level = "Stretch Goal";
+    level =
+      "Stretch Goal";
   }
 
   return {
@@ -205,16 +487,20 @@ export function explainOpportunity(
     reasons,
 
     missingSkills: [
-      ...new Set(missingSkills),
+      ...new Set(
+        missingSkills
+      ),
     ],
 
-    readinessGain: Math.max(
-      2,
-      Math.min(
-        missingSkills.length * 2,
-        15
-      )
-    ),
+    readinessGain:
+      Math.max(
+        2,
+        Math.min(
+          missingSkills.length *
+            2,
+          15
+        )
+      ),
 
     ranking: {
       northStar:
@@ -227,11 +513,12 @@ export function explainOpportunity(
         remoteScore,
 
       saved: 0,
+
       applied: 0,
+
       passive: 0,
 
-      total:
-        score,
+      total: score,
     },
   };
 }
