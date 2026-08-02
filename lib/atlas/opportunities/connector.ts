@@ -15,18 +15,6 @@ import {
 } from "./connectors/types";
 
 import {
-  WellfoundConnector,
-} from "./connectors/wellfound";
-
-import {
-  WeWorkRemotelyConnector,
-} from "./connectors/weworkremotely";
-
-import {
-  CourseraConnector,
-} from "./connectors/coursera";
-
-import {
   USAJobsConnector,
 } from "./connectors/usajobs";
 
@@ -58,10 +46,17 @@ import {
   OpportunitiesForAfricansConnector,
 } from "./connectors/opportunitiesforafricans";
 
+import {
+  JobGurusConnector,
+} from "./connectors/jobgurus";
+
 const CONNECTOR_TIMEOUT = 20000;
 
 const HOT_NIGERIAN_JOBS_TIMEOUT =
   30000;
+
+const MAX_CONCURRENT_CONNECTORS =
+  3;
 
 const RemoteOKConnector: OpportunityConnector =
   {
@@ -92,15 +87,6 @@ const connectors = {
   remoteok:
     RemoteOKConnector,
 
-  wellfound:
-    WellfoundConnector,
-
-  weworkremotely:
-    WeWorkRemotelyConnector,
-
-  coursera:
-    CourseraConnector,
-
   usajobs:
     USAJobsConnector,
 
@@ -124,6 +110,9 @@ const connectors = {
 
   opportunitiesforafricans:
     OpportunitiesForAfricansConnector,
+
+  jobgurus:
+    JobGurusConnector,
 };
 
 type ConnectorName =
@@ -211,20 +200,55 @@ export async function fetchAllSources(): Promise<
     >;
 
   const results =
-    await Promise.all(
-      entries.map(
-        (
-          [
-            name,
-            connector,
-          ]
-        ) =>
-          fetchConnector(
-            name,
-            connector
-          )
-      )
+    new Array<
+      Opportunity[]
+    >(entries.length);
+
+  let nextIndex = 0;
+
+  async function runWorker(): Promise<void> {
+    while (
+      nextIndex <
+      entries.length
+    ) {
+      const currentIndex =
+        nextIndex;
+
+      nextIndex += 1;
+
+      const [
+        name,
+        connector,
+      ] =
+        entries[
+          currentIndex
+        ];
+
+      results[
+        currentIndex
+      ] =
+        await fetchConnector(
+          name,
+          connector
+        );
+    }
+  }
+
+  const workerCount =
+    Math.min(
+      MAX_CONCURRENT_CONNECTORS,
+      entries.length
     );
+
+  await Promise.all(
+    Array.from(
+      {
+        length:
+          workerCount,
+      },
+      () => runWorker()
+    )
+  );
 
   const normalized =
     results
