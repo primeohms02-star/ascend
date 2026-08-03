@@ -668,6 +668,101 @@ ascend_support_case_messages: {
         }
         Relationships: []
       }
+      atlas_onboarding_context: {
+        Row: {
+          challenges: string[]
+          created_at: string
+          direction_fact_id: string | null
+          goal: string
+          id: string
+          identity: string
+          north_star: string
+          skills: string[]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          challenges?: string[]
+          created_at?: string
+          direction_fact_id?: string | null
+          goal: string
+          id?: string
+          identity: string
+          north_star: string
+          skills?: string[]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          challenges?: string[]
+          created_at?: string
+          direction_fact_id?: string | null
+          goal?: string
+          id?: string
+          identity?: string
+          north_star?: string
+          skills?: string[]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      ascend_music_profiles: {
+        Row: {
+          career_stage: string
+          challenges: string[]
+          created_at: string
+          genres: string[]
+          goal: string
+          id: string
+          location: string
+          north_star: string
+          preferred_regions: string[]
+          roles: string[]
+          skills: string[]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          career_stage: string
+          challenges?: string[]
+          created_at?: string
+          genres?: string[]
+          goal: string
+          id?: string
+          location?: string
+          north_star: string
+          preferred_regions?: string[]
+          roles?: string[]
+          skills?: string[]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          career_stage?: string
+          challenges?: string[]
+          created_at?: string
+          genres?: string[]
+          goal?: string
+          id?: string
+          location?: string
+          north_star?: string
+          preferred_regions?: string[]
+          roles?: string[]
+          skills?: string[]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ascend_music_profiles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["clerk_id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           clerk_id: string

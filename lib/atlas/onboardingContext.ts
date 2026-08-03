@@ -31,9 +31,7 @@ export async function loadOnboardingContext(
   const {
     data,
     error,
-  } = await (
-    supabaseServer as any
-  )
+  } = await supabaseServer
     .from(
       "atlas_onboarding_context"
     )
@@ -93,9 +91,7 @@ export async function saveOnboardingContext(
   const {
     data,
     error,
-  } = await (
-    supabaseServer as any
-  )
+  } = await supabaseServer
     .from(
       "atlas_onboarding_context"
     )

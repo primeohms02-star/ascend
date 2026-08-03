@@ -54,6 +54,25 @@ function OpportunityIcon() {
   );
 }
 
+function MusicIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      className="h-5 w-5"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth="1.8"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M9 18V5l10-2v13M9 9l10-2M6.5 21C4.6 21 3 19.9 3 18.5S4.6 16 6.5 16 10 17.1 10 18.5 8.4 21 6.5 21Zm10-2c-1.9 0-3.5-1.1-3.5-2.5s1.6-2.5 3.5-2.5 3.5 1.1 3.5 2.5-1.6 2.5-3.5 2.5Z"
+      />
+    </svg>
+  );
+}
+
 function ArrowIcon() {
   return (
     <svg
@@ -169,6 +188,41 @@ export default async function DashboardPage() {
               }
             />
           </div>
+
+          <Link
+            href="/music"
+            className="group relative mt-5 block overflow-hidden rounded-3xl border border-fuchsia-400/20 bg-gradient-to-br from-fuchsia-500/[0.1] via-violet-950/40 to-slate-950 p-6 transition hover:border-fuchsia-300/40"
+          >
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-fuchsia-500/15 blur-3xl"
+            />
+
+            <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-fuchsia-300/20 bg-fuchsia-400/10 text-fuchsia-200">
+                  <MusicIcon />
+                </div>
+
+                <p className="mt-5 text-xs font-semibold uppercase tracking-[0.18em] text-fuchsia-300">
+                  ASCEND Music
+                </p>
+
+                <h2 className="mt-2 text-xl font-semibold text-white">
+                  Build your Music Pathway
+                </h2>
+
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-400">
+                  Define your music identity, direction and opportunity focus across Nigeria, Africa and the world.
+                </p>
+              </div>
+
+              <span className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-fuchsia-400 px-4 py-2.5 text-sm font-semibold text-slate-950">
+                Open Music
+                <ArrowIcon />
+              </span>
+            </div>
+          </Link>
         </section>
 
         {/* Mission and opportunity workspace */}

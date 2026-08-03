@@ -10,6 +10,8 @@ import {
   loadOnboardingContext,
 } from "@/lib/atlas/onboardingContext";
 
+import { loadMusicProfile } from "@/lib/music/profile";
+
 import {
   groq,
 } from "./groq";
@@ -70,6 +72,7 @@ export async function loadAtlasContext(
 
   const [
     onboardingContext,
+    musicProfile,
     strategy,
     knowledge,
     facts,
@@ -82,6 +85,10 @@ export async function loadAtlasContext(
     atlasMemories,
   ] = await Promise.all([
     loadOnboardingContext(
+      clerkId
+    ),
+
+    loadMusicProfile(
       clerkId
     ),
 
@@ -130,6 +137,8 @@ export async function loadAtlasContext(
     ...brain,
 
     onboardingContext,
+
+    musicProfile,
 
     strategy,
 
@@ -289,6 +298,30 @@ Use all onboarding fields together, including the user's declared skills.
 Never assume the user has a skill that is not present in live onboarding context.
 
 Never generate strategy using only the final North Star sentence.
+
+=============================
+ASCEND MUSIC PATHWAY — LIVE
+=============================
+
+${
+  atlas.musicProfile
+    ? `Music roles: ${atlas.musicProfile.roles.join(", ")}
+Career stage: ${atlas.musicProfile.careerStage}
+Genres: ${atlas.musicProfile.genres.join(", ")}
+Music skills: ${atlas.musicProfile.skills.join(", ") || "Still being developed"}
+Immediate music goal: ${atlas.musicProfile.goal}
+Music challenges: ${atlas.musicProfile.challenges.join(", ")}
+Location: ${atlas.musicProfile.location}
+Preferred opportunity regions: ${atlas.musicProfile.preferredRegions.join(", ")}
+Music North Star: ${atlas.musicProfile.northStar}`
+    : "The user has not created an ASCEND Music Pathway."
+}
+
+Music Pathway data is supporting live context.
+
+It must never replace the user's canonical North Star or active mission.
+
+Ordinary music conversation must never create, replace, complete or progress a mission.
 
 =============================
 CURRENT MISSION — LIVE
