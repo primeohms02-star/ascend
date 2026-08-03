@@ -4,6 +4,8 @@ import {
   useState,
 } from "react";
 
+import Link from "next/link";
+
 import {
   useAuth,
 } from "@clerk/nextjs";
@@ -250,6 +252,20 @@ export default function SupportEscalation({
             {createdCase.urgency} urgency
           </span>
         </div>
+
+        <Link
+          href={`/support/cases/${encodeURIComponent(
+            createdCase.referenceNumber
+          )}`}
+          className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-400 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-emerald-300"
+        >
+          Open Case
+
+          <ChevronRight
+            size={17}
+            aria-hidden="true"
+          />
+        </Link>
 
         <p className="mt-5 text-xs leading-6 text-slate-400">
           Keep this reference number. It
