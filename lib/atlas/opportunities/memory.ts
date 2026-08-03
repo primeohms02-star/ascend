@@ -86,6 +86,53 @@ export async function updateOpportunityStatus(
     .eq("opportunity_id", opportunityId);
 }
 
+export async function removeSavedOpportunity(
+  userId: string,
+  opportunityId: string
+) {
+  return supabaseServer
+    .from("atlas_opportunity_memory")
+    .delete()
+    .eq("user_id", userId)
+    .eq("opportunity_id", opportunityId)
+    .eq("status", "saved");
+}
+
+export async function getOpportunityStatuses(
+  userId: string,
+  opportunityIds: string[]
+): Promise<Record<string, OpportunityStatus>> {
+  const uniqueIds = [
+    ...new Set(
+      opportunityIds
+        .map((id) => id.trim())
+        .filter(Boolean)
+    ),
+  ];
+
+  if (uniqueIds.length === 0) {
+    return {};
+  }
+
+  const { data, error } = await supabaseServer
+    .from("atlas_opportunity_memory")
+    .select("opportunity_id,status")
+    .eq("user_id", userId)
+    .in("opportunity_id", uniqueIds);
+
+  if (error) {
+    console.error("Get Opportunity Statuses Error:", error);
+    return {};
+  }
+
+  return Object.fromEntries(
+    (data ?? []).map((item) => [
+      item.opportunity_id,
+      item.status as OpportunityStatus,
+    ])
+  );
+}
+
 export async function getOpportunityMemory(
   userId: string
 ): Promise<OpportunityMemoryRecord[]> {

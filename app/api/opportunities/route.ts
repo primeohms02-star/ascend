@@ -8,6 +8,7 @@ import { auth } from "@clerk/nextjs/server";
 import {
   getPersonalizedOpportunityPage,
 } from "@/lib/atlas/opportunities/service";
+import { getOpportunityStatuses } from "@/lib/atlas/opportunities/memory";
 
 export const dynamic = "force-dynamic";
 
@@ -89,8 +90,16 @@ export async function GET(
         }
       );
 
+    const opportunityStatuses =
+      await getOpportunityStatuses(
+        userId,
+        result.opportunities.map(
+          (opportunity) => opportunity.id
+        )
+      );
+
     return NextResponse.json(
-      result,
+      { ...result, opportunityStatuses },
       {
         headers: {
           "Cache-Control":

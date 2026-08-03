@@ -6,9 +6,52 @@ import {
 import { auth } from "@clerk/nextjs/server";
 
 import {
+  removeSavedOpportunity,
   updateOpportunityStatus,
   type OpportunityStatus,
 } from "@/lib/atlas/opportunities/memory";
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const { userId } = await auth();
+
+    if (!userId) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
+    const opportunityId = request.nextUrl.searchParams
+      .get("opportunityId")
+      ?.trim();
+
+    if (!opportunityId) {
+      return NextResponse.json(
+        { error: "A valid opportunity ID is required." },
+        { status: 400 }
+      );
+    }
+
+    const { error } = await removeSavedOpportunity(
+      userId,
+      opportunityId
+    );
+
+    if (error) {
+      throw error;
+    }
+
+    return NextResponse.json({ success: true, status: null });
+  } catch (error) {
+    console.error("Unsave Opportunity API Error:", error);
+
+    return NextResponse.json(
+      { error: "Atlas could not unsave this opportunity." },
+      { status: 500 }
+    );
+  }
+}
 
 const VALID_STATUSES: OpportunityStatus[] = [
   "saved",

@@ -6,12 +6,16 @@ import type { Opportunity } from "@/lib/atlas/opportunities/types";
 
 type Props = {
   opportunity: Opportunity;
+  initialApplied?: boolean;
+  onApplied?: () => void;
 };
 
 export default function ApplyOpportunityButton({
   opportunity,
+  initialApplied = false,
+  onApplied,
 }: Props) {
-  const [applied, setApplied] = useState(false);
+  const [applied, setApplied] = useState(initialApplied);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -85,6 +89,7 @@ export default function ApplyOpportunityButton({
       }
 
       setApplied(true);
+      onApplied?.();
 
       if (postingWindow) {
         postingWindow.location.replace(

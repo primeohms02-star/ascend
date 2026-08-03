@@ -2,14 +2,20 @@
 
 import { useState } from "react";
 
+import type { Opportunity } from "@/lib/atlas/opportunities/types";
+
 type Props = {
-  opportunity: any;
+  opportunity: Opportunity;
+  initialSaved?: boolean;
+  onStatusChange?: (saved: boolean) => void;
 };
 
 export default function SaveOpportunityButton({
   opportunity,
+  initialSaved = false,
+  onStatusChange,
 }: Props) {
-  const [saved, setSaved] = useState(false);
+  const [saved, setSaved] = useState(initialSaved);
   const [loading, setLoading] = useState(false);
 
   async function save() {
@@ -28,7 +34,42 @@ export default function SaveOpportunityButton({
 
       if (res.ok) {
         setSaved(true);
+        onStatusChange?.(true);
+      } else {
+        throw new Error(
+          "Atlas could not save this opportunity."
+        );
       }
+    } catch (error) {
+      console.error("Save Opportunity Error:", error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function unsave() {
+    try {
+      setLoading(true);
+
+      const params = new URLSearchParams({
+        opportunityId: opportunity.id,
+      });
+
+      const res = await fetch(
+        `/api/opportunities/status?${params.toString()}`,
+        { method: "DELETE" }
+      );
+
+      if (!res.ok) {
+        throw new Error(
+          "Atlas could not unsave this opportunity."
+        );
+      }
+
+      setSaved(false);
+      onStatusChange?.(false);
+    } catch (error) {
+      console.error("Unsave Opportunity Error:", error);
     } finally {
       setLoading(false);
     }
@@ -36,8 +77,9 @@ export default function SaveOpportunityButton({
 
   return (
     <button
-      onClick={save}
-      disabled={loading || saved}
+      type="button"
+      onClick={saved ? unsave : save}
+      disabled={loading}
       className="
         rounded-xl
         border
@@ -52,7 +94,13 @@ export default function SaveOpportunityButton({
         hover:text-blue-300
       "
     >
-      {saved ? "✓ Saved" : loading ? "Saving..." : "☆ Save"}
+      {loading
+        ? saved
+          ? "Unsaving..."
+          : "Saving..."
+        : saved
+          ? "Unsave"
+          : "☆ Save"}
     </button>
   );
 }

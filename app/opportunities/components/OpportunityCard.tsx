@@ -4,6 +4,7 @@ import SaveOpportunityButton from "@/app/components/SaveOpportunityButton";
 import ApplyOpportunityButton from "@/app/components/ApplyOpportunityButton";
 
 import type { RankedOpportunity } from "@/lib/atlas/opportunities/types";
+import type { OpportunityStatus } from "@/lib/atlas/opportunities/memory";
 
 type OpportunityExplanation = {
   matchScore: number;
@@ -16,6 +17,11 @@ type OpportunityExplanation = {
 type Props = {
   opportunity: RankedOpportunity;
   insight: OpportunityExplanation;
+  status?: OpportunityStatus;
+  onStatusChange?: (
+    opportunityId: string,
+    status?: OpportunityStatus
+  ) => void;
 };
 
 function clampScore(score: number): number {
@@ -87,6 +93,8 @@ function CheckIcon() {
 export default function OpportunityCard({
   opportunity,
   insight,
+  status,
+  onStatusChange,
 }: Props) {
   const matchScore = clampScore(
     insight.matchScore
@@ -298,11 +306,33 @@ export default function OpportunityCard({
             </Link>
 
             <SaveOpportunityButton
+              key={`save-${status ?? "none"}`}
               opportunity={opportunity}
+              initialSaved={status === "saved"}
+              onStatusChange={(saved) =>
+                onStatusChange?.(
+                  opportunity.id,
+                  saved ? "saved" : undefined
+                )
+              }
             />
 
             <ApplyOpportunityButton
+              key={`apply-${status ?? "none"}`}
               opportunity={opportunity}
+              initialApplied={
+                status === "applied" ||
+                status === "interview" ||
+                status === "completed" ||
+                status === "accepted" ||
+                status === "rejected"
+              }
+              onApplied={() =>
+                onStatusChange?.(
+                  opportunity.id,
+                  "applied"
+                )
+              }
             />
 
             {opportunity.url && (

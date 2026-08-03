@@ -54,15 +54,71 @@ export default function AtlasPage() {
   const [conversation, setConversation] =
     useState<ConversationItem[]>([]);
 
+  const [historyLoading, setHistoryLoading] =
+    useState(true);
+
   const conversationEndRef =
     useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    const controller = new AbortController();
+
+    async function loadHistory() {
+      try {
+        const response = await fetch(
+          "/api/atlas/history",
+          {
+            signal: controller.signal,
+            cache: "no-store",
+          }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            data.error ??
+              "Atlas could not load your conversation history."
+          );
+        }
+
+        if (Array.isArray(data.conversation)) {
+          setConversation(
+            data.conversation.filter(
+              (item: ConversationItem) =>
+                (item.role === "user" ||
+                  item.role === "atlas") &&
+                typeof item.message === "string"
+            )
+          );
+        }
+      } catch (error) {
+        if (
+          error instanceof DOMException &&
+          error.name === "AbortError"
+        ) {
+          return;
+        }
+
+        console.error("Atlas History Error:", error);
+      } finally {
+        if (!controller.signal.aborted) {
+          setHistoryLoading(false);
+        }
+      }
+    }
+
+    loadHistory();
+
+    return () => controller.abort();
+  }, []);
+
+  useEffect(() => {
     conversationEndRef.current?.scrollIntoView({
-      behavior: "smooth",
+      behavior: historyLoading ? "auto" : "smooth",
       block: "end",
     });
-  }, [conversation]);
+  }, [conversation, historyLoading]);
 
   useEffect(() => {
     const controller =
@@ -143,7 +199,11 @@ export default function AtlasPage() {
     const prompt =
       (text ?? message).trim();
 
-    if (!prompt || loading) {
+    if (
+      !prompt ||
+      loading ||
+      historyLoading
+    ) {
       return;
     }
 
@@ -306,7 +366,9 @@ export default function AtlasPage() {
             <input
               type="text"
               value={message}
-              disabled={loading}
+              disabled={
+                loading || historyLoading
+              }
               onChange={(event) =>
                 setMessage(
                   event.target.value
@@ -330,6 +392,7 @@ export default function AtlasPage() {
               }
               disabled={
                 loading ||
+                historyLoading ||
                 !message.trim()
               }
               aria-label="Send message to Atlas"
@@ -364,7 +427,9 @@ export default function AtlasPage() {
                       suggestion
                     )
                   }
-                  disabled={loading}
+                  disabled={
+                    loading || historyLoading
+                  }
                   className="rounded-full border border-white/10 bg-white/5 px-5 py-3 text-sm text-slate-300 transition-all duration-300 hover:border-amber-400 hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {suggestion}
@@ -389,6 +454,12 @@ export default function AtlasPage() {
           aria-live="polite"
           className="mt-8 space-y-5"
         >
+          {historyLoading && (
+            <p className="text-center text-sm text-slate-500">
+              Restoring your conversation...
+            </p>
+          )}
+
           {conversation.map(
             (item, index) => (
               <div
@@ -423,7 +494,9 @@ export default function AtlasPage() {
               <input
                 type="text"
                 value={message}
-                disabled={loading}
+                disabled={
+                  loading || historyLoading
+                }
                 onChange={(event) =>
                   setMessage(
                     event.target.value
@@ -447,6 +520,7 @@ export default function AtlasPage() {
                 }
                 disabled={
                   loading ||
+                  historyLoading ||
                   !message.trim()
                 }
                 aria-label="Send message to Atlas"

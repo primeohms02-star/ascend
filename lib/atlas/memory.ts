@@ -48,6 +48,10 @@ export async function loadConversation(
         "role,message,created_at"
       )
       .eq("user_id", clerkId)
+      .eq(
+        "memory_type",
+        "conversation"
+      )
       .in("role", [
         "user",
         "assistant",

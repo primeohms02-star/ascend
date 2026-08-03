@@ -19,6 +19,7 @@ import type {
 import type {
   RankedOpportunity,
 } from "@/lib/atlas/opportunities/types";
+import type { OpportunityStatus } from "@/lib/atlas/opportunities/memory";
 
 type Props = {
   search: string;
@@ -38,6 +39,7 @@ type OpportunityPageResponse = {
   totalPages: number;
   hasNextPage: boolean;
   hasPreviousPage: boolean;
+  opportunityStatuses: Record<string, OpportunityStatus>;
 };
 
 const PAGE_SIZE = 10;
@@ -152,6 +154,11 @@ export default function OpportunityFeed({
   ] = useState<
     OpportunityProfile | null
   >(null);
+
+  const [
+    opportunityStatuses,
+    setOpportunityStatuses,
+  ] = useState<Record<string, OpportunityStatus>>({});
 
   const [
     total,
@@ -307,6 +314,10 @@ export default function OpportunityFeed({
 
         setProfile(
           result.profile
+        );
+
+        setOpportunityStatuses(
+          result.opportunityStatuses ?? {}
         );
 
         setTotal(
@@ -576,6 +587,20 @@ export default function OpportunityFeed({
                   opportunity
                 }
                 insight={insight}
+                status={opportunityStatuses[opportunity.id]}
+                onStatusChange={(opportunityId, status) => {
+                  setOpportunityStatuses((current) => {
+                    const updated = { ...current };
+
+                    if (status) {
+                      updated[opportunityId] = status;
+                    } else {
+                      delete updated[opportunityId];
+                    }
+
+                    return updated;
+                  });
+                }}
               />
             );
           }

@@ -5,6 +5,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 
@@ -28,6 +29,7 @@ import {
   Compass,
   LoaderCircle,
   Mail,
+  MessageCircle,
   RefreshCw,
   Search,
   ShieldCheck,
@@ -177,6 +179,9 @@ function CaseLoading() {
 }
 
 export default function SupportCasePage() {
+  const conversationRef =
+    useRef<HTMLDivElement>(null);
+
   const params =
     useParams<{
       reference: string;
@@ -400,28 +405,40 @@ export default function SupportCasePage() {
               </p>
             </div>
 
-            <button
-              type="button"
-              onClick={
-                copyReference
-              }
-              className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-slate-200 transition hover:border-cyan-400/30 hover:bg-white/10"
-            >
-              {copied ? (
-                <CheckCircle2
-                  size={17}
-                  className="text-emerald-300"
-                />
-              ) : (
-                <Clipboard
-                  size={17}
-                />
+            <div className="flex flex-wrap gap-3">
+              {supportCase && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    conversationRef.current?.scrollIntoView({
+                      behavior: "smooth",
+                      block: "start",
+                    })
+                  }
+                  className="inline-flex items-center gap-2 rounded-xl bg-cyan-400 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300"
+                >
+                  <MessageCircle size={17} />
+                  Open Support Chat
+                </button>
               )}
 
-              {copied
-                ? "Copied"
-                : referenceNumber}
-            </button>
+              <button
+                type="button"
+                onClick={copyReference}
+                className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-slate-200 transition hover:border-cyan-400/30 hover:bg-white/10"
+              >
+                {copied ? (
+                  <CheckCircle2
+                    size={17}
+                    className="text-emerald-300"
+                  />
+                ) : (
+                  <Clipboard size={17} />
+                )}
+
+                {copied ? "Copied" : referenceNumber}
+              </button>
+            </div>
           </div>
         </header>
 
@@ -625,23 +642,28 @@ export default function SupportCasePage() {
                   </p>
                 </section>
 
-                <SupportCaseConversation
-  key={supportCase.id}
-  referenceNumber={supportCase.referenceNumber}
-  status={supportCase.status}
-  contactEmail={
-    userId
-      ? undefined
-      : contactEmail
-  }
-  onReplySent={() =>
-    retrieveCase(
-      userId
-        ? undefined
-        : contactEmail
-    )
-  }
-/>
+                <div
+                  ref={conversationRef}
+                  className="scroll-mt-6"
+                >
+                  <SupportCaseConversation
+                    key={supportCase.id}
+                    referenceNumber={supportCase.referenceNumber}
+                    status={supportCase.status}
+                    contactEmail={
+                      userId
+                        ? undefined
+                        : contactEmail
+                    }
+                    onReplySent={() =>
+                      retrieveCase(
+                        userId
+                          ? undefined
+                          : contactEmail
+                      )
+                    }
+                  />
+                </div>
 
                 <section className="rounded-3xl border border-white/10 bg-white/[0.04] p-6 sm:p-8">
                   <h2 className="text-xl font-bold">
