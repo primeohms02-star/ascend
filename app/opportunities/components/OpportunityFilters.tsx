@@ -82,6 +82,10 @@ const filters: FilterOption[] = [
     label: "Business",
     value: "Business",
   },
+  {
+    label: "Music",
+    value: "Music",
+  },
 ];
 
 type Props = {

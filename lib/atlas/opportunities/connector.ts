@@ -50,6 +50,10 @@ import {
   JobGurusConnector,
 } from "./connectors/jobgurus";
 
+import {
+  MusicInAfricaConnector,
+} from "./connectors/musicinafrica";
+
 const CONNECTOR_TIMEOUT = 20000;
 
 const HOT_NIGERIAN_JOBS_TIMEOUT =
@@ -113,6 +117,9 @@ const connectors = {
 
   jobgurus:
     JobGurusConnector,
+
+  musicinafrica:
+    MusicInAfricaConnector,
 };
 
 type ConnectorName =
