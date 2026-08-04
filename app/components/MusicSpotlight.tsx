@@ -141,7 +141,7 @@ export default function MusicSpotlight() {
             )}
 
             <Link
-              href={userId ? "/opportunities" : "/sign-up"}
+              href={userId ? "/opportunities?filter=Music" : "/sign-up"}
               className="inline-flex items-center justify-center rounded-2xl border border-white/10 bg-white/5 px-7 py-4 font-semibold text-slate-200 backdrop-blur-xl transition hover:border-fuchsia-300/25 hover:bg-white/10 hover:text-white"
             >
               Explore Music Opportunities

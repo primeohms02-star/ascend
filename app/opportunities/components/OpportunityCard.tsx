@@ -17,6 +17,7 @@ type OpportunityExplanation = {
 type Props = {
   opportunity: RankedOpportunity;
   insight: OpportunityExplanation;
+  activeFilter?: string;
   status?: OpportunityStatus;
   onStatusChange?: (
     opportunityId: string,
@@ -93,6 +94,7 @@ function CheckIcon() {
 export default function OpportunityCard({
   opportunity,
   insight,
+  activeFilter,
   status,
   onStatusChange,
 }: Props) {
@@ -109,7 +111,11 @@ export default function OpportunityCard({
     `/opportunities/${encodedOpportunityId}` +
     `?source=${encodeURIComponent(
       opportunity.source
-    )}`;
+    )}${
+      activeFilter && activeFilter !== "All"
+        ? `&filter=${encodeURIComponent(activeFilter)}`
+        : ""
+    }`;
 
   const reasons = insight.reasons ?? [];
 

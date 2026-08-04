@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import OpportunityHeader from "./components/OpportunityHeader";
 import OpportunityFilters from "./components/OpportunityFilters";
@@ -52,6 +52,34 @@ export default function OpportunitiesPage() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("All");
 
+  useEffect(() => {
+    const requestedFilter = new URLSearchParams(
+      window.location.search
+    ).get("filter");
+
+    if (requestedFilter) {
+      setFilter(requestedFilter);
+    }
+  }, []);
+
+  function handleFilterChange(nextFilter: string) {
+    setFilter(nextFilter);
+
+    const url = new URL(window.location.href);
+
+    if (nextFilter === "All") {
+      url.searchParams.delete("filter");
+    } else {
+      url.searchParams.set("filter", nextFilter);
+    }
+
+    window.history.replaceState(
+      null,
+      "",
+      `${url.pathname}${url.search}${url.hash}`
+    );
+  }
+
   return (
     <main className="min-h-screen bg-gradient-to-br from-[#020617] via-[#08111f] to-[#0f172a]">
       <div className="mx-auto max-w-7xl px-5 py-8 sm:px-6 sm:py-10">
@@ -88,7 +116,7 @@ export default function OpportunitiesPage() {
           <div className="mt-5 border-t border-white/10 pt-5">
             <OpportunityFilters
               value={filter}
-              onChange={setFilter}
+              onChange={handleFilterChange}
             />
           </div>
         </section>

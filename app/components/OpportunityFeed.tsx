@@ -587,6 +587,7 @@ export default function OpportunityFeed({
                   opportunity
                 }
                 insight={insight}
+                activeFilter={filter}
                 status={opportunityStatuses[opportunity.id]}
                 onStatusChange={(opportunityId, status) => {
                   setOpportunityStatuses((current) => {

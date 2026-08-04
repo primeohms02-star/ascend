@@ -16,6 +16,7 @@ type Props = {
 
   searchParams: Promise<{
     source?: string;
+    filter?: string;
   }>;
 };
 
@@ -43,7 +44,7 @@ export default async function OpportunityDetailsPage({
   searchParams,
 }: Props) {
   const { id } = await params;
-  const { source } = await searchParams;
+  const { source, filter } = await searchParams;
 
   const decodedId = decodeURIComponent(id);
 
@@ -74,7 +75,15 @@ export default async function OpportunityDetailsPage({
 
   const actionPlanHref =
     `/opportunities/${encodedOpportunityId}/action-plan` +
-    `?source=${encodeURIComponent(source)}`;
+    `?source=${encodeURIComponent(source)}${
+      filter
+        ? `&filter=${encodeURIComponent(filter)}`
+        : ""
+    }`;
+
+  const opportunitiesHref = filter
+    ? `/opportunities?filter=${encodeURIComponent(filter)}`
+    : "/opportunities";
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-[#020617] via-[#08111f] to-[#0f172a]">
@@ -83,7 +92,7 @@ export default async function OpportunityDetailsPage({
 
         <nav aria-label="Opportunity navigation">
           <Link
-            href="/opportunities"
+            href={opportunitiesHref}
             className="group inline-flex items-center gap-2 rounded-xl border border-slate-700/80 bg-slate-900/60 px-4 py-2.5 text-sm font-medium text-slate-300 transition hover:border-cyan-400/30 hover:bg-cyan-400/10 hover:text-cyan-300 focus:outline-none focus:ring-2 focus:ring-cyan-400/50"
           >
             <BackArrowIcon />

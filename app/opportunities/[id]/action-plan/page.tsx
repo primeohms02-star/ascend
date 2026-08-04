@@ -15,6 +15,7 @@ type Props = {
 
   searchParams: Promise<{
     source?: string;
+    filter?: string;
   }>;
 };
 
@@ -42,7 +43,7 @@ export default async function AtlasActionPlanPage({
   searchParams,
 }: Props) {
   const { id } = await params;
-  const { source } = await searchParams;
+  const { source, filter } = await searchParams;
 
   const { userId } = await auth();
 
@@ -78,7 +79,11 @@ export default async function AtlasActionPlanPage({
 
   const decisionPageHref =
     `/opportunities/${encodedOpportunityId}` +
-    `?source=${encodeURIComponent(source)}`;
+    `?source=${encodeURIComponent(source)}${
+      filter
+        ? `&filter=${encodeURIComponent(filter)}`
+        : ""
+    }`;
 
   const progressStorageId =
     `${source}:${opportunity.id}`;
