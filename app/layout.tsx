@@ -49,6 +49,10 @@ export const metadata: Metadata = {
     "grants",
     "jobs in Africa",
     "opportunities in Nigeria",
+    "music opportunities in Africa",
+    "music opportunities in Nigeria",
+    "African music career development",
+    "Afrobeats opportunities",
   ],
 
   creator: "ASCEND",

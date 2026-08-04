@@ -26,6 +26,10 @@ const productLinks = [
     label: "Momentum",
     href: "/dashboard#momentum",
   },
+  {
+    label: "ASCEND Music",
+    href: "/#ascend-music",
+  },
 ];
 
 const exploreLinks = [

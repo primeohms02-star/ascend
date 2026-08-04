@@ -47,10 +47,21 @@ export default function Hero() {
           </h1>
 
           <p className="mt-8 max-w-xl text-lg leading-8 text-slate-300">
-            ASCEND helps you understand where you are,
-            discover opportunities, and confidently
-            decide what to do next.
+            ASCEND helps you understand who you are,
+            define your North Star, take strategic
+            action, discover relevant opportunities
+            and build evidence of meaningful growth.
           </p>
+
+          <div className="mt-7 flex flex-wrap justify-center gap-x-5 gap-y-2 text-sm text-slate-500 lg:justify-start">
+            <span>Direction</span>
+            <span className="text-blue-500">•</span>
+            <span>Atlas Intelligence</span>
+            <span className="text-blue-500">•</span>
+            <span>Real Opportunities</span>
+            <span className="text-blue-500">•</span>
+            <span>Measurable Growth</span>
+          </div>
 
           <div className="mt-12 flex flex-col gap-5 sm:flex-row">
             {isLoaded ? (

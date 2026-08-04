@@ -1,6 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import type {
+  MouseEvent,
+} from "react";
 
 import Image from "next/image";
 import Link from "next/link";
@@ -33,6 +36,10 @@ const navigation = [
     href: "/how-it-works",
   },
   {
+    label: "Music",
+    href: "/#ascend-music",
+  },
+  {
     label: "Roadmap",
     href: "/roadmap",
   },
@@ -52,6 +59,43 @@ export default function Navbar() {
 
   function closeMobileMenu() {
     setMobileOpen(false);
+  }
+
+  function handleNavigation(
+    event: MouseEvent<HTMLAnchorElement>,
+    href: string
+  ) {
+    closeMobileMenu();
+
+    if (
+      href !== "/#ascend-music" ||
+      typeof window === "undefined" ||
+      window.location.pathname !== "/"
+    ) {
+      return;
+    }
+
+    event.preventDefault();
+
+    window.history.replaceState(
+      null,
+      "",
+      "#ascend-music"
+    );
+
+    window.setTimeout(
+      () => {
+        document
+          .getElementById(
+            "ascend-music"
+          )
+          ?.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+          });
+      },
+      mobileOpen ? 240 : 0
+    );
   }
 
   return (
@@ -92,6 +136,12 @@ export default function Navbar() {
               <Link
                 key={item.label}
                 href={item.href}
+                onClick={(event) =>
+                  handleNavigation(
+                    event,
+                    item.href
+                  )
+                }
                 className="text-sm font-medium text-slate-400 transition hover:text-white"
               >
                 {item.label}
@@ -205,7 +255,12 @@ export default function Navbar() {
                     <Link
                       key={item.label}
                       href={item.href}
-                      onClick={closeMobileMenu}
+                      onClick={(event) =>
+                        handleNavigation(
+                          event,
+                          item.href
+                        )
+                      }
                       className="rounded-xl px-4 py-3 text-sm font-medium text-slate-300 transition hover:bg-white/5 hover:text-white"
                     >
                       {item.label}
