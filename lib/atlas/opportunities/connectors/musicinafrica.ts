@@ -16,6 +16,12 @@ const SEARCH_TERMS = [
   "open call",
   "call for applications",
   "applications",
+  "open call Nigeria",
+  "call for applications Nigeria",
+  "Nigerian musicians",
+  "music grant Nigeria",
+  "music competition Nigeria",
+  "music training Nigeria",
 ];
 
 const MAX_POST_AGE_DAYS = 180;
@@ -37,6 +43,10 @@ type MusicInAfricaPost = {
   link?: string;
 
   title?: {
+    rendered?: string;
+  };
+
+  excerpt?: {
     rendered?: string;
   };
 };
@@ -195,26 +205,38 @@ function toOpportunity(
   const url =
     post.link?.trim() ?? "";
 
+  const excerpt = decodeHtml(
+    post.excerpt?.rendered ?? ""
+  );
+
+  const searchableText = [
+    title,
+    excerpt,
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   if (
     !title ||
     !url ||
     !isRecentPost(post.date) ||
-    !isMusicOpportunity(title)
+    !isMusicOpportunity(searchableText)
   ) {
     return null;
   }
 
   const category =
-    detectCategory(title);
+    detectCategory(searchableText);
 
   const location =
-    detectLocation(title);
+    detectLocation(searchableText);
 
   return {
     id: `musicinafrica-${post.id}`,
     title,
     company: "Music In Africa",
     description:
+      excerpt.slice(0, 800) ||
       "An application opportunity for musicians, artists or music-industry professionals published by Music In Africa. Open the original posting to confirm eligibility, requirements and the current deadline.",
     category,
     source: "musicinafrica",
@@ -222,7 +244,7 @@ function toOpportunity(
     remote: false,
     url,
     tags: buildTags(
-      title,
+      searchableText,
       category,
       location
     ),
@@ -281,7 +303,7 @@ async function fetchSearch(
 
   url.searchParams.set(
     "_fields",
-    "id,date,link,title"
+    "id,date,link,title,excerpt"
   );
 
   const response = await fetch(
@@ -367,7 +389,7 @@ async function fetchPostById(
 
   try {
     const response = await fetch(
-      `${API_URL}/${numericId}?_fields=id,date,link,title`,
+      `${API_URL}/${numericId}?_fields=id,date,link,title,excerpt`,
       {
         headers: {
           Accept: "application/json",

@@ -187,6 +187,10 @@ export default function MusicSpotlight() {
                   <p className="mt-1 text-sm text-slate-400">
                     Creative direction system
                   </p>
+
+                  <p className="mt-2 text-xs font-medium text-fuchsia-200/80">
+                    For those interested in the music industry
+                  </p>
                 </div>
               </div>
 

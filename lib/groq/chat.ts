@@ -1,8 +1,9 @@
 import { groq } from "./client";
+import { GROQ_MODEL } from "./config";
 
 export async function askGroq(prompt: string) {
   const completion = await groq.chat.completions.create({
-    model: "llama-3.3-70b-versatile",
+    model: GROQ_MODEL,
     messages: [
       {
         role: "user",

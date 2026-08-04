@@ -4,6 +4,8 @@ import { auth } from "@clerk/nextjs/server";
 
 import Groq from "groq-sdk";
 
+import { GROQ_MODEL } from "@/lib/groq/config";
+
 import {
   classifySupportRequest,
   getSupportContext,
@@ -220,7 +222,7 @@ export async function POST(
         const completion =
           await groq.chat.completions.create({
             model:
-              "llama-3.3-70b-versatile",
+              GROQ_MODEL,
 
             temperature: 0.2,
 

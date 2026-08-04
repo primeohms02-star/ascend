@@ -12,6 +12,8 @@ import {
 
 import { loadMusicProfile } from "@/lib/music/profile";
 
+import { GROQ_MODEL } from "@/lib/groq/config";
+
 import {
   groq,
 } from "./groq";
@@ -544,7 +546,7 @@ export async function runAtlasBrain({
   const completion =
     await groq.chat.completions.create({
       model:
-        "llama-3.3-70b-versatile",
+        GROQ_MODEL,
 
       temperature:
         0.7,
@@ -604,7 +606,7 @@ export async function extractPermanentMemory(
   const completion =
     await groq.chat.completions.create({
       model:
-        "llama-3.3-70b-versatile",
+        GROQ_MODEL,
 
       temperature: 0,
 
@@ -696,7 +698,7 @@ export async function generateMission(
   const completion =
     await groq.chat.completions.create({
       model:
-        "llama-3.3-70b-versatile",
+        GROQ_MODEL,
 
       temperature: 0,
 

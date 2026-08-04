@@ -24,6 +24,8 @@ import {
   loadOnboardingContext as loadStructuredOnboardingContext,
 } from "@/lib/atlas/onboardingContext";
 
+import { GROQ_MODEL } from "@/lib/groq/config";
+
 export type DailyMission = {
   title: string;
 
@@ -445,7 +447,7 @@ export async function getDailyMission(
     const completion =
       await groq.chat.completions.create({
         model:
-          "llama-3.3-70b-versatile",
+          GROQ_MODEL,
 
         temperature:
           0.35,

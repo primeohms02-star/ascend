@@ -16,12 +16,20 @@ import {
 const SPLASH_STORAGE_KEY =
   "ascend-launch-seen";
 
+type LaunchStatus =
+  | "checking"
+  | "visible"
+  | "hidden";
+
 export default function AscendLaunch() {
   const shouldReduceMotion =
     useReducedMotion();
 
-  const [visible, setVisible] =
-    useState(true);
+  const [status, setStatus] =
+    useState<LaunchStatus>("checking");
+
+  const [isCompactDevice, setIsCompactDevice] =
+    useState(false);
 
   useEffect(() => {
     const previousOverflow =
@@ -39,9 +47,18 @@ export default function AscendLaunch() {
     }
 
     if (hasSeenLaunch) {
-      setVisible(false);
+      setStatus("hidden");
       return;
     }
+
+    const compactDevice =
+      window.matchMedia(
+        "(max-width: 767px), (prefers-reduced-motion: reduce)"
+      ).matches;
+
+    setIsCompactDevice(compactDevice);
+
+    setStatus("visible");
 
     document.body.style.overflow =
       "hidden";
@@ -58,14 +75,16 @@ export default function AscendLaunch() {
             // Continue if browser storage is unavailable.
           }
 
-          setVisible(false);
+          setStatus("hidden");
 
           document.body.style.overflow =
             previousOverflow;
         },
         shouldReduceMotion
-          ? 600
-          : 2000
+          ? 300
+          : compactDevice
+            ? 800
+            : 1600
       );
 
     return () => {
@@ -78,7 +97,7 @@ export default function AscendLaunch() {
 
   return (
     <AnimatePresence>
-      {visible && (
+      {status === "visible" && (
         <motion.div
           initial={{
             opacity: 1,
@@ -111,7 +130,8 @@ export default function AscendLaunch() {
             }}
             transition={{
               duration:
-                shouldReduceMotion
+                shouldReduceMotion ||
+                isCompactDevice
                   ? 0.3
                   : 1.8,
               ease: [
@@ -121,7 +141,7 @@ export default function AscendLaunch() {
                 1,
               ],
             }}
-            className="absolute h-72 w-72 rounded-full bg-cyan-500/25 blur-[110px] sm:h-96 sm:w-96"
+            className="absolute hidden h-96 w-96 rounded-full bg-cyan-500/25 blur-[110px] md:block"
           />
 
           {/* Logo */}
@@ -132,8 +152,13 @@ export default function AscendLaunch() {
               scale:
                 shouldReduceMotion
                   ? 0.95
-                  : 0.38,
-              filter: "blur(7px)",
+                  : isCompactDevice
+                    ? 0.9
+                    : 0.38,
+              filter:
+                isCompactDevice
+                  ? "blur(0px)"
+                  : "blur(7px)",
             }}
             animate={{
               opacity: 1,
@@ -142,7 +167,8 @@ export default function AscendLaunch() {
             }}
             transition={{
               duration:
-                shouldReduceMotion
+                shouldReduceMotion ||
+                isCompactDevice
                   ? 0.3
                   : 1.85,
               ease: [
@@ -177,11 +203,13 @@ export default function AscendLaunch() {
             }}
             transition={{
               duration:
-                shouldReduceMotion
+                shouldReduceMotion ||
+                isCompactDevice
                   ? 0.3
                   : 0.7,
               delay:
-                shouldReduceMotion
+                shouldReduceMotion ||
+                isCompactDevice
                   ? 0
                   : 0.2,
               ease: "easeOut",
