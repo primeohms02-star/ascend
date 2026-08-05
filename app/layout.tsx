@@ -5,7 +5,6 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
-import AscendLaunch from "@/app/components/AscendLaunch";
 import AscendStructuredData from "@/app/components/AscendStructuredData";
 import { NotificationProvider } from "@/app/context/NotificationContext";
 
@@ -158,8 +157,6 @@ export default function RootLayout({
           <AscendStructuredData />
 
           <NotificationProvider>
-            <AscendLaunch />
-
             {children}
           </NotificationProvider>
 
