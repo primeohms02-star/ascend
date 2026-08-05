@@ -50,9 +50,10 @@ import {
   JobGurusConnector,
 } from "./connectors/jobgurus";
 
+
 import {
-  MusicInAfricaConnector,
-} from "./connectors/musicinafrica";
+  NigerianIndustriesConnector,
+} from "./connectors/nigerianindustries";
 
 const CONNECTOR_TIMEOUT = 20000;
 
@@ -118,8 +119,8 @@ const connectors = {
   jobgurus:
     JobGurusConnector,
 
-  musicinafrica:
-    MusicInAfricaConnector,
+  nigerianindustries:
+    NigerianIndustriesConnector,
 };
 
 type ConnectorName =

@@ -1,16 +1,24 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 
 import { ClerkProvider } from "@clerk/nextjs";
 
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
+import AscendLaunch from "@/app/components/AscendLaunch";
 import AscendStructuredData from "@/app/components/AscendStructuredData";
 import { NotificationProvider } from "@/app/context/NotificationContext";
 
 import "./globals.css";
 
 const siteUrl = "https://ascendai.space";
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#020617",
+};
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -48,10 +56,6 @@ export const metadata: Metadata = {
     "grants",
     "jobs in Africa",
     "opportunities in Nigeria",
-    "music opportunities in Africa",
-    "music opportunities in Nigeria",
-    "African music career development",
-    "Afrobeats opportunities",
   ],
 
   creator: "ASCEND",
@@ -157,6 +161,8 @@ export default function RootLayout({
           <AscendStructuredData />
 
           <NotificationProvider>
+            <AscendLaunch />
+
             {children}
           </NotificationProvider>
 

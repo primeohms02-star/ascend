@@ -29,3 +29,61 @@ body {
   animation: atlasOrb 5s linear infinite alternate;
 
 }
+
+/* Mobile Safari and low-power device optimizations */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  background: #020617;
+}
+
+body {
+  min-height: 100dvh;
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+  overscroll-behavior-y: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+button,
+a,
+input,
+textarea,
+select {
+  touch-action: manipulation;
+}
+
+@supports (-webkit-touch-callout: none) {
+  input,
+  textarea,
+  select {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 767px) {
+  .backdrop-blur-xl,
+  .backdrop-blur-2xl,
+  .backdrop-blur-3xl {
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+  }
+
+  [class*="blur-[180px]"],
+  [class*="blur-[200px]"],
+  [class*="blur-[220px]"] {
+    filter: blur(90px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

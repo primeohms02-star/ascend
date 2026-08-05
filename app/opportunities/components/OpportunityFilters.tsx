@@ -83,8 +83,12 @@ const filters: FilterOption[] = [
     value: "Business",
   },
   {
-    label: "Music",
-    value: "Music",
+    label: "Finance",
+    value: "Finance",
+  },
+  {
+    label: "Fashion",
+    value: "Fashion",
   },
 ];
 

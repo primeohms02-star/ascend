@@ -8,8 +8,6 @@ import type {
   OpportunityProfile,
 } from "./profile";
 
-import { loadMusicProfile } from "@/lib/music/profile";
-
 type ProfileRow = {
   clerk_id: string;
 
@@ -238,6 +236,16 @@ const INDUSTRY_SIGNALS:
         /\b(?:finance|banking|accounting|fintech)\b/i,
     },
     {
+      name: "Business",
+      pattern:
+        /\b(?:business|entrepreneurship|startup|founder|operations|commerce)\b/i,
+    },
+    {
+      name: "Fashion",
+      pattern:
+        /\b(?:fashion|apparel|garment|textile|styling|couture|ready-to-wear)\b/i,
+    },
+    {
       name: "Healthcare",
       pattern:
         /\b(?:healthcare|health|medical|medicine)\b/i,
@@ -429,7 +437,6 @@ export async function buildOpportunityProfile(
   const [
     profileResult,
     onboardingResult,
-    musicProfile,
   ] = await Promise.all([
     supabaseServer
       .from("profiles")
@@ -442,7 +449,9 @@ export async function buildOpportunityProfile(
       )
       .maybeSingle(),
 
-    supabaseServer
+    (
+      supabaseServer as any
+    )
       .from(
         "atlas_onboarding_context"
       )
@@ -454,10 +463,6 @@ export async function buildOpportunityProfile(
         profile.clerkId
       )
       .maybeSingle(),
-
-    loadMusicProfile(
-      profile.clerkId
-    ),
   ]);
 
   if (
@@ -515,10 +520,6 @@ export async function buildOpportunityProfile(
     identity,
     goal,
     northStar,
-    musicProfile?.roles.join(" ") ?? "",
-    musicProfile?.genres.join(" ") ?? "",
-    musicProfile?.goal ?? "",
-    musicProfile?.northStar ?? "",
   ]
     .filter(Boolean)
     .join(" ");
@@ -534,8 +535,6 @@ export async function buildOpportunityProfile(
     unique([
       ...declaredSkills,
 
-      ...(musicProfile?.skills ?? []),
-
       /*
        * Preserve useful skills the user
        * explicitly mentioned in their
@@ -549,7 +548,7 @@ export async function buildOpportunityProfile(
   const location =
     detectLocation(
       directionText
-    ) || musicProfile?.location || "";
+    );
 
   const remoteOnly =
     /\b(?:remote only|only remote|remote-only|work(?:ing)? from home only)\b/i.test(
@@ -557,14 +556,9 @@ export async function buildOpportunityProfile(
     );
 
   const industries =
-    unique([
-      ...detectIndustries(
-        directionText
-      ),
-      ...(musicProfile
-        ? ["Music", "Entertainment"]
-        : []),
-    ]);
+    detectIndustries(
+      directionText
+    );
 
   return {
     clerkId:
@@ -579,11 +573,6 @@ export async function buildOpportunityProfile(
       unique([
         ...industries,
         northStar,
-        ...(musicProfile?.roles ?? []),
-        ...(musicProfile?.genres ?? []),
-        ...(musicProfile
-          ? [musicProfile.goal, musicProfile.northStar]
-          : []),
       ]),
 
     experienceLevel:
@@ -599,8 +588,7 @@ export async function buildOpportunityProfile(
     location,
 
     preferredCountries:
-      location === "Nigeria" ||
-      musicProfile?.preferredRegions.includes("Nigeria")
+      location === "Nigeria"
         ? ["Nigeria"]
         : [],
 
