@@ -65,6 +65,9 @@ const validIdentities =
     "Career Changer",
     "Freelancer",
     "Founder or Entrepreneur",
+    "Business Professional",
+    "Finance Professional",
+    "Fashion Professional",
     "Creator",
     "Researcher or Academic",
     "Social Impact Professional",
@@ -80,6 +83,8 @@ const validGoals =
     "Join a Fellowship",
     "Find Grants or Funding",
     "Build a Business",
+    "Build a Finance Career",
+    "Grow in Fashion",
     "Learn New Skills",
     "Change Careers",
     "Advance My Career",
@@ -311,6 +316,12 @@ function buildFallbackMission(
 
       "Build a Business":
         "Define the specific customer problem your business will solve and speak with one potential customer to test your most important assumption.",
+
+      "Build a Finance Career":
+        "Choose one finance pathway you want to pursue, compare three relevant roles or programmes, and identify the two skills most important for your strongest match.",
+
+      "Grow in Fashion":
+        "Choose one fashion direction you want to strengthen, document your current portfolio or brand position, and identify one relevant opportunity to pursue this week.",
 
       "Learn New Skills":
         "Identify the three most important skills required by your North Star and complete one focused learning session on the highest-priority skill.",

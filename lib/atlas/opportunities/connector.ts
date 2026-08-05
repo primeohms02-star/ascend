@@ -54,6 +54,22 @@ import {
   MusicInAfricaConnector,
 } from "./connectors/musicinafrica";
 
+import {
+  TrybeAfricaConnector,
+} from "./connectors/trybeafrica";
+
+import {
+  FateFoundationConnector,
+} from "./connectors/fatefoundation";
+
+import {
+  NigeriaFinanceConnector,
+} from "./connectors/nigeriafinance";
+
+import {
+  AfricanFashionFoundationConnector,
+} from "./connectors/africanfashionfoundation";
+
 const CONNECTOR_TIMEOUT = 20000;
 
 const HOT_NIGERIAN_JOBS_TIMEOUT =
@@ -171,6 +187,18 @@ const connectors = {
 
   musicinafrica:
     MusicInAfricaConnector,
+
+  trybeafrica:
+    TrybeAfricaConnector,
+
+  fatefoundation:
+    FateFoundationConnector,
+
+  nigeriafinance:
+    NigeriaFinanceConnector,
+
+  africanfashionfoundation:
+    AfricanFashionFoundationConnector,
 };
 
 type ConnectorName =

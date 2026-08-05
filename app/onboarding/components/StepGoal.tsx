@@ -48,6 +48,18 @@ const goals = [
       "Start, validate or grow a business that creates meaningful value.",
   },
   {
+    emoji: "🏦",
+    title: "Build a Finance Career",
+    description:
+      "Find opportunities and build skills across banking, accounting, investment or finance.",
+  },
+  {
+    emoji: "👗",
+    title: "Grow in Fashion",
+    description:
+      "Develop your fashion craft, brand, portfolio and access relevant industry opportunities.",
+  },
+  {
     emoji: "🛠️",
     title: "Learn New Skills",
     description:

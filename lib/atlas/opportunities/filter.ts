@@ -133,6 +133,35 @@ const GOAL_CATEGORIES:
       ],
     },
 
+    "build a finance career": {
+      primary: [
+        "job",
+        "internship",
+        "programme",
+      ],
+
+      adjacent: [
+        "course",
+        "scholarship",
+        "mentorship",
+      ],
+    },
+
+    "grow in fashion": {
+      primary: [
+        "competition",
+        "grant",
+        "accelerator",
+      ],
+
+      adjacent: [
+        "fellowship",
+        "course",
+        "programme",
+        "job",
+      ],
+    },
+
     "learn new skills": {
       primary: [
         "course",

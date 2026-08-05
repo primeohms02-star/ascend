@@ -30,7 +30,7 @@ import type {
 const DEFAULT_PAGE_SIZE = 10;
 const MAX_PAGE_SIZE = 25;
 
-const SNAPSHOT_VERSION = "v13";
+const SNAPSHOT_VERSION = "v14";
 
 const SNAPSHOT_DURATION_SECONDS =
   900;
@@ -205,6 +205,14 @@ function isAfricaOpportunity(
       "opportunitiesforafricans" ||
     source ===
       "musicinafrica" ||
+    source ===
+      "trybeafrica" ||
+    source ===
+      "fatefoundation" ||
+    source ===
+      "nigeriafinance" ||
+    source ===
+      "africanfashionfoundation" ||
     searchable.includes(
       "africa"
     ) ||

@@ -60,6 +60,24 @@ const options = [
       "Building a business, venture or solution that creates value.",
   },
   {
+    emoji: "🏢",
+    title: "Business Professional",
+    description:
+      "Building expertise across strategy, operations, sales or enterprise growth.",
+  },
+  {
+    emoji: "🏦",
+    title: "Finance Professional",
+    description:
+      "Growing through banking, accounting, investment, audit or financial analysis.",
+  },
+  {
+    emoji: "👗",
+    title: "Fashion Professional",
+    description:
+      "Building a career or business in fashion design, styling, textiles or apparel.",
+  },
+  {
     emoji: "🎨",
     title: "Creator",
     description:
