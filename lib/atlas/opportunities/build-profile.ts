@@ -8,6 +8,8 @@ import type {
   OpportunityProfile,
 } from "./profile";
 
+import { loadMusicProfile } from "@/lib/music/profile";
+
 type ProfileRow = {
   clerk_id: string;
 
@@ -133,9 +135,31 @@ const SKILL_SIGNALS:
         /\bfinancial\s+analysis\b/i,
     },
     {
+      name:
+        "Financial Modeling",
+      pattern:
+        /\bfinancial\s+modell?ing\b/i,
+    },
+    {
+      name:
+        "Investment Analysis",
+      pattern:
+        /\binvestment\s+analysis\b/i,
+    },
+    {
       name: "Accounting",
       pattern:
         /\baccounting\b/i,
+    },
+    {
+      name: "Entrepreneurship",
+      pattern:
+        /\b(?:entrepreneurship|entrepreneurial)\b/i,
+    },
+    {
+      name: "Business Strategy",
+      pattern:
+        /\bbusiness\s+strateg(?:y|ic)\b/i,
     },
     {
       name:
@@ -170,6 +194,16 @@ const SKILL_SIGNALS:
         "Graphic Design",
       pattern:
         /\bgraphic\s+design\b/i,
+    },
+    {
+      name: "Fashion Design",
+      pattern:
+        /\bfashion\s+design\b/i,
+    },
+    {
+      name: "Fashion Styling",
+      pattern:
+        /\bfashion\s+styl(?:e|ing|ist)\b/i,
     },
     {
       name:
@@ -238,12 +272,12 @@ const INDUSTRY_SIGNALS:
     {
       name: "Business",
       pattern:
-        /\b(?:business|entrepreneurship|startup|founder|operations|commerce)\b/i,
+        /\b(?:business|entrepreneur|entrepreneurship|startup|founder|enterprise|commerce)\b/i,
     },
     {
       name: "Fashion",
       pattern:
-        /\b(?:fashion|apparel|garment|textile|styling|couture|ready-to-wear)\b/i,
+        /\b(?:fashion|apparel|clothing|garment|textile|couture|fashion\s+design|fashion\s+styling)\b/i,
     },
     {
       name: "Healthcare",
@@ -437,6 +471,7 @@ export async function buildOpportunityProfile(
   const [
     profileResult,
     onboardingResult,
+    musicProfile,
   ] = await Promise.all([
     supabaseServer
       .from("profiles")
@@ -449,9 +484,7 @@ export async function buildOpportunityProfile(
       )
       .maybeSingle(),
 
-    (
-      supabaseServer as any
-    )
+    supabaseServer
       .from(
         "atlas_onboarding_context"
       )
@@ -463,6 +496,10 @@ export async function buildOpportunityProfile(
         profile.clerkId
       )
       .maybeSingle(),
+
+    loadMusicProfile(
+      profile.clerkId
+    ),
   ]);
 
   if (
@@ -520,6 +557,10 @@ export async function buildOpportunityProfile(
     identity,
     goal,
     northStar,
+    musicProfile?.roles.join(" ") ?? "",
+    musicProfile?.genres.join(" ") ?? "",
+    musicProfile?.goal ?? "",
+    musicProfile?.northStar ?? "",
   ]
     .filter(Boolean)
     .join(" ");
@@ -535,6 +576,8 @@ export async function buildOpportunityProfile(
     unique([
       ...declaredSkills,
 
+      ...(musicProfile?.skills ?? []),
+
       /*
        * Preserve useful skills the user
        * explicitly mentioned in their
@@ -548,7 +591,7 @@ export async function buildOpportunityProfile(
   const location =
     detectLocation(
       directionText
-    );
+    ) || musicProfile?.location || "";
 
   const remoteOnly =
     /\b(?:remote only|only remote|remote-only|work(?:ing)? from home only)\b/i.test(
@@ -556,9 +599,14 @@ export async function buildOpportunityProfile(
     );
 
   const industries =
-    detectIndustries(
-      directionText
-    );
+    unique([
+      ...detectIndustries(
+        directionText
+      ),
+      ...(musicProfile
+        ? ["Music", "Entertainment"]
+        : []),
+    ]);
 
   return {
     clerkId:
@@ -573,6 +621,11 @@ export async function buildOpportunityProfile(
       unique([
         ...industries,
         northStar,
+        ...(musicProfile?.roles ?? []),
+        ...(musicProfile?.genres ?? []),
+        ...(musicProfile
+          ? [musicProfile.goal, musicProfile.northStar]
+          : []),
       ]),
 
     experienceLevel:
@@ -588,7 +641,8 @@ export async function buildOpportunityProfile(
     location,
 
     preferredCountries:
-      location === "Nigeria"
+      location === "Nigeria" ||
+      musicProfile?.preferredRegions.includes("Nigeria")
         ? ["Nigeria"]
         : [],
 

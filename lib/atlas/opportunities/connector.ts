@@ -50,10 +50,9 @@ import {
   JobGurusConnector,
 } from "./connectors/jobgurus";
 
-
 import {
-  NigerianIndustriesConnector,
-} from "./connectors/nigerianindustries";
+  MusicInAfricaConnector,
+} from "./connectors/musicinafrica";
 
 const CONNECTOR_TIMEOUT = 20000;
 
@@ -62,6 +61,57 @@ const HOT_NIGERIAN_JOBS_TIMEOUT =
 
 const MAX_CONCURRENT_CONNECTORS =
   3;
+
+const INDUSTRY_TAG_RULES = [
+  {
+    tag: "Business",
+    pattern:
+      /\b(?:business|entrepreneur(?:ship|ial)?|startup|start-up|founder|enterprise|commerce|small\s+business|sme)\b/i,
+  },
+  {
+    tag: "Finance",
+    pattern:
+      /\b(?:finance|financial|banking|banker|fintech|accounting|accountant|audit|investment|insurance|capital\s+market|wealth\s+management)\b/i,
+  },
+  {
+    tag: "Fashion",
+    pattern:
+      /\b(?:fashion|apparel|clothing|garment|textile|couture|fashion\s+design|fashion\s+styling|fashion\s+brand)\b/i,
+  },
+] as const;
+
+function enrichIndustryTags(
+  opportunity: Opportunity
+): Opportunity {
+  const searchableText = [
+    opportunity.title,
+    opportunity.company,
+    opportunity.description,
+    opportunity.category,
+    opportunity.location,
+    ...(opportunity.tags ?? []),
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  const tags = new Map(
+    (opportunity.tags ?? []).map((tag) => [
+      tag.toLowerCase(),
+      tag,
+    ])
+  );
+
+  for (const rule of INDUSTRY_TAG_RULES) {
+    if (rule.pattern.test(searchableText)) {
+      tags.set(rule.tag.toLowerCase(), rule.tag);
+    }
+  }
+
+  return {
+    ...opportunity,
+    tags: Array.from(tags.values()),
+  };
+}
 
 const RemoteOKConnector: OpportunityConnector =
   {
@@ -119,8 +169,8 @@ const connectors = {
   jobgurus:
     JobGurusConnector,
 
-  nigerianindustries:
-    NigerianIndustriesConnector,
+  musicinafrica:
+    MusicInAfricaConnector,
 };
 
 type ConnectorName =
@@ -263,7 +313,8 @@ export async function fetchAllSources(): Promise<
       .flat()
       .map(
         normalizeOpportunity
-      );
+      )
+      .map(enrichIndustryTags);
 
   return deduplicateOpportunities(
     normalized
@@ -300,13 +351,17 @@ export async function getOpportunityById(
         ? HOT_NIGERIAN_JOBS_TIMEOUT
         : CONNECTOR_TIMEOUT;
 
-    return await withTimeout(
+    const opportunity = await withTimeout(
       connector.getOpportunityById(
         id
       ),
       normalizedSource,
       timeout
     );
+
+    return opportunity
+      ? enrichIndustryTags(opportunity)
+      : null;
   } catch (error) {
     console.error(
       `Could not retrieve opportunity from ${normalizedSource}:`,

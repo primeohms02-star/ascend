@@ -6,7 +6,7 @@ import {
   useState,
 } from "react";
 
-import { AnimatePresence, motion } from "framer-motion";
+import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 
 import { getGreeting } from "@/lib/utils/greeting";
@@ -51,23 +51,23 @@ export default function AtlasPage() {
       oracle: "",
     });
 
-  const [history, setHistory] =
+  const [conversation, setConversation] =
     useState<ConversationItem[]>([]);
-
-  const [currentConversation, setCurrentConversation] =
-    useState<ConversationItem[]>([]);
-
-  const [showHistory, setShowHistory] =
-    useState(false);
 
   const [historyLoading, setHistoryLoading] =
     useState(true);
 
-  const historyEndRef =
-    useRef<HTMLDivElement>(null);
+  const [historyCount, setHistoryCount] =
+    useState(0);
+
+  const [showHistory, setShowHistory] =
+    useState(false);
 
   const conversationEndRef =
     useRef<HTMLDivElement>(null);
+
+  const shouldScrollToLatestRef =
+    useRef(false);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -92,14 +92,16 @@ export default function AtlasPage() {
         }
 
         if (Array.isArray(data.conversation)) {
-          setHistory(
+          const restoredConversation =
             data.conversation.filter(
               (item: ConversationItem) =>
                 (item.role === "user" ||
                   item.role === "atlas") &&
                 typeof item.message === "string"
-            )
-          );
+            );
+
+          setConversation(restoredConversation);
+          setHistoryCount(restoredConversation.length);
         }
       } catch (error) {
         if (
@@ -123,7 +125,7 @@ export default function AtlasPage() {
   }, []);
 
   useEffect(() => {
-    if (currentConversation.length === 0) {
+    if (!shouldScrollToLatestRef.current) {
       return;
     }
 
@@ -131,18 +133,9 @@ export default function AtlasPage() {
       behavior: "smooth",
       block: "end",
     });
-  }, [currentConversation]);
 
-  function revealHistory() {
-    setShowHistory(true);
-
-    window.setTimeout(() => {
-      historyEndRef.current?.scrollIntoView({
-        behavior: "smooth",
-        block: "end",
-      });
-    }, 80);
-  }
+    shouldScrollToLatestRef.current = false;
+  }, [conversation]);
 
   useEffect(() => {
     const controller =
@@ -233,8 +226,9 @@ export default function AtlasPage() {
 
     setLoading(true);
     setMessage("");
+    shouldScrollToLatestRef.current = true;
 
-    setCurrentConversation((current) => [
+    setConversation((current) => [
       ...current,
       {
         role: "user",
@@ -275,7 +269,9 @@ export default function AtlasPage() {
         );
       }
 
-      setCurrentConversation((current) => {
+      setConversation((current) => {
+        shouldScrollToLatestRef.current = true;
+
         const updated = [...current];
 
         updated[updated.length - 1] = {
@@ -299,7 +295,9 @@ export default function AtlasPage() {
         error
       );
 
-      setCurrentConversation((current) => {
+      setConversation((current) => {
+        shouldScrollToLatestRef.current = true;
+
         const updated = [...current];
 
         updated[updated.length - 1] = {
@@ -317,8 +315,13 @@ export default function AtlasPage() {
     }
   }
 
+  const visibleConversation =
+    showHistory
+      ? conversation
+      : conversation.slice(historyCount);
+
   return (
-    <main className="relative flex min-h-screen items-center justify-center overflow-x-hidden bg-gradient-to-b from-black via-[#0A0A0F] to-[#18181B] px-5 py-20 text-white sm:px-8">
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-b from-black via-[#0A0A0F] to-[#18181B] px-5 py-20 text-white sm:px-8">
       <button
         type="button"
         onClick={() => router.back()}
@@ -472,120 +475,106 @@ export default function AtlasPage() {
           oracle={briefing.oracle}
         />
 
-        {/* Previous conversation history */}
+        {/* Conversation */}
 
-        <section className="mt-8" aria-label="Atlas conversation history">
-          {historyLoading ? (
-            <p className="text-center text-sm text-slate-500">
-              Checking previous conversations...
-            </p>
-          ) : history.length > 0 ? (
-            <>
-              <button
-                type="button"
-                onClick={() =>
-                  showHistory
-                    ? setShowHistory(false)
-                    : revealHistory()
-                }
-                aria-expanded={showHistory}
-                className="mx-auto flex min-h-11 items-center gap-2 rounded-full border border-white/10 bg-white/5 px-5 py-2.5 text-sm font-medium text-slate-300 transition hover:border-amber-400/60 hover:bg-white/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-amber-400/50"
-              >
-                <span aria-hidden="true">
-                  {showHistory ? "↑" : "↓"}
-                </span>
-                {showHistory
-                  ? "Hide previous chat"
-                  : "Show previous chat"}
-              </button>
-
-              <AnimatePresence initial={false}>
-                {showHistory && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.25 }}
-                    className="overflow-hidden"
-                  >
-                    <div className="mt-6 space-y-5 border-t border-white/10 pt-6">
-                      {history.map((item, index) => (
-                        <div
-                          key={`history-${item.role}-${index}`}
-                          className={`rounded-3xl p-5 supports-[backdrop-filter]:backdrop-blur-xl ${
-                            item.role === "user"
-                              ? "ml-auto max-w-2xl bg-amber-500 text-black"
-                              : "mr-auto max-w-3xl border border-white/10 bg-white/5 text-white"
-                          }`}
-                        >
-                          <p className="mb-2 text-sm font-semibold">
-                            {item.role === "user" ? "You" : "Atlas"}
-                          </p>
-                          <p className="whitespace-pre-wrap leading-7">
-                            {item.message}
-                          </p>
-                        </div>
-                      ))}
-                      <div ref={historyEndRef} />
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </>
-          ) : null}
-        </section>
-
-        {/* Current conversation */}
-
-        <div aria-live="polite" className="mt-8 space-y-5">
-          {currentConversation.map((item, index) => (
-            <div
-              key={`current-${item.role}-${index}`}
-              className={`rounded-3xl p-5 supports-[backdrop-filter]:backdrop-blur-xl ${
-                item.role === "user"
-                  ? "ml-auto max-w-2xl bg-amber-500 text-black"
-                  : "mr-auto max-w-3xl border border-white/10 bg-white/5 text-white"
-              }`}
+        {!historyLoading && historyCount > 0 && (
+          <div className="mt-8 flex justify-center">
+            <button
+              type="button"
+              onClick={() => setShowHistory((current) => !current)}
+              aria-expanded={showHistory}
+              className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-5 py-3 text-sm font-medium text-slate-300 backdrop-blur-xl transition hover:border-amber-400/60 hover:bg-white/10 hover:text-white"
             >
-              <p className="mb-2 text-sm font-semibold">
-                {item.role === "user" ? "You" : "Atlas"}
-              </p>
-              <p className="whitespace-pre-wrap leading-7">
-                {item.message}
-              </p>
-            </div>
-          ))}
+              <span aria-hidden="true">
+                {showHistory ? "↑" : "↓"}
+              </span>
+
+              {showHistory
+                ? "Hide previous chats"
+                : "Show previous chats"}
+            </button>
+          </div>
+        )}
+
+        <div
+          aria-live="polite"
+          className="mt-8 space-y-5"
+        >
+          {historyLoading && (
+            <p className="text-center text-sm text-slate-500">
+              Restoring your conversation...
+            </p>
+          )}
+
+          {visibleConversation.map(
+            (item, index) => (
+              <div
+                key={`${item.role}-${showHistory ? index : historyCount + index}`}
+                className={`rounded-3xl p-5 backdrop-blur-xl ${
+                  item.role === "user"
+                    ? "ml-auto max-w-2xl bg-amber-500 text-black"
+                    : "mr-auto max-w-3xl border border-white/10 bg-white/5 text-white"
+                }`}
+              >
+                <p className="mb-2 text-sm font-semibold">
+                  {item.role === "user"
+                    ? "You"
+                    : "Atlas"}
+                </p>
+
+                <p className="whitespace-pre-wrap leading-7">
+                  {item.message}
+                </p>
+              </div>
+            )
+          )}
         </div>
 
         <div ref={conversationEndRef} />
 
         {/* Continue conversation */}
 
-        {currentConversation.length > 0 && (
-          <div className="mt-8 pb-[max(1rem,env(safe-area-inset-bottom))]">
+        {conversation.length > 0 && (
+          <div className="mt-8">
             <div className="relative w-full">
               <input
                 type="text"
                 value={message}
-                disabled={loading || historyLoading}
-                onChange={(event) => setMessage(event.target.value)}
+                disabled={
+                  loading || historyLoading
+                }
+                onChange={(event) =>
+                  setMessage(
+                    event.target.value
+                  )
+                }
                 onKeyDown={(event) => {
-                  if (event.key === "Enter") {
+                  if (
+                    event.key === "Enter"
+                  ) {
                     sendToAtlas();
                   }
                 }}
                 placeholder="Continue talking with Atlas..."
-                className="w-full rounded-full border border-white/10 bg-white/5 px-7 py-5 pr-20 text-base text-white supports-[backdrop-filter]:backdrop-blur-xl outline-none transition focus:border-amber-400 disabled:opacity-60 sm:px-8 sm:text-lg"
+                className="w-full rounded-full border border-white/10 bg-white/5 px-7 py-5 pr-20 text-base text-white backdrop-blur-xl outline-none transition focus:border-amber-400 disabled:opacity-60 sm:px-8 sm:text-lg"
               />
 
               <button
                 type="button"
-                onClick={() => sendToAtlas()}
-                disabled={loading || historyLoading || !message.trim()}
+                onClick={() =>
+                  sendToAtlas()
+                }
+                disabled={
+                  loading ||
+                  historyLoading ||
+                  !message.trim()
+                }
                 aria-label="Send message to Atlas"
                 className="absolute right-3 top-1/2 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-amber-500 font-bold text-black transition hover:bg-amber-400 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {loading ? "..." : "➜"}
+                {loading
+                  ? "..."
+                  : "➜"}
               </button>
             </div>
           </div>

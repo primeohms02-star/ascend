@@ -2,6 +2,7 @@
 
 html {
   scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
@@ -10,6 +11,60 @@ body {
   background: #ffffff;
   color: #111827;
   font-family: Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overscroll-behavior-x: none;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+/*
+ * Mobile Safari can become GPU-bound when several
+ * large backdrop and ambient blur layers overlap.
+ * Keep the glass appearance while lowering the
+ * compositing cost on compact Apple devices.
+ */
+@supports (-webkit-touch-callout: none) {
+  @media (max-width: 767px) {
+    .backdrop-blur,
+    .backdrop-blur-sm,
+    .backdrop-blur-md,
+    .backdrop-blur-xl,
+    .backdrop-blur-2xl,
+    .backdrop-blur-3xl {
+      -webkit-backdrop-filter: blur(8px) !important;
+      backdrop-filter: blur(8px) !important;
+    }
+
+    [class*="blur-["] {
+      filter: blur(56px) !important;
+    }
+
+    [class*="overflow-y-auto"],
+    [class*="overflow-auto"] {
+      -webkit-overflow-scrolling: touch;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 @keyframes atlasOrb {
@@ -28,62 +83,4 @@ body {
 
   animation: atlasOrb 5s linear infinite alternate;
 
-}
-
-/* Mobile Safari and low-power device optimizations */
-html {
-  -webkit-text-size-adjust: 100%;
-  text-size-adjust: 100%;
-  background: #020617;
-}
-
-body {
-  min-height: 100dvh;
-  padding-left: env(safe-area-inset-left);
-  padding-right: env(safe-area-inset-right);
-  overscroll-behavior-y: none;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-button,
-a,
-input,
-textarea,
-select {
-  touch-action: manipulation;
-}
-
-@supports (-webkit-touch-callout: none) {
-  input,
-  textarea,
-  select {
-    font-size: 16px;
-  }
-}
-
-@media (max-width: 767px) {
-  .backdrop-blur-xl,
-  .backdrop-blur-2xl,
-  .backdrop-blur-3xl {
-    -webkit-backdrop-filter: blur(12px);
-    backdrop-filter: blur(12px);
-  }
-
-  [class*="blur-[180px]"],
-  [class*="blur-[200px]"],
-  [class*="blur-[220px]"] {
-    filter: blur(90px);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    scroll-behavior: auto !important;
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
 }

@@ -90,6 +90,10 @@ const filters: FilterOption[] = [
     label: "Fashion",
     value: "Fashion",
   },
+  {
+    label: "Music",
+    value: "Music",
+  },
 ];
 
 type Props = {
