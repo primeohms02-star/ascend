@@ -100,8 +100,18 @@ export default function PublicPageShell({
         </div>
       </header>
 
-      <section className="relative z-10 border-b border-white/[0.07] px-5 pb-20 pt-24 sm:px-6 lg:px-8 lg:pb-28 lg:pt-32">
-        <div className="mx-auto max-w-5xl text-center">
+      <section className="relative z-10 border-b border-white/[0.07] px-5 pb-20 pt-8 sm:px-6 lg:px-8 lg:pb-28 lg:pt-10">
+        <div className="mx-auto max-w-7xl">
+          <Link
+            href="/"
+            className="inline-flex min-h-11 items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-5 py-2.5 text-sm font-medium text-slate-300 transition hover:border-cyan-400/40 hover:bg-white/[0.08] hover:text-white focus:outline-none focus:ring-2 focus:ring-cyan-400/50"
+          >
+            <span aria-hidden="true">←</span>
+            Back to Home
+          </Link>
+        </div>
+
+        <div className="mx-auto mt-16 max-w-5xl text-center lg:mt-20">
           <p className="text-sm font-semibold uppercase tracking-[0.3em] text-cyan-300">
             {eyebrow}
           </p>
