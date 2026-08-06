@@ -552,16 +552,70 @@ export async function runAtlasBrain({
         0.7,
 
       max_completion_tokens:
-        600,
+        1200,
 
       messages:
         conversation as any,
     });
 
-  const reply =
-    completion.choices[0]
-      ?.message?.content ??
+  const firstChoice =
+    completion.choices[0];
+
+  let reply =
+    firstChoice
+      ?.message
+      ?.content
+      ?.trim() ??
     "I’m thinking. Please ask me again.";
+
+  if (
+    firstChoice?.finish_reason ===
+      "length" &&
+    reply
+  ) {
+    const continuation =
+      await groq.chat.completions.create({
+        model:
+          GROQ_MODEL,
+
+        temperature:
+          0.7,
+
+        max_completion_tokens:
+          800,
+
+        messages: [
+          ...conversation,
+
+          {
+            role:
+              "assistant" as const,
+
+            content:
+              reply,
+          },
+
+          {
+            role:
+              "user" as const,
+
+            content:
+              "Continue exactly from where your previous response stopped. Do not repeat anything already written. Finish the answer and end with a complete sentence.",
+          },
+        ] as any,
+      });
+
+    const remainingReply =
+      continuation.choices[0]
+        ?.message
+        ?.content
+        ?.trim();
+
+    if (remainingReply) {
+      reply =
+        `${reply.trimEnd()} ${remainingReply.trimStart()}`;
+    }
+  }
 
   const mission =
     atlas.missions?.find(

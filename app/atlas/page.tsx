@@ -515,8 +515,8 @@ export default function AtlasPage() {
                           key={`history-${item.role}-${index}`}
                           className={
                             item.role === "user"
-                              ? "ml-auto max-w-2xl rounded-3xl bg-amber-500 p-5 text-black"
-                              : "mr-auto w-full max-w-3xl border-y border-white/10 py-6 text-white"
+                              ? "ml-auto max-w-2xl rounded-[24px] border border-amber-200/20 bg-amber-400 px-5 py-4 text-[#17120A] shadow-[0_14px_36px_rgba(0,0,0,0.22)]"
+                              : "mr-auto w-full max-w-3xl rounded-[28px] border border-white/10 bg-gradient-to-br from-white/[0.075] via-white/[0.045] to-white/[0.025] p-5 text-white shadow-[0_18px_60px_rgba(0,0,0,0.28)] sm:p-6"
                           }
                         >
                           {item.role === "user" ? (
@@ -529,7 +529,7 @@ export default function AtlasPage() {
                             </>
                           ) : (
                             <div className="flex items-start gap-4">
-                              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-amber-400/30 bg-amber-400/10 text-xs font-black tracking-[0.08em] text-amber-300">
+                              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-amber-300/25 bg-gradient-to-br from-amber-300/20 to-amber-500/5 text-xs font-black tracking-[0.08em] text-amber-200 shadow-[0_8px_24px_rgba(245,158,11,0.12)]">
                                 A
                               </div>
                               <div className="min-w-0 flex-1">
@@ -559,8 +559,8 @@ export default function AtlasPage() {
               key={`current-${item.role}-${index}`}
               className={
                 item.role === "user"
-                  ? "ml-auto max-w-2xl rounded-3xl bg-amber-500 p-5 text-black"
-                  : "mr-auto w-full max-w-3xl border-y border-white/10 py-6 text-white"
+                  ? "ml-auto max-w-2xl rounded-[24px] border border-amber-200/20 bg-amber-400 px-5 py-4 text-[#17120A] shadow-[0_14px_36px_rgba(0,0,0,0.22)]"
+                  : "mr-auto w-full max-w-3xl rounded-[28px] border border-white/10 bg-gradient-to-br from-white/[0.075] via-white/[0.045] to-white/[0.025] p-5 text-white shadow-[0_18px_60px_rgba(0,0,0,0.28)] sm:p-6"
               }
             >
               {item.role === "user" ? (
@@ -570,7 +570,7 @@ export default function AtlasPage() {
                 </>
               ) : (
                 <div className="flex items-start gap-4">
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-amber-400/30 bg-amber-400/10 text-xs font-black tracking-[0.08em] text-amber-300">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-amber-300/25 bg-gradient-to-br from-amber-300/20 to-amber-500/5 text-xs font-black tracking-[0.08em] text-amber-200 shadow-[0_8px_24px_rgba(245,158,11,0.12)]">
                     A
                   </div>
                   <div className="min-w-0 flex-1">
