@@ -11,6 +11,134 @@ type OverviewDetail = {
   value: string;
 };
 
+function normalizeDisplayText(value: string): string {
+  return value
+    .replace(/[\u200B-\u200D\uFEFF]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function isMeaningfulValue(value?: string): value is string {
+  if (!value) {
+    return false;
+  }
+
+  return !/^(?:not specified|not available|n\/?a|none|nil|tbd|to be confirmed|unspecified|unknown)[.!]?$/i.test(
+    normalizeDisplayText(value)
+  );
+}
+
+function isSafeDetailItem(value: string): boolean {
+  const item = normalizeDisplayText(value)
+    .replace(/^(?:[-*•▪◦–—]|\d+[.)])\s*/, "")
+    .trim();
+  const label = item
+    .toLowerCase()
+    .replace(/[^a-z0-9' ]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (item.length < 4 || item.length > 420 || !isMeaningfulValue(item)) {
+    return false;
+  }
+
+  if (
+    /^(?:salary|compensation|pay|stipend|salary range|application closing date|application deadline|closing date|deadline|location|job location|work location|employment type|job type|contract type|how to apply|application method|note|share this job|share this opportunity|comments?)$/.test(
+      label
+    )
+  ) {
+    return false;
+  }
+
+  if (
+    /^(?:salary|compensation|pay|stipend|salary range|application closing date|application deadline|closing date|deadline|location|job location|work location|employment type|job type|contract type)\s*[:\-–—]/i.test(
+      item
+    )
+  ) {
+    return false;
+  }
+
+  if (/^(?:note|important)\s*:/i.test(item)) {
+    return false;
+  }
+
+  if (
+    /^(?:interested and qualified candidates|qualified candidates should|send your cv|submit your application|apply via|click here to apply|only shortlisted candidates)/i.test(
+      item
+    )
+  ) {
+    return false;
+  }
+
+  if (
+    /\b(?:massive job recruitment|job recruitment \(\d+ positions?\)|recruitment \(\d+ positions?\)|list of successful candidates)\b/i.test(
+      item
+    )
+  ) {
+    return false;
+  }
+
+  if (
+    /\b(?:facebook|twitter|whatsapp|linkedin|telegram|viber|copy url|privacy policy|terms of service|subscribe to job alert)\b/i.test(
+      item
+    )
+  ) {
+    return false;
+  }
+
+  return true;
+}
+
+function cleanSummary(value: string): string {
+  let text = normalizeDisplayText(value);
+
+  const stopPatterns = [
+    /\bShare this (?:job|opportunity)\b/i,
+    /\bHow to apply\b/i,
+    /\bApplication method\b/i,
+    /\bRelated (?:jobs|posts|opportunities)\b/i,
+    /\bRecommended (?:jobs|opportunities)\b/i,
+    /\bComments?\s*\(\d+\)/i,
+    /\bHome\s*\|\s*Contact Us\b/i,
+  ];
+
+  for (const pattern of stopPatterns) {
+    const match = pattern.exec(text);
+
+    if (match && match.index > 0) {
+      text = text.slice(0, match.index);
+    }
+  }
+
+  const numberedList = /\s+(?:1|01)[.)]\s+[A-Z]/.exec(text);
+
+  if (numberedList && numberedList.index > 240) {
+    text = text.slice(0, numberedList.index);
+  }
+
+  text = text
+    .replace(/^(?:Home\s+[^.!?]{0,180}|Print\s+[^.!?]{0,180})\s+/i, "")
+    .replace(
+      /\b(?:Print|Telegram|Viber|Copy URL|Facebook|Twitter|WhatsApp|LinkedIn|Email)\b(?:\s+|$)/gi,
+      " "
+    )
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (text.length <= 1000) {
+    return text;
+  }
+
+  const shortened = text.slice(0, 1000);
+  const boundary = Math.max(
+    shortened.lastIndexOf(". "),
+    shortened.lastIndexOf("! "),
+    shortened.lastIndexOf("? ")
+  );
+
+  return (boundary > 300 ? shortened.slice(0, boundary + 1) : shortened).trim();
+}
+
 function SectionIcon({
   type,
 }: {
@@ -116,7 +244,7 @@ function buildOverviewDetails(opportunity: Opportunity): OverviewDetail[] {
     },
   ];
 
-  if (opportunity.company) {
+  if (isMeaningfulValue(opportunity.company)) {
     details.push({
       label: "Organisation",
       value: opportunity.company,
@@ -130,21 +258,21 @@ function buildOverviewDetails(opportunity: Opportunity): OverviewDetail[] {
       : opportunity.location || "Remote"
     : opportunity.location;
 
-  if (location) {
+  if (isMeaningfulValue(location)) {
     details.push({
       label: "Location",
       value: location,
     });
   }
 
-  if (opportunity.salary) {
+  if (isMeaningfulValue(opportunity.salary)) {
     details.push({
       label: "Salary or funding",
       value: opportunity.salary,
     });
   }
 
-  if (opportunity.employmentType) {
+  if (isMeaningfulValue(opportunity.employmentType)) {
     details.push({
       label: "Employment type",
       value: opportunity.employmentType,
@@ -153,7 +281,7 @@ function buildOverviewDetails(opportunity: Opportunity): OverviewDetail[] {
 
   const deadline = formatDeadline(opportunity.deadline);
 
-  if (deadline) {
+  if (isMeaningfulValue(deadline)) {
     details.push({
       label: "Deadline",
       value: deadline,
@@ -164,7 +292,30 @@ function buildOverviewDetails(opportunity: Opportunity): OverviewDetail[] {
 }
 
 function chooseItems(primary: string[] | undefined, fallback: string[]): string[] {
-  return primary?.filter((item) => item.trim().length > 0) ?? fallback;
+  const candidates = primary?.length ? primary : fallback;
+  const unique = new Map<string, string>();
+
+  for (const value of candidates) {
+    const item = normalizeDisplayText(value)
+      .replace(/^(?:[-*•▪◦–—]|\d+[.)])\s*/, "")
+      .trim();
+
+    if (!isSafeDetailItem(item)) {
+      continue;
+    }
+
+    const key = item.toLowerCase();
+
+    if (!unique.has(key)) {
+      unique.set(key, item);
+    }
+
+    if (unique.size >= 14) {
+      break;
+    }
+  }
+
+  return Array.from(unique.values());
 }
 
 export default function OpportunityDescription({
@@ -172,7 +323,9 @@ export default function OpportunityDescription({
 }: Props) {
   const cleaned = normalizeOpportunityDescription(opportunity.description);
   const parsed = extractOpportunity(cleaned);
-  const overview = opportunity.summary?.trim() || parsed.overview.trim();
+  const overview = cleanSummary(
+    opportunity.summary?.trim() || parsed.overview.trim()
+  );
   const responsibilities = chooseItems(
     opportunity.responsibilities,
     parsed.responsibilities
