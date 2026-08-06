@@ -17,6 +17,10 @@ import {
 } from "@/lib/atlas/decisionEngine";
 
 import {
+  calculateAscension,
+} from "@/lib/atlas/ascension";
+
+import {
   supabaseServer,
 } from "@/lib/supabase-server";
 
@@ -32,9 +36,53 @@ export type DailyMission = {
   description: string;
 };
 
+type MissionContext = {
+  prompt: string;
+  goal: string;
+  skills: string[];
+  northStar: string;
+};
+
+type MissionGenerationOptions = {
+  projectCompletion?: boolean;
+  xpReward?: number;
+};
+
 function getMissionPath(
-  journey: string
+  journey: string,
+  goal: string
 ): MissionPath {
+  const normalizedGoal =
+    goal.trim().toLowerCase();
+
+  const goalPaths:
+    Record<string, MissionPath> = {
+      "build a business":
+        "Builder",
+
+      "build a finance career":
+        "Finance",
+
+      "grow in fashion":
+        "Fashion",
+
+      "grow my freelance career":
+        "Freelancer",
+
+      "grow as a creator":
+        "Creator",
+
+      "win a scholarship":
+        "Scholar",
+
+      "join a fellowship":
+        "Scholar",
+    };
+
+  if (goalPaths[normalizedGoal]) {
+    return goalPaths[normalizedGoal];
+  }
+
   const normalized =
     journey
       .trim()
@@ -80,6 +128,15 @@ function getMissionPath(
 
       "founder or entrepreneur":
         "Builder",
+
+      "business professional":
+        "Builder",
+
+      "finance professional":
+        "Finance",
+
+      "fashion professional":
+        "Fashion",
 
       founder:
         "Builder",
@@ -152,7 +209,7 @@ function parseMission(
 
 async function loadOnboardingContext(
   userId: string
-): Promise<string> {
+): Promise<MissionContext> {
   /*
    * Structured onboarding is authoritative
    * for users who complete the current flow.
@@ -188,7 +245,8 @@ async function loadOnboardingContext(
             .join("\n")
         : "- None provided";
 
-    return `
+    return {
+      prompt: `
 Identity:
 ${structuredContext.identity}
 
@@ -203,7 +261,17 @@ ${challenges}
 
 North Star:
 ${structuredContext.north_star}
-    `.trim();
+      `.trim(),
+
+      goal:
+        structuredContext.goal,
+
+      skills:
+        structuredContext.skills,
+
+      northStar:
+        structuredContext.north_star,
+    };
   }
 
   /*
@@ -248,9 +316,20 @@ ${structuredContext.north_star}
     throw error;
   }
 
-  return (
-    data?.fact ?? ""
-  );
+  const legacyFact =
+    data?.fact ?? "";
+
+  const legacyGoal =
+    legacyFact.match(
+      /Immediate goal:\s*([^.]*)/i
+    )?.[1]?.trim() ?? "";
+
+  return {
+    prompt: legacyFact,
+    goal: legacyGoal,
+    skills: [],
+    northStar: "",
+  };
 }
 
 function getAvailableMissions(
@@ -286,12 +365,7 @@ function selectFallbackMission(
   if (
     available.length > 0
   ) {
-    return available[
-      Math.floor(
-        Math.random() *
-          available.length
-      )
-    ];
+    return available[0];
   }
 
   const fallbackByPath:
@@ -362,6 +436,22 @@ function selectFallbackMission(
         description:
           "Complete one action that creates or documents measurable progress for the people or problem you want to serve.",
       },
+
+      Finance: {
+        title:
+          "Finance Career Evidence",
+
+        description:
+          "Choose one finance role or programme aligned with your North Star, identify its three most important requirements and complete one practical action that creates evidence of your readiness for it.",
+      },
+
+      Fashion: {
+        title:
+          "Fashion Direction Evidence",
+
+        description:
+          "Choose one fashion opportunity or audience aligned with your North Star and improve one portfolio, brand or application asset that demonstrates why your work belongs in that direction.",
+      },
     };
 
   return fallbackByPath[
@@ -369,14 +459,106 @@ function selectFallbackMission(
   ];
 }
 
+const GENERIC_MISSION_PATTERNS = [
+  "take one meaningful action",
+  "work toward your goal",
+  "keep moving forward",
+  "stay consistent",
+  "reflect on your progress",
+  "plan your day",
+];
+
+const CONTEXT_STOP_WORDS =
+  new Set([
+    "about",
+    "after",
+    "again",
+    "build",
+    "career",
+    "current",
+    "discover",
+    "from",
+    "grow",
+    "have",
+    "into",
+    "learn",
+    "make",
+    "more",
+    "north",
+    "star",
+    "that",
+    "their",
+    "this",
+    "toward",
+    "want",
+    "with",
+    "your",
+  ]);
+
+function getContextAnchors(
+  context: MissionContext
+): string[] {
+  return [
+    context.goal,
+    context.northStar,
+    ...context.skills,
+  ]
+    .join(" ")
+    .toLowerCase()
+    .match(/[a-z0-9+#.-]{4,}/g)
+    ?.filter(
+      (word) =>
+        !CONTEXT_STOP_WORDS.has(
+          word
+        )
+    ) ?? [];
+}
+
+function isPersonalizedMission(
+  mission: DailyMission,
+  context: MissionContext
+): boolean {
+  const content =
+    `${mission.title} ${mission.description}`
+      .toLowerCase();
+
+  if (
+    GENERIC_MISSION_PATTERNS.some(
+      (pattern) =>
+        content.includes(
+          pattern
+        )
+    )
+  ) {
+    return false;
+  }
+
+  const anchors =
+    getContextAnchors(
+      context
+    );
+
+  return (
+    anchors.length === 0 ||
+    anchors.some(
+      (anchor) =>
+        content.includes(
+          anchor
+        )
+    )
+  );
+}
+
 export async function getDailyMission(
   journey: string,
-  userId: string
+  userId: string,
+  options:
+    MissionGenerationOptions = {}
 ): Promise<DailyMission> {
   const [
     completedTitles,
     brain,
-    onboardingContext,
+    missionContext,
   ] = await Promise.all([
     getCompletedMissionTitles(
       userId
@@ -393,18 +575,78 @@ export async function getDailyMission(
 
   const path =
     getMissionPath(
-      journey
+      journey,
+      missionContext.goal
     );
+
+  const activeMissionTitle =
+    options.projectCompletion
+      ? brain.activeMission
+          ?.mission ?? ""
+      : "";
+
+  const blockedTitles = [
+    ...completedTitles,
+
+    ...(activeMissionTitle
+      ? [activeMissionTitle]
+      : []),
+  ];
+
+  const projectedAscension =
+    options.projectCompletion
+      ? calculateAscension(
+          brain.ascensionScore +
+            Math.max(
+              0,
+              options.xpReward ??
+                0
+            )
+        )
+      : null;
+
+  const projectedBrain =
+    options.projectCompletion
+      ? {
+          ...brain,
+
+          progress:
+            projectedAscension
+              ?.progressPercent ??
+            brain.progress,
+
+          momentum: {
+            ...brain.momentum,
+
+            current_streak:
+              Math.max(
+                1,
+                Number(
+                  brain.momentum
+                    ?.current_streak ??
+                    0
+                )
+              ),
+
+            completed_missions:
+              Number(
+                brain.momentum
+                  ?.completed_missions ??
+                  0
+              ) + 1,
+          },
+        }
+      : brain;
 
   const decision =
     decideNextAction(
-      brain
+      projectedBrain
     );
 
   let available =
     getAvailableMissions(
       path,
-      completedTitles
+      blockedTitles
     );
 
   /*
@@ -477,7 +719,7 @@ North Star:
 ${brain.northStar}
 
 Progress within the current Ascension level:
-${brain.progress}%
+${projectedBrain.progress}%
 
 Current strategic priority:
 ${decision.priority}
@@ -487,8 +729,14 @@ ${decision.explanation}
 
 Onboarding context:
 ${
-  onboardingContext ||
+  missionContext.prompt ||
   "No additional onboarding context is available."
+}
+
+Mission currently being completed:
+${
+  activeMissionTitle ||
+  "None"
 }
 
 Previously completed mission titles:
@@ -518,8 +766,10 @@ RULES
 - Never assume the user has a skill they did not declare.
 - It must be realistically completable within one day.
 - It must produce visible evidence of progress.
+- Its description must explain what the user will do, what evidence or deliverable they will produce and why that outcome advances their immediate goal or North Star.
 - It must contain one coherent outcome, not several unrelated tasks.
 - Do not repeat any completed mission.
+- Do not repeat or lightly reword the mission currently being completed.
 - Do not generate generic lifestyle, motivation or productivity advice.
 - Do not tell the user merely to think, stay positive or keep going.
 - Use a curated idea only when it genuinely fits the live context.
@@ -552,7 +802,7 @@ DESCRIPTION:
       generatedMission
     ) {
       const alreadyCompleted =
-        completedTitles.some(
+        blockedTitles.some(
           (title) =>
             normalizeTitle(
               title
@@ -563,10 +813,22 @@ DESCRIPTION:
         );
 
       if (
-        !alreadyCompleted
+        !alreadyCompleted &&
+        isPersonalizedMission(
+          generatedMission,
+          missionContext
+        )
       ) {
+        console.info(
+          "Atlas Mission Source: personalized-groq"
+        );
+
         return generatedMission;
       }
+
+      console.warn(
+        "Atlas rejected a repeated or insufficiently personalized mission response."
+      );
     }
   } catch (error) {
     console.error(
@@ -575,8 +837,15 @@ DESCRIPTION:
     );
   }
 
-  return selectFallbackMission(
+  const fallbackMission =
+    selectFallbackMission(
     available,
     path
   );
+
+  console.info(
+    `Atlas Mission Source: curated-${path.toLowerCase()}-fallback`
+  );
+
+  return fallbackMission;
 }

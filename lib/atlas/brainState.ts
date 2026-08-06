@@ -23,6 +23,8 @@ export type AtlasBrainState = {
 
   progress: number;
 
+  ascensionScore: number;
+
   patterns: {
     strengths: string[];
     weaknesses: string[];

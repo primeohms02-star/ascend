@@ -188,7 +188,14 @@ export async function POST(
       await getDailyMission(
         journey ??
           "Purpose Discovery",
-        userId
+        userId,
+        {
+          projectCompletion:
+            true,
+
+          xpReward:
+            MISSION_XP_REWARD,
+        }
       );
 
     try {

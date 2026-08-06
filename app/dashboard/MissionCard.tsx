@@ -7,6 +7,7 @@ type MissionCardProps = {
   description: string;
   missionId: string;
   available: boolean;
+  northStar: string;
 };
 
 function TargetIcon() {
@@ -63,6 +64,7 @@ export default function MissionCard({
   description,
   missionId,
   available,
+  northStar,
 }: MissionCardProps) {
   return (
     <section
@@ -126,9 +128,30 @@ export default function MissionCard({
                 </span>
               </summary>
 
-              <p className="border-t border-white/10 px-4 py-4 text-sm leading-6 text-slate-400">
-                {description}
-              </p>
+              <div className="border-t border-white/10 px-4 py-4">
+                <p className="text-sm leading-7 text-slate-300">
+                  {description}
+                </p>
+
+                {northStar && (
+                  <p className="mt-3 text-sm leading-7 text-slate-400">
+                    Completing this mission should produce concrete evidence of progress toward your North Star: “{northStar}”
+                  </p>
+                )}
+
+                <div className="mt-4 rounded-xl border border-blue-400/15 bg-blue-400/[0.07] p-3">
+                  <p className="text-sm leading-6 text-slate-300">
+                    If any part of this mission is unclear—or you need help completing it—
+                    <Link
+                      href="/atlas"
+                      className="font-semibold text-blue-300 transition hover:text-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-400/50"
+                    >
+                      ask Atlas for guidance
+                    </Link>
+                    . Atlas can help you understand the outcome, plan the steps and work through obstacles without completing the mission for you.
+                  </p>
+                </div>
+              </div>
             </details>
           )}
 

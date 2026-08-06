@@ -12,7 +12,9 @@ export type MissionPath =
   | "Pioneer"
   | "Creator"
   | "Freelancer"
-  | "Impact";
+  | "Impact"
+  | "Finance"
+  | "Fashion";
 
 export const MissionLibrary: Record<
   MissionPath,
@@ -319,6 +321,82 @@ export const MissionLibrary: Record<
 
       description:
         "Identify one organization or person whose work complements yours and send a focused collaboration message.",
+    },
+  ],
+
+  Finance: [
+    {
+      title:
+        "Finance Pathway Map",
+
+      description:
+        "Choose one finance pathway connected to your North Star, compare three real roles or programmes in that pathway, and record the qualifications, skills and experience shared by the strongest two matches.",
+    },
+    {
+      title:
+        "Finance Skills Evidence",
+
+      description:
+        "Select one finance skill required by your target pathway and complete a practical exercise that produces evidence you can add to a portfolio, application or professional profile.",
+    },
+    {
+      title:
+        "Finance Opportunity Shortlist",
+
+      description:
+        "Find three finance jobs, internships, training programmes or professional opportunities aligned with your direction, compare their requirements and save the strongest match with one next action.",
+    },
+    {
+      title:
+        "Finance Industry Conversation",
+
+      description:
+        "Contact one finance professional working in your intended pathway and ask two focused questions about entry requirements, valuable experience and the most useful next step from your current position.",
+    },
+    {
+      title:
+        "Finance Application Evidence",
+
+      description:
+        "Choose one relevant finance opportunity and tailor one section of your CV, cover letter or professional profile using evidence that directly matches its requirements.",
+    },
+  ],
+
+  Fashion: [
+    {
+      title:
+        "Fashion Direction Statement",
+
+      description:
+        "Define the fashion audience, category and value you want to be known for, then write a concise direction statement that can guide your portfolio, brand or career decisions.",
+    },
+    {
+      title:
+        "Fashion Portfolio Evidence",
+
+      description:
+        "Improve one fashion portfolio or brand piece so it clearly shows the concept, your role, the creative process and the result you want a collaborator, employer or customer to understand.",
+    },
+    {
+      title:
+        "Fashion Opportunity Shortlist",
+
+      description:
+        "Find three fashion grants, jobs, showcases, incubators, competitions or training opportunities aligned with your direction, compare their requirements and save the strongest match.",
+    },
+    {
+      title:
+        "Fashion Audience Insight",
+
+      description:
+        "Study or speak with five people in your intended fashion audience, identify one recurring need or preference and record how it should influence your next design, service or brand decision.",
+    },
+    {
+      title:
+        "Fashion Industry Connection",
+
+      description:
+        "Contact one fashion professional, brand, creative or organization aligned with your direction and begin a focused conversation about a collaboration, learning opportunity or route into the industry.",
     },
   ],
 };

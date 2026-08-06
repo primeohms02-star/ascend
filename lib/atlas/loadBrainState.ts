@@ -104,6 +104,9 @@ export async function loadBrainState(
       progress:
         ascension.progressPercent,
 
+      ascensionScore:
+        ascension.score,
+
       journey,
 
       momentum,

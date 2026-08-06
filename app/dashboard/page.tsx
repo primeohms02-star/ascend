@@ -148,6 +148,9 @@ export default async function DashboardPage() {
             focus={
               dashboard.dailyBriefing.focus
             }
+            focusDetail={
+              dashboard.dailyBriefing.focusDetail
+            }
             oracle={
               dashboard.dailyBriefing.oracle
             }
@@ -212,6 +215,10 @@ export default async function DashboardPage() {
                   Build your Music Pathway
                 </h2>
 
+                <p className="mt-2 text-sm font-medium text-fuchsia-200">
+                  For those interested in the music industry
+                </p>
+
                 <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-400">
                   Define your music identity, direction and opportunity focus across Nigeria, Africa and the world.
                 </p>
@@ -257,6 +264,9 @@ export default async function DashboardPage() {
               }
               available={
                 dashboard.mission.available
+              }
+              northStar={
+                dashboard.compass.northStar
               }
             />
 

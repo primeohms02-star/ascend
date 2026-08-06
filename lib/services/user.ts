@@ -343,6 +343,11 @@ export async function getCurrentUserBrain(
             ?.mission ??
           "No active mission",
 
+        missionReason:
+          activeMission
+            ?.reason ??
+          "",
+
         progress:
           ascension.score,
       }),

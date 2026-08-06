@@ -2,6 +2,7 @@ type Props = {
   greeting: string;
   summary: string;
   focus: string;
+  focusDetail: string;
   oracle: string;
 };
 
@@ -9,6 +10,7 @@ export default function DailyBriefingCard({
   greeting,
   summary,
   focus,
+  focusDetail,
   oracle,
 }: Props) {
   return (
@@ -27,7 +29,7 @@ export default function DailyBriefingCard({
           <div>
 
             <p className="text-sm uppercase tracking-[0.3em] text-blue-400">
-              Today's Briefing
+              Today&apos;s Briefing
             </p>
 
             <h1 className="mt-3 text-4xl font-bold">
@@ -72,6 +74,10 @@ export default function DailyBriefingCard({
             {focus}
           </p>
 
+          <p className="mt-3 text-sm leading-7 text-slate-400">
+            {focusDetail}
+          </p>
+
         </div>
 
         {/* Cortex Insight */}
@@ -83,7 +89,7 @@ export default function DailyBriefingCard({
           </p>
 
           <p className="text-lg italic leading-8 text-slate-200">
-            "{oracle}"
+            &ldquo;{oracle}&rdquo;
           </p>
 
         </div>
