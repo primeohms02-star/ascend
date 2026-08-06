@@ -24,6 +24,7 @@ import type { OpportunityStatus } from "@/lib/atlas/opportunities/memory";
 type Props = {
   search: string;
   filter: string;
+  initialPage?: number;
 };
 
 type OpportunityPageResponse = {
@@ -43,6 +44,38 @@ type OpportunityPageResponse = {
 };
 
 const PAGE_SIZE = 10;
+const OPPORTUNITY_SCROLL_KEY =
+  "ascend:opportunities:return-scroll";
+
+function normalizePage(value: number | undefined): number {
+  return Number.isInteger(value) && Number(value) > 0
+    ? Number(value)
+    : 1;
+}
+
+function buildReturnPath({
+  page,
+  filter,
+  search,
+}: {
+  page: number;
+  filter: string;
+  search: string;
+}): string {
+  const params = new URLSearchParams({
+    page: String(page),
+  });
+
+  if (filter && filter !== "All") {
+    params.set("filter", filter);
+  }
+
+  if (search) {
+    params.set("search", search);
+  }
+
+  return `/opportunities?${params.toString()}`;
+}
 
 function LoadingCard() {
   return (
@@ -137,6 +170,7 @@ function ArrowRightIcon() {
 export default function OpportunityFeed({
   search,
   filter,
+  initialPage,
 }: Props) {
   const feedTopRef =
     useRef<HTMLDivElement>(null);
@@ -168,7 +202,9 @@ export default function OpportunityFeed({
   const [
     page,
     setPage,
-  ] = useState(1);
+  ] = useState(
+    () => normalizePage(initialPage)
+  );
 
   const [
     totalPages,
@@ -205,13 +241,34 @@ export default function OpportunityFeed({
     setReloadKey,
   ] = useState(0);
 
+  const previousCriteriaRef = useRef({
+    search,
+    filter,
+  });
+
+  const restoredScrollRef =
+    useRef(false);
+
   /*
    * Reset pagination whenever
    * the filter or search changes.
    */
 
   useEffect(() => {
-    setPage(1);
+    const previous =
+      previousCriteriaRef.current;
+
+    if (
+      previous.search !== search ||
+      previous.filter !== filter
+    ) {
+      setPage(1);
+    }
+
+    previousCriteriaRef.current = {
+      search,
+      filter,
+    };
   }, [search, filter]);
 
   /*
@@ -236,6 +293,39 @@ export default function OpportunityFeed({
       );
     };
   }, [search]);
+
+  /*
+   * Keep the current opportunity view in the URL.
+   * This allows the detail page to return to the
+   * exact page, search and filter state.
+   */
+
+  useEffect(() => {
+    const returnPath =
+      buildReturnPath({
+        page,
+        filter,
+        search:
+          debouncedSearch,
+      });
+
+    const currentPath =
+      `${window.location.pathname}${window.location.search}`;
+
+    if (
+      currentPath !== returnPath
+    ) {
+      window.history.replaceState(
+        window.history.state,
+        "",
+        returnPath
+      );
+    }
+  }, [
+    page,
+    filter,
+    debouncedSearch,
+  ]);
 
   useEffect(() => {
     const controller =
@@ -376,6 +466,64 @@ export default function OpportunityFeed({
     reloadKey,
   ]);
 
+  /*
+   * Restore the previous scroll position after
+   * the requested opportunity page has loaded.
+   */
+
+  useEffect(() => {
+    if (
+      loading ||
+      restoredScrollRef.current ||
+      opportunities.length === 0
+    ) {
+      return;
+    }
+
+    const storedPosition =
+      window.sessionStorage.getItem(
+        OPPORTUNITY_SCROLL_KEY
+      );
+
+    if (!storedPosition) {
+      return;
+    }
+
+    const scrollPosition =
+      Number(storedPosition);
+
+    window.sessionStorage.removeItem(
+      OPPORTUNITY_SCROLL_KEY
+    );
+
+    restoredScrollRef.current = true;
+
+    if (
+      !Number.isFinite(
+        scrollPosition
+      ) ||
+      scrollPosition < 0
+    ) {
+      return;
+    }
+
+    window.requestAnimationFrame(
+      () => {
+        window.requestAnimationFrame(
+          () => {
+            window.scrollTo({
+              top: scrollPosition,
+              behavior: "auto",
+            });
+          }
+        );
+      }
+    );
+  }, [
+    loading,
+    opportunities.length,
+  ]);
+
   function changePage(
     nextPage: number
   ) {
@@ -398,6 +546,13 @@ export default function OpportunityFeed({
             block: "start",
           });
       }
+    );
+  }
+
+  function rememberOpportunityPosition() {
+    window.sessionStorage.setItem(
+      OPPORTUNITY_SCROLL_KEY,
+      String(window.scrollY)
     );
   }
 
@@ -534,6 +689,14 @@ export default function OpportunityFeed({
       total
     );
 
+  const returnPath =
+    buildReturnPath({
+      page,
+      filter,
+      search:
+        debouncedSearch,
+    });
+
   return (
     <div
       ref={feedTopRef}
@@ -587,7 +750,10 @@ export default function OpportunityFeed({
                   opportunity
                 }
                 insight={insight}
-                activeFilter={filter}
+                returnTo={returnPath}
+                onOpenOpportunity={
+                  rememberOpportunityPosition
+                }
                 status={opportunityStatuses[opportunity.id]}
                 onStatusChange={(opportunityId, status) => {
                   setOpportunityStatuses((current) => {

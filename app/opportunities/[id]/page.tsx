@@ -17,15 +17,34 @@ type Props = {
 
   searchParams: Promise<{
     source?: string;
+    returnTo?: string;
   }>;
 };
+
+function getSafeReturnPath(
+  value: string | undefined
+): string {
+  if (
+    value === "/opportunities" ||
+    value?.startsWith(
+      "/opportunities?"
+    )
+  ) {
+    return value;
+  }
+
+  return "/opportunities?page=1";
+}
 
 export default async function OpportunityDetailsPage({
   params,
   searchParams,
 }: Props) {
   const { id } = await params;
-  const { source } = await searchParams;
+  const { source, returnTo } = await searchParams;
+
+  const safeReturnTo =
+    getSafeReturnPath(returnTo);
 
   const decodedId = decodeURIComponent(id);
 
@@ -61,7 +80,10 @@ export default async function OpportunityDetailsPage({
 
   const actionPlanHref =
     `/opportunities/${encodedOpportunityId}/action-plan` +
-    `?source=${encodeURIComponent(source)}`;
+    `?source=${encodeURIComponent(source)}` +
+    `&returnTo=${encodeURIComponent(
+      safeReturnTo
+    )}`;
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-[#020617] via-[#08111f] to-[#0f172a]">
@@ -69,7 +91,7 @@ export default async function OpportunityDetailsPage({
         {/* Back navigation */}
 
         <nav aria-label="Opportunity navigation">
-          <OpportunityBackButton />
+          <OpportunityBackButton returnTo={safeReturnTo} />
         </nav>
 
         <OpportunityHero opportunity={opportunity} />

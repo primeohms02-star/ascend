@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { Suspense, useState } from "react";
+import { useSearchParams } from "next/navigation";
 
 import OpportunityHeader from "./components/OpportunityHeader";
 import OpportunityFilters from "./components/OpportunityFilters";
@@ -48,37 +49,48 @@ function SparkleIcon() {
   );
 }
 
+function OpportunitiesLoadingFallback() {
+  return (
+    <main className="min-h-screen bg-gradient-to-br from-[#020617] via-[#08111f] to-[#0f172a]">
+      <div className="mx-auto max-w-7xl px-5 py-10 sm:px-6">
+        <div className="h-11 w-44 animate-pulse rounded-xl bg-slate-800/70" />
+        <div className="mt-8 h-40 animate-pulse rounded-3xl bg-slate-900/60" />
+        <div className="mt-10 h-96 animate-pulse rounded-3xl bg-slate-900/60" />
+      </div>
+    </main>
+  );
+}
+
 export default function OpportunitiesPage() {
-  const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState("All");
+  return (
+    <Suspense fallback={<OpportunitiesLoadingFallback />}>
+      <OpportunitiesContent />
+    </Suspense>
+  );
+}
 
-  useEffect(() => {
-    const requestedFilter = new URLSearchParams(
-      window.location.search
-    ).get("filter");
+function parseInitialPage(value: string | null): number {
+  const parsed = Number.parseInt(value ?? "1", 10);
 
-    if (requestedFilter) {
-      setFilter(requestedFilter);
-    }
-  }, []);
+  return Number.isFinite(parsed) && parsed > 0
+    ? parsed
+    : 1;
+}
 
-  function handleFilterChange(nextFilter: string) {
-    setFilter(nextFilter);
+function OpportunitiesContent() {
+  const searchParams = useSearchParams();
 
-    const url = new URL(window.location.href);
+  const [search, setSearch] = useState(
+    () => searchParams.get("search") ?? ""
+  );
 
-    if (nextFilter === "All") {
-      url.searchParams.delete("filter");
-    } else {
-      url.searchParams.set("filter", nextFilter);
-    }
+  const [filter, setFilter] = useState(
+    () => searchParams.get("filter") ?? "All"
+  );
 
-    window.history.replaceState(
-      null,
-      "",
-      `${url.pathname}${url.search}${url.hash}`
-    );
-  }
+  const [initialPage] = useState(
+    () => parseInitialPage(searchParams.get("page"))
+  );
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-[#020617] via-[#08111f] to-[#0f172a]">
@@ -116,7 +128,7 @@ export default function OpportunitiesPage() {
           <div className="mt-5 border-t border-white/10 pt-5">
             <OpportunityFilters
               value={filter}
-              onChange={handleFilterChange}
+              onChange={setFilter}
             />
           </div>
         </section>
@@ -154,6 +166,7 @@ export default function OpportunitiesPage() {
             <OpportunityFeed
               search={search}
               filter={filter}
+              initialPage={initialPage}
             />
           </section>
 

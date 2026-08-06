@@ -17,7 +17,8 @@ type OpportunityExplanation = {
 type Props = {
   opportunity: RankedOpportunity;
   insight: OpportunityExplanation;
-  activeFilter?: string;
+  returnTo: string;
+  onOpenOpportunity?: () => void;
   status?: OpportunityStatus;
   onStatusChange?: (
     opportunityId: string,
@@ -94,7 +95,8 @@ function CheckIcon() {
 export default function OpportunityCard({
   opportunity,
   insight,
-  activeFilter,
+  returnTo,
+  onOpenOpportunity,
   status,
   onStatusChange,
 }: Props) {
@@ -111,11 +113,10 @@ export default function OpportunityCard({
     `/opportunities/${encodedOpportunityId}` +
     `?source=${encodeURIComponent(
       opportunity.source
-    )}${
-      activeFilter && activeFilter !== "All"
-        ? `&filter=${encodeURIComponent(activeFilter)}`
-        : ""
-    }`;
+    )}` +
+    `&returnTo=${encodeURIComponent(
+      returnTo
+    )}`;
 
   const reasons = insight.reasons ?? [];
 
@@ -304,6 +305,7 @@ export default function OpportunityCard({
           <div className="flex flex-wrap items-stretch gap-3">
             <Link
               href={decisionHref}
+              onClick={onOpenOpportunity}
               className="inline-flex min-h-10 flex-1 items-center justify-center gap-2 rounded-xl border border-cyan-400/30 bg-cyan-400/10 px-4 py-2 text-center text-sm font-semibold text-cyan-200 transition hover:bg-cyan-400/15 hover:text-cyan-100"
             >
               <CompassIcon />

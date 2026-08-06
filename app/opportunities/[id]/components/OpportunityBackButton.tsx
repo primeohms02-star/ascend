@@ -21,16 +21,30 @@ function BackArrowIcon() {
   );
 }
 
-export default function OpportunityBackButton() {
+type Props = {
+  returnTo: string;
+};
+
+export default function OpportunityBackButton({
+  returnTo,
+}: Props) {
   const router = useRouter();
 
   function goBack() {
-    if (window.history.length > 1) {
-      router.back();
-      return;
-    }
+    const safeReturnTo =
+      returnTo === "/opportunities" ||
+      returnTo.startsWith(
+        "/opportunities?"
+      )
+        ? returnTo
+        : "/opportunities?page=1";
 
-    router.push("/opportunities");
+    router.replace(
+      safeReturnTo,
+      {
+        scroll: false,
+      }
+    );
   }
 
   return (
