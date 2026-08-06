@@ -1,10 +1,14 @@
 import { extractOpportunity } from "@/lib/atlas/opportunities/extractor";
 import { normalizeOpportunityDescription } from "@/lib/atlas/opportunities/normalize";
+import type { Opportunity } from "@/lib/atlas/opportunities/types";
 
 type Props = {
-  opportunity: {
-    description?: string;
-  };
+  opportunity: Opportunity;
+};
+
+type OverviewDetail = {
+  label: string;
+  value: string;
 };
 
 function SectionIcon({
@@ -83,35 +87,105 @@ function DetailList({
   );
 }
 
+function formatDeadline(value?: string): string {
+  if (!value) {
+    return "";
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return new Intl.DateTimeFormat("en", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  }).format(date);
+}
+
+function buildOverviewDetails(opportunity: Opportunity): OverviewDetail[] {
+  const details: OverviewDetail[] = [
+    {
+      label:
+        opportunity.category?.toLowerCase() === "job"
+          ? "Job title"
+          : "Opportunity title",
+      value: opportunity.title,
+    },
+  ];
+
+  if (opportunity.company) {
+    details.push({
+      label: "Organisation",
+      value: opportunity.company,
+    });
+  }
+
+  const location = opportunity.remote
+    ? opportunity.location &&
+      !opportunity.location.toLowerCase().startsWith("remote")
+      ? `Remote · ${opportunity.location}`
+      : opportunity.location || "Remote"
+    : opportunity.location;
+
+  if (location) {
+    details.push({
+      label: "Location",
+      value: location,
+    });
+  }
+
+  if (opportunity.salary) {
+    details.push({
+      label: "Salary or funding",
+      value: opportunity.salary,
+    });
+  }
+
+  if (opportunity.employmentType) {
+    details.push({
+      label: "Employment type",
+      value: opportunity.employmentType,
+    });
+  }
+
+  const deadline = formatDeadline(opportunity.deadline);
+
+  if (deadline) {
+    details.push({
+      label: "Deadline",
+      value: deadline,
+    });
+  }
+
+  return details;
+}
+
+function chooseItems(primary: string[] | undefined, fallback: string[]): string[] {
+  return primary?.filter((item) => item.trim().length > 0) ?? fallback;
+}
+
 export default function OpportunityDescription({
   opportunity,
 }: Props) {
-  const cleaned = normalizeOpportunityDescription(
-    opportunity.description
-  );
-
+  const cleaned = normalizeOpportunityDescription(opportunity.description);
   const parsed = extractOpportunity(cleaned);
-
-  const hasOverview =
-    typeof parsed.overview === "string" &&
-    parsed.overview.trim().length > 0;
-
-  const hasResponsibilities =
-    parsed.responsibilities.length > 0;
-
-  const hasRequirements =
-    parsed.requirements.length > 0;
-
-  const hasBenefits =
-    parsed.benefits.length > 0;
+  const overview = opportunity.summary?.trim() || parsed.overview.trim();
+  const responsibilities = chooseItems(
+    opportunity.responsibilities,
+    parsed.responsibilities
+  );
+  const requirements = chooseItems(opportunity.requirements, parsed.requirements);
+  const benefits = chooseItems(opportunity.benefits, parsed.benefits);
+  const overviewDetails = buildOverviewDetails(opportunity);
 
   return (
     <div
       id="opportunity-overview"
       className="scroll-mt-8 space-y-6"
     >
-      {/* Section header */}
-
       <div className="px-1">
         <p className="text-xs font-semibold uppercase tracking-[0.24em] text-cyan-300">
           Opportunity Details
@@ -122,12 +196,10 @@ export default function OpportunityDescription({
         </h2>
 
         <p className="mt-2 max-w-2xl leading-7 text-slate-400">
-          Examine the original responsibilities, requirements, and
-          benefits behind Atlas&apos;s assessment.
+          Review the details available from the original opportunity source before
+          making your decision.
         </p>
       </div>
-
-      {/* Overview */}
 
       <section
         aria-labelledby="opportunity-overview-heading"
@@ -152,16 +224,38 @@ export default function OpportunityDescription({
           </div>
         </div>
 
-        <p className="mt-6 whitespace-pre-line text-sm leading-8 text-slate-300 sm:text-base">
-          {hasOverview
-            ? parsed.overview
-            : "A detailed overview is not currently available. Review the original posting before making your decision."}
-        </p>
+        <dl className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {overviewDetails.map((detail) => (
+            <div
+              key={`${detail.label}-${detail.value}`}
+              className="rounded-2xl border border-white/10 bg-slate-950/45 p-4"
+            >
+              <dt className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                {detail.label}
+              </dt>
+
+              <dd className="mt-2 text-sm font-medium leading-6 text-slate-200 sm:text-base">
+                {detail.value}
+              </dd>
+            </div>
+          ))}
+        </dl>
+
+        <div className="mt-6 border-t border-white/10 pt-6">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+            {opportunity.category?.toLowerCase() === "job"
+              ? "Job summary"
+              : "Opportunity summary"}
+          </p>
+
+          <p className="mt-3 whitespace-pre-line text-sm leading-8 text-slate-300 sm:text-base">
+            {overview ||
+              "A detailed summary is not currently available. Review the original posting before making your decision."}
+          </p>
+        </div>
       </section>
 
-      {/* Responsibilities */}
-
-      {hasResponsibilities && (
+      {responsibilities.length > 0 && (
         <section
           aria-labelledby="opportunity-responsibilities-heading"
           className="rounded-3xl border border-slate-700/80 bg-slate-900/60 p-6 sm:p-8"
@@ -185,16 +279,11 @@ export default function OpportunityDescription({
             </div>
           </div>
 
-          <DetailList
-            items={parsed.responsibilities}
-            accentColor="bg-blue-400"
-          />
+          <DetailList items={responsibilities} accentColor="bg-blue-400" />
         </section>
       )}
 
-      {/* Requirements */}
-
-      {hasRequirements && (
+      {requirements.length > 0 && (
         <section
           aria-labelledby="opportunity-requirements-heading"
           className="rounded-3xl border border-slate-700/80 bg-slate-900/60 p-6 sm:p-8"
@@ -218,16 +307,11 @@ export default function OpportunityDescription({
             </div>
           </div>
 
-          <DetailList
-            items={parsed.requirements}
-            accentColor="bg-amber-400"
-          />
+          <DetailList items={requirements} accentColor="bg-amber-400" />
         </section>
       )}
 
-      {/* Benefits */}
-
-      {hasBenefits && (
+      {benefits.length > 0 && (
         <section
           aria-labelledby="opportunity-benefits-heading"
           className="rounded-3xl border border-slate-700/80 bg-slate-900/60 p-6 sm:p-8"
@@ -251,10 +335,7 @@ export default function OpportunityDescription({
             </div>
           </div>
 
-          <DetailList
-            items={parsed.benefits}
-            accentColor="bg-emerald-400"
-          />
+          <DetailList items={benefits} accentColor="bg-emerald-400" />
         </section>
       )}
     </div>

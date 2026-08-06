@@ -7,6 +7,16 @@ export interface Opportunity {
 
   description?: string;
 
+  summary?: string;
+
+  responsibilities?: string[];
+
+  requirements?: string[];
+
+  benefits?: string[];
+
+  employmentType?: string;
+
   category?: string;
 
   /**
