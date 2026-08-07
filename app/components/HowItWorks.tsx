@@ -60,7 +60,7 @@ export default function HowItWorks() {
     <section
       id="how-it-works"
       aria-labelledby="how-it-works-heading"
-      className="relative overflow-hidden border-t border-white/[0.06] bg-[#070A10] px-6 py-28"
+      className="relative overflow-hidden border-t border-white/[0.06] bg-[#070A10] px-6 py-20 sm:py-24"
     >
       <div
         aria-hidden="true"
@@ -75,7 +75,7 @@ export default function HowItWorks() {
 
           <h2
             id="how-it-works-heading"
-            className="mt-5 text-4xl font-black tracking-tight text-white md:text-5xl"
+            className="mt-4 text-3xl font-black tracking-tight text-white md:text-4xl"
           >
             From uncertainty
             <br />
@@ -85,7 +85,7 @@ export default function HowItWorks() {
             </span>
           </h2>
 
-          <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-slate-400">
+          <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-slate-400">
             ASCEND does more than give advice. It
             connects who you are becoming to what
             you should do next—and remembers the
@@ -101,7 +101,7 @@ export default function HowItWorks() {
             className="absolute left-[10%] right-[10%] top-12 hidden h-px bg-gradient-to-r from-transparent via-blue-400/30 to-transparent lg:block"
           />
 
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
             {steps.map(
               (
                 step,
@@ -132,9 +132,9 @@ export default function HowItWorks() {
                     }}
                     className="group relative"
                   >
-                    <div className="relative z-10 mx-auto flex h-24 w-24 items-center justify-center rounded-full border border-blue-400/20 bg-[#0A101C] shadow-[0_0_35px_rgba(37,99,235,0.12)] transition group-hover:border-cyan-400/40 group-hover:shadow-[0_0_45px_rgba(34,211,238,0.18)]">
+                    <div className="relative z-10 mx-auto flex h-20 w-20 items-center justify-center rounded-full border border-blue-400/20 bg-[#0A101C] shadow-[0_0_35px_rgba(37,99,235,0.12)] transition group-hover:border-cyan-400/40 group-hover:shadow-[0_0_45px_rgba(34,211,238,0.18)]">
                       <Icon
-                        size={30}
+                        size={26}
                         className="text-cyan-300"
                         aria-hidden="true"
                       />
@@ -146,7 +146,7 @@ export default function HowItWorks() {
                       </span>
                     </div>
 
-                    <div className="mt-7 rounded-3xl border border-white/[0.08] bg-white/[0.03] p-5 text-center transition duration-300 group-hover:border-blue-400/20 group-hover:bg-white/[0.05]">
+                    <div className="mt-5 rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4 text-center transition duration-300 group-hover:border-blue-400/20 group-hover:bg-white/[0.05]">
                       <p className="text-xs font-semibold uppercase tracking-[0.2em] text-blue-400">
                         {
                           step.label
@@ -188,9 +188,9 @@ export default function HowItWorks() {
             delay: 0.2,
             duration: 0.6,
           }}
-          className="mx-auto mt-16 max-w-4xl rounded-3xl border border-cyan-400/15 bg-gradient-to-r from-cyan-400/[0.07] via-blue-500/[0.08] to-cyan-400/[0.07] p-7 text-center"
+          className="mx-auto mt-10 max-w-4xl rounded-2xl border border-cyan-400/15 bg-gradient-to-r from-cyan-400/[0.07] via-blue-500/[0.08] to-cyan-400/[0.07] p-5 text-center"
         >
-          <p className="text-lg font-semibold text-white">
+          <p className="text-base font-semibold text-white">
             Every completed mission creates new
             evidence.
           </p>

@@ -19,7 +19,7 @@ export default function CTA() {
   return (
     <section
       aria-labelledby="cta-heading"
-      className="relative overflow-hidden border-t border-white/[0.06] bg-[#05070B] px-6 py-28"
+      className="relative overflow-hidden border-t border-white/[0.06] bg-[#05070B] px-6 py-20 sm:py-24"
     >
       {/* Ambient background */}
 
@@ -48,9 +48,9 @@ export default function CTA() {
         transition={{
           duration: 0.65,
         }}
-        className="relative mx-auto max-w-5xl overflow-hidden rounded-[2rem] border border-blue-400/20 bg-gradient-to-br from-blue-500/[0.12] via-slate-950/90 to-cyan-500/[0.08] px-6 py-16 text-center shadow-[0_0_100px_rgba(37,99,235,0.12)] sm:px-12 md:py-20"
+        className="relative mx-auto max-w-4xl overflow-hidden rounded-3xl border border-blue-400/20 bg-gradient-to-br from-blue-500/[0.12] via-slate-950/90 to-cyan-500/[0.08] px-6 py-12 text-center shadow-[0_0_100px_rgba(37,99,235,0.12)] sm:px-10 md:py-16"
       >
-        <div className="relative mx-auto h-20 w-20">
+        <div className="relative mx-auto h-16 w-16">
           <Image
             src="/ascend-navbar-logo.png"
             alt=""
@@ -61,13 +61,13 @@ export default function CTA() {
           />
         </div>
 
-        <p className="mt-8 text-sm font-semibold uppercase tracking-[0.3em] text-blue-300">
+        <p className="mt-6 text-xs font-semibold uppercase tracking-[0.3em] text-blue-300">
           Your Direction Starts Here
         </p>
 
         <h2
           id="cta-heading"
-          className="mx-auto mt-5 max-w-4xl text-4xl font-black leading-tight tracking-tight text-white sm:text-5xl md:text-6xl"
+          className="mx-auto mt-5 max-w-4xl text-3xl font-black leading-tight tracking-tight text-white sm:text-4xl md:text-5xl"
         >
           You do not need your
           <br />
@@ -77,26 +77,26 @@ export default function CTA() {
           </span>
         </h2>
 
-        <p className="mx-auto mt-7 max-w-2xl text-lg leading-8 text-slate-300">
+        <p className="mx-auto mt-5 max-w-2xl text-base leading-7 sm:text-lg text-slate-300">
           You need a direction, one meaningful next
           action and a system that learns from the
           progress you make.
         </p>
 
         {!isLoaded ? (
-          <div className="mt-11 flex flex-col items-center justify-center gap-4 sm:flex-row">
+          <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
             <div className="h-14 w-full max-w-60 animate-pulse rounded-2xl bg-blue-600/40 sm:w-60" />
 
             <div className="h-14 w-full max-w-40 animate-pulse rounded-2xl bg-white/5 sm:w-40" />
           </div>
         ) : (
           <>
-            <div className="mt-11 flex flex-col items-center justify-center gap-4 sm:flex-row">
+            <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
               {isSignedIn ? (
                 <>
                   <Link
                     href="/dashboard"
-                    className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 px-8 py-4 text-base font-semibold text-white shadow-[0_0_35px_rgba(37,99,235,0.3)] transition hover:-translate-y-0.5 hover:bg-blue-500 sm:w-auto"
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-3.5 text-sm sm:text-base font-semibold text-white shadow-[0_0_35px_rgba(37,99,235,0.3)] transition hover:-translate-y-0.5 hover:bg-blue-500 sm:w-auto"
                   >
                     Continue Your Journey
 
@@ -108,7 +108,7 @@ export default function CTA() {
 
                   <Link
                     href="/atlas"
-                    className="inline-flex w-full items-center justify-center rounded-2xl border border-white/10 bg-white/5 px-8 py-4 text-base font-semibold text-slate-200 backdrop-blur-xl transition hover:border-cyan-400/30 hover:bg-white/10 hover:text-white sm:w-auto"
+                    className="inline-flex w-full items-center justify-center rounded-xl border border-white/10 bg-white/5 px-6 py-3.5 text-sm sm:text-base font-semibold text-slate-200 backdrop-blur-xl transition hover:border-cyan-400/30 hover:bg-white/10 hover:text-white sm:w-auto"
                   >
                     Talk with Atlas
                   </Link>
@@ -117,7 +117,7 @@ export default function CTA() {
                 <>
                   <Link
                     href="/sign-up"
-                    className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 px-8 py-4 text-base font-semibold text-white shadow-[0_0_35px_rgba(37,99,235,0.3)] transition hover:-translate-y-0.5 hover:bg-blue-500 sm:w-auto"
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-3.5 text-sm sm:text-base font-semibold text-white shadow-[0_0_35px_rgba(37,99,235,0.3)] transition hover:-translate-y-0.5 hover:bg-blue-500 sm:w-auto"
                   >
                     Build Your Compass
 
@@ -129,7 +129,7 @@ export default function CTA() {
 
                   <Link
                     href="/sign-in"
-                    className="inline-flex w-full items-center justify-center rounded-2xl border border-white/10 bg-white/5 px-8 py-4 text-base font-semibold text-slate-200 backdrop-blur-xl transition hover:border-blue-400/30 hover:bg-white/10 hover:text-white sm:w-auto"
+                    className="inline-flex w-full items-center justify-center rounded-xl border border-white/10 bg-white/5 px-6 py-3.5 text-sm sm:text-base font-semibold text-slate-200 backdrop-blur-xl transition hover:border-blue-400/30 hover:bg-white/10 hover:text-white sm:w-auto"
                   >
                     Sign In
                   </Link>

@@ -29,7 +29,7 @@ export default function IdentityCard({
   level,
 }: IdentityCardProps) {
   return (
-    <section className="relative overflow-hidden rounded-3xl border border-violet-400/20 bg-gradient-to-br from-violet-400/[0.07] via-slate-900/80 to-slate-950 p-6 shadow-xl shadow-violet-950/20">
+    <section className="relative overflow-hidden rounded-xl border border-violet-400/20 bg-gradient-to-br from-violet-400/[0.07] via-slate-900/80 to-slate-950 p-5 shadow-xl shadow-violet-950/20">
       <div
         aria-hidden="true"
         className="pointer-events-none absolute -right-20 -top-20 h-52 w-52 rounded-full bg-violet-500/10 blur-3xl"
@@ -44,19 +44,19 @@ export default function IdentityCard({
               Evolving Identity
             </p>
 
-            <h2 className="mt-2 text-2xl font-bold text-white">
+            <h2 className="mt-1.5 text-xl font-bold text-white">
               {title}
             </h2>
           </div>
 
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-violet-400/20 bg-violet-400/10 text-violet-300">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-violet-400/20 bg-violet-400/10 text-violet-300">
             <IdentityIcon />
           </div>
         </div>
 
         {/* Shared level */}
 
-        <div className="mt-5 flex items-center justify-between gap-4 rounded-2xl border border-violet-400/15 bg-violet-400/[0.05] px-4 py-3">
+        <div className="mt-4 flex items-center justify-between gap-4 rounded-xl border border-violet-400/15 bg-violet-400/[0.05] px-4 py-3">
           <span className="text-sm text-slate-400">
             Shared progression
           </span>
@@ -66,7 +66,7 @@ export default function IdentityCard({
           </span>
         </div>
 
-        <p className="mt-4 text-sm leading-6 text-slate-400">
+        <p className="mt-3 text-sm leading-6 text-slate-400">
           Each completed mission provides evidence of the
           person you are becoming.
         </p>

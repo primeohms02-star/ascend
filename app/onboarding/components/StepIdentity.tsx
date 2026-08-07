@@ -137,22 +137,22 @@ export default function StepIdentity({
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.5 }}
     >
-      <div className="mb-10 text-center">
-        <p className="mb-4 text-sm uppercase tracking-[0.3em] text-blue-500">
+      <div className="mb-7 text-center">
+        <p className="mb-3 text-xs font-semibold uppercase tracking-[0.24em] text-blue-500">
           Tell us about yourself
         </p>
 
-        <h2 className="text-4xl font-bold text-white">
+        <h2 className="text-3xl font-bold tracking-tight text-white sm:text-[2rem]">
           Which best describes you?
         </h2>
 
-        <p className="mx-auto mt-4 max-w-2xl text-slate-400">
+        <p className="mx-auto mt-3 max-w-2xl text-xs leading-5 text-slate-400">
           Atlas uses this to understand your current
           stage—not to limit where you can go.
         </p>
       </div>
 
-      <div className="grid max-h-[60vh] gap-4 overflow-y-auto pr-2 md:grid-cols-2">
+      <div className="grid max-h-[62vh] gap-3 overflow-y-auto pr-2 md:grid-cols-2 xl:grid-cols-3">
         {options.map((option) => {
           const active = value === option.title;
           const Icon = option.icon;
@@ -163,27 +163,27 @@ export default function StepIdentity({
               type="button"
               onClick={() => onSelect(option.title)}
               aria-pressed={active}
-              className={`rounded-3xl border p-6 text-left transition-all duration-300 ${
+              className={`rounded-2xl border p-4 text-left transition-all duration-200 ${
                 active
                   ? "border-blue-500 bg-blue-500/10 shadow-lg shadow-blue-500/10"
-                  : "border-white/10 bg-white/5 hover:-translate-y-1 hover:border-blue-500/50 hover:bg-white/10"
+                  : "border-white/10 bg-white/5 hover:-translate-y-0.5 hover:border-blue-500/50 hover:bg-white/10"
               }`}
             >
               <div
-                className={`mb-4 flex h-11 w-11 items-center justify-center rounded-xl border ${
+                className={`mb-3 flex h-9 w-9 items-center justify-center rounded-lg border ${
                   active
                     ? "border-blue-400/40 bg-blue-500/15 text-blue-200"
                     : "border-white/10 bg-white/5 text-slate-300"
                 }`}
               >
-                <Icon size={21} strokeWidth={1.8} aria-hidden="true" />
+                <Icon size={18} strokeWidth={1.8} aria-hidden="true" />
               </div>
 
-              <h3 className="mb-2 text-xl font-semibold text-white">
+              <h3 className="mb-1.5 text-base font-semibold leading-6 text-white">
                 {option.title}
               </h3>
 
-              <p className="text-sm leading-6 text-slate-400">
+              <p className="text-xs leading-5 text-slate-400">
                 {option.description}
               </p>
             </button>
@@ -191,12 +191,12 @@ export default function StepIdentity({
         })}
       </div>
 
-      <div className="mt-8 flex justify-end">
+      <div className="mt-6 flex justify-end">
         <button
           type="button"
           onClick={onNext}
           disabled={!value}
-          className="inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-8 py-4 font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
+          className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-3.5 font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
         >
           Continue
           <ArrowRight size={18} aria-hidden="true" />

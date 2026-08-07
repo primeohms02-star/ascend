@@ -99,7 +99,7 @@ export default function Features() {
     <section
       id="features"
       aria-labelledby="features-heading"
-      className="relative overflow-hidden border-t border-white/[0.06] bg-[#05070B] px-6 py-28"
+      className="relative overflow-hidden border-t border-white/[0.06] bg-[#05070B] px-6 py-20 sm:py-24"
     >
       {/* Ambient decoration */}
 
@@ -113,14 +113,14 @@ export default function Features() {
       </div>
 
       <div className="relative mx-auto max-w-7xl">
-        <div className="mx-auto mb-16 max-w-3xl text-center">
-          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-blue-400">
+        <div className="mx-auto mb-10 max-w-3xl text-center">
+          <p className="text-xs font-semibold uppercase tracking-[0.26em] text-blue-400">
             The ASCEND System
           </p>
 
           <h2
             id="features-heading"
-            className="mt-5 text-4xl font-black tracking-tight text-white md:text-5xl"
+            className="mt-4 text-3xl font-black tracking-tight text-white md:text-4xl"
           >
             Direction becomes
             <br />
@@ -130,7 +130,7 @@ export default function Features() {
             </span>
           </h2>
 
-          <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-slate-400">
+          <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-slate-400">
             ASCEND connects the parts of personal
             progress that are usually scattered
             across different apps, conversations
@@ -138,7 +138,7 @@ export default function Features() {
           </p>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {systems.map(
             (
               system,
@@ -170,17 +170,17 @@ export default function Features() {
                   whileHover={{
                     y: -6,
                   }}
-                  className={`group relative overflow-hidden rounded-3xl border border-white/10 bg-white/[0.035] p-7 shadow-2xl shadow-transparent backdrop-blur-xl transition duration-300 hover:border-white/20 ${system.glow}`}
+                  className={`group relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.035] p-5 shadow-2xl shadow-transparent backdrop-blur-xl transition duration-300 hover:border-white/20 ${system.glow}`}
                 >
                   <div className="absolute right-0 top-0 h-32 w-32 translate-x-10 -translate-y-10 rounded-full bg-white/[0.035] blur-2xl" />
 
                   <div className="relative">
                     <div className="flex items-start justify-between gap-5">
                       <div
-                        className={`flex h-14 w-14 items-center justify-center rounded-2xl border ${system.accent}`}
+                        className={`flex h-11 w-11 items-center justify-center rounded-xl border ${system.accent}`}
                       >
                         <Icon
-                          size={26}
+                          size={21}
                           aria-hidden="true"
                         />
                       </div>
@@ -190,17 +190,17 @@ export default function Features() {
                       </span>
                     </div>
 
-                    <h3 className="mt-7 text-2xl font-bold text-white">
+                    <h3 className="mt-5 text-xl font-bold text-white">
                       {system.name}
                     </h3>
 
-                    <p className="mt-4 min-h-24 text-base leading-7 text-slate-400">
+                    <p className="mt-3 min-h-20 text-sm leading-6 text-slate-400">
                       {
                         system.description
                       }
                     </p>
 
-                    <div className="mt-7 border-t border-white/[0.08] pt-5">
+                    <div className="mt-5 border-t border-white/[0.08] pt-4">
                       <p className="flex items-center gap-3 text-sm font-medium text-slate-200">
                         <span className="h-1.5 w-1.5 rounded-full bg-blue-400" />
 
@@ -216,7 +216,7 @@ export default function Features() {
           )}
         </div>
 
-        <div className="mt-12 rounded-3xl border border-blue-400/15 bg-gradient-to-r from-blue-500/[0.08] via-cyan-500/[0.05] to-transparent px-6 py-6 text-center">
+        <div className="mt-8 rounded-2xl border border-blue-400/15 bg-gradient-to-r from-blue-500/[0.08] via-cyan-500/[0.05] to-transparent px-5 py-5 text-center">
           <p className="text-sm leading-7 text-slate-300 sm:text-base">
             These systems share one live
             understanding of your journey—so your

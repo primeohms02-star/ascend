@@ -69,21 +69,21 @@ export default function StepChallenge({
         duration: 0.5,
       }}
     >
-      <div className="mb-10 text-center">
-        <p className="mb-4 text-sm uppercase tracking-[0.3em] text-blue-500">
+      <div className="mb-7 text-center">
+        <p className="mb-3 text-xs font-semibold uppercase tracking-[0.24em] text-blue-500">
           Biggest Challenges
         </p>
 
-        <h2 className="text-4xl font-bold text-white">
+        <h2 className="text-3xl font-bold tracking-tight text-white sm:text-[2rem]">
           What&apos;s holding you back?
         </h2>
 
-        <p className="mt-4 text-slate-400">
+        <p className="mt-3 text-sm text-slate-400">
           Select every challenge Atlas should consider.
         </p>
       </div>
 
-      <div className="grid max-h-[55vh] gap-4 overflow-y-auto pr-2 md:grid-cols-2">
+      <div className="grid max-h-[58vh] gap-3 overflow-y-auto pr-2 md:grid-cols-2 xl:grid-cols-3">
         {challenges.map(
           (challenge) => {
             const active =
@@ -101,7 +101,7 @@ export default function StepChallenge({
                 aria-pressed={
                   active
                 }
-                className={`rounded-2xl border p-5 text-left transition ${
+                className={`rounded-xl border p-4 text-left text-sm transition ${
                   active
                     ? "border-blue-500 bg-blue-500/10 text-white"
                     : "border-white/10 bg-white/5 text-slate-300 hover:border-blue-500/40 hover:bg-white/10"
@@ -128,7 +128,7 @@ export default function StepChallenge({
         )}
       </div>
 
-      <div className="mt-8 flex items-center justify-between gap-4">
+      <div className="mt-6 flex items-center justify-between gap-4">
         <p className="text-sm text-slate-500">
           {value.length} selected
         </p>
@@ -139,7 +139,7 @@ export default function StepChallenge({
           disabled={
             value.length === 0
           }
-          className="rounded-2xl bg-blue-600 px-8 py-4 font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
+          className="rounded-xl bg-blue-600 px-6 py-3.5 font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
         >
           <span className="inline-flex items-center gap-2">
             Continue

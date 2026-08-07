@@ -59,7 +59,7 @@ export default function MusicSpotlight() {
     <section
       id="ascend-music"
       aria-labelledby="music-heading"
-      className="relative scroll-mt-28 overflow-hidden border-t border-white/[0.06] bg-[#05060A] px-6 py-24 sm:py-28"
+      className="relative scroll-mt-28 overflow-hidden border-t border-white/[0.06] bg-[#05060A] px-6 py-20 sm:py-24"
     >
       <div
         aria-hidden="true"
@@ -70,7 +70,7 @@ export default function MusicSpotlight() {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.035)_1px,transparent_1px)] bg-[size:42px_42px] [mask-image:radial-gradient(circle_at_center,black,transparent_78%)]" />
       </div>
 
-      <div className="relative mx-auto grid max-w-7xl items-center gap-14 lg:grid-cols-[0.92fr_1.08fr] lg:gap-20">
+      <div className="relative mx-auto grid max-w-7xl items-center gap-10 lg:grid-cols-[0.92fr_1.08fr] lg:gap-20">
         <motion.div
           initial={{
             opacity: 0,
@@ -99,7 +99,7 @@ export default function MusicSpotlight() {
 
           <h2
             id="music-heading"
-            className="mt-7 text-4xl font-black leading-tight tracking-tight text-white sm:text-5xl lg:text-6xl"
+            className="mt-5 text-3xl font-black leading-tight tracking-tight text-white sm:text-4xl lg:text-5xl"
           >
             Your sound deserves
             <br />
@@ -109,7 +109,7 @@ export default function MusicSpotlight() {
             </span>
           </h2>
 
-          <p className="mt-7 max-w-2xl text-lg leading-8 text-slate-300">
+          <p className="mt-5 max-w-2xl text-base leading-7 sm:text-lg text-slate-300">
             ASCEND Music helps artists, producers,
             songwriters, DJs and music professionals
             define where they are going—and find the
@@ -123,11 +123,11 @@ export default function MusicSpotlight() {
             main North Star, mission or progress.
           </p>
 
-          <div className="mt-9 flex flex-col gap-4 sm:flex-row">
+          <div className="mt-7 flex flex-col gap-3 sm:flex-row">
             {isLoaded ? (
               <Link
                 href={pathwayHref}
-                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-fuchsia-500 px-7 py-4 font-semibold text-white shadow-[0_0_35px_rgba(217,70,239,0.22)] transition hover:-translate-y-0.5 hover:bg-fuchsia-400"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-fuchsia-500 px-6 py-3.5 font-semibold text-white shadow-[0_0_35px_rgba(217,70,239,0.22)] transition hover:-translate-y-0.5 hover:bg-fuchsia-400"
               >
                 Build Your Music Pathway
 
@@ -137,12 +137,12 @@ export default function MusicSpotlight() {
                 />
               </Link>
             ) : (
-              <div className="h-14 w-64 animate-pulse rounded-2xl bg-fuchsia-500/30" />
+              <div className="h-[52px] w-60 animate-pulse rounded-xl bg-fuchsia-500/30" />
             )}
 
             <Link
               href={userId ? "/opportunities?filter=Music" : "/sign-up"}
-              className="inline-flex items-center justify-center rounded-2xl border border-white/10 bg-white/5 px-7 py-4 font-semibold text-slate-200 backdrop-blur-xl transition hover:border-fuchsia-300/25 hover:bg-white/10 hover:text-white"
+              className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/5 px-6 py-3.5 font-semibold text-slate-200 backdrop-blur-xl transition hover:border-fuchsia-300/25 hover:bg-white/10 hover:text-white"
             >
               Explore Music Opportunities
             </Link>
@@ -170,12 +170,12 @@ export default function MusicSpotlight() {
         >
           <div className="absolute inset-10 rounded-full bg-fuchsia-500/15 blur-[90px]" />
 
-          <div className="relative overflow-hidden rounded-[2rem] border border-fuchsia-300/15 bg-gradient-to-br from-fuchsia-500/[0.12] via-[#0B0A13]/95 to-cyan-500/[0.06] p-5 shadow-[0_0_100px_rgba(168,85,247,0.1)] sm:p-7">
+          <div className="relative overflow-hidden rounded-3xl border border-fuchsia-300/15 bg-gradient-to-br from-fuchsia-500/[0.12] via-[#0B0A13]/95 to-cyan-500/[0.06] p-5 shadow-[0_0_100px_rgba(168,85,247,0.1)] sm:p-6">
             <div className="flex items-center justify-between gap-4 border-b border-white/[0.08] pb-5">
               <div className="flex items-center gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-fuchsia-300/20 bg-fuchsia-400/10 text-fuchsia-200">
+                <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-fuchsia-300/20 bg-fuchsia-400/10 text-fuchsia-200">
                   <AudioLines
-                    size={24}
+                    size={21}
                     aria-hidden="true"
                   />
                 </div>

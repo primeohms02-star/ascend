@@ -68,7 +68,7 @@ export default function CompassCard({
       transition={{
         duration: 0.5,
       }}
-      className="relative overflow-hidden rounded-3xl border border-blue-400/20 bg-gradient-to-br from-[#05070B] via-[#0B1220] to-[#111827] shadow-xl shadow-blue-950/20"
+      className="relative overflow-hidden rounded-2xl border border-blue-400/20 bg-gradient-to-br from-[#05070B] via-[#0B1220] to-[#111827] shadow-xl shadow-blue-950/20"
     >
       <div
         aria-hidden="true"
@@ -79,7 +79,7 @@ export default function CompassCard({
 
       <NorthStar />
 
-      <div className="relative z-10 grid items-center gap-6 p-6 sm:p-7 lg:grid-cols-[minmax(0,1fr)_280px] lg:px-8">
+      <div className="relative z-10 grid items-center gap-5 p-5 sm:p-6 lg:grid-cols-[minmax(0,1fr)_230px] lg:px-6">
         {/* North Star content */}
 
         <div className="min-w-0">
@@ -87,32 +87,32 @@ export default function CompassCard({
             North Star
           </p>
 
-          <div className="mt-3 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-            <h2 className="text-xl font-semibold text-white sm:text-2xl">
+          <div className="mt-2.5 flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
+            <h2 className="text-lg font-semibold text-white sm:text-xl">
               Your direction:
             </h2>
 
-            <p className="break-words text-xl font-bold text-blue-300 sm:text-2xl">
+            <p className="break-words text-lg font-bold text-blue-300 sm:text-xl">
               {northStar}
             </p>
           </div>
 
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-400">
+          <p className="mt-2.5 max-w-2xl text-sm leading-6 text-slate-400">
             The future you are intentionally building through
             your missions, decisions, and opportunities.
           </p>
 
           {/* Mobile compass */}
 
-          <div className="relative mt-5 flex h-52 items-center justify-center overflow-visible sm:h-60 lg:hidden">
-            <div className="origin-center scale-[0.62] sm:scale-[0.72]">
+          <div className="relative mt-4 flex h-44 items-center justify-center overflow-visible sm:h-52 lg:hidden">
+            <div className="origin-center scale-[0.54] sm:scale-[0.64]">
               <CompassNeedle
                 alignment={alignment}
               />
             </div>
           </div>
 
-          <div className="mt-5 max-w-xl">
+          <div className="mt-4 max-w-xl">
             <AlignmentBar
               alignment={alignment}
             />
@@ -120,7 +120,7 @@ export default function CompassCard({
 
           {/* Atlas assistance */}
 
-          <div className="mt-5 flex max-w-2xl flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="mt-4 flex max-w-2xl flex-col gap-3 sm:flex-row sm:items-center">
             <Link
               href="/atlas"
               className="group inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-blue-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400/60"
@@ -144,7 +144,7 @@ export default function CompassCard({
         {/* Desktop compass */}
 
         <div className="hidden justify-center lg:flex">
-          <div className="scale-75">
+          <div className="scale-[0.64]">
             <CompassNeedle
               alignment={alignment}
             />

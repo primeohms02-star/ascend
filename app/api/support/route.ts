@@ -126,6 +126,20 @@ export async function POST(
   request: Request
 ) {
   try {
+    const { userId } = await auth();
+
+    if (!userId) {
+      return NextResponse.json(
+        {
+          error:
+            "Sign in to use ASCEND Support AI.",
+        },
+        {
+          status: 401,
+        }
+      );
+    }
+
     const requestBody =
       (await request.json()) as Partial<
         SupportRequest
@@ -169,19 +183,6 @@ export async function POST(
 
     const knowledgeContext =
       getSupportContext(message);
-
-    let userId: string | null =
-      null;
-
-    try {
-      const session =
-        await auth();
-
-      userId =
-        session.userId ?? null;
-    } catch {
-      userId = null;
-    }
 
     const systemPrompt =
       buildSupportSystemPrompt({

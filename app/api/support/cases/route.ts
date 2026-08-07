@@ -253,6 +253,26 @@ export async function POST(
         initialMessage
       );
 
+    if (
+      !userId &&
+      diagnosis.category !== "account" &&
+      diagnosis.category !== "authentication"
+    ) {
+      const response: SupportCaseErrorResponse =
+        {
+          success: false,
+          error:
+            "Sign in to create support cases for ASCEND product issues.",
+        };
+
+      return NextResponse.json(
+        response,
+        {
+          status: 403,
+        }
+      );
+    }
+
     const conversation =
       cleanConversation(
         body.conversation

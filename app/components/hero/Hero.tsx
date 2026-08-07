@@ -9,11 +9,11 @@ export default function Hero() {
     <section className="relative min-h-screen overflow-hidden bg-[#05070B]">
       <HeroBackground />
 
-      <div className="relative z-10 mx-auto flex min-h-screen max-w-7xl flex-col-reverse items-center justify-center gap-20 px-6 pt-24 lg:flex-row lg:px-10">
+      <div className="relative z-10 mx-auto flex min-h-screen max-w-7xl flex-col-reverse items-center justify-center gap-14 px-6 pt-20 lg:flex-row lg:px-10">
         {/* LEFT */}
 
         <div className="flex-1 text-center lg:text-left">
-          <h1 className="text-5xl font-black leading-[0.95] tracking-tight text-white md:text-6xl lg:text-7xl">
+          <h1 className="text-4xl font-black leading-[0.98] tracking-tight text-white sm:text-5xl lg:text-6xl">
             Your life
             <br />
             doesn&apos;t come
@@ -24,14 +24,14 @@ export default function Hero() {
             </span>
           </h1>
 
-          <p className="mt-8 max-w-xl text-lg leading-8 text-slate-300">
+          <p className="mt-6 max-w-xl text-base leading-7 text-slate-300 sm:text-lg sm:leading-8">
             ASCEND helps you understand who you are,
             define your North Star, take strategic
             action, discover relevant opportunities
             and build evidence of meaningful growth.
           </p>
 
-          <div className="mt-7 flex flex-wrap justify-center gap-x-5 gap-y-2 text-sm text-slate-500 lg:justify-start">
+          <div className="mt-6 flex flex-wrap justify-center gap-x-5 gap-y-2 text-sm text-slate-500 lg:justify-start">
             <span>Direction</span>
             <span className="text-blue-500">•</span>
             <span>Atlas Intelligence</span>
@@ -43,7 +43,7 @@ export default function Hero() {
 
           <HeroJourneyActions />
 
-          <div className="mt-12">
+          <div className="mt-9">
             <ScrollIndicator />
           </div>
         </div>
@@ -52,7 +52,7 @@ export default function Hero() {
 
         <div className="flex flex-1 items-center justify-center">
           <Compass
-            size={460}
+            size={410}
           />
         </div>
       </div>

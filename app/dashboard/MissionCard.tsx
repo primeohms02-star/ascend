@@ -69,7 +69,7 @@ export default function MissionCard({
   return (
     <section
       id="mission"
-      className="relative scroll-mt-8 overflow-hidden rounded-3xl border border-orange-400/20 bg-gradient-to-br from-orange-400/[0.08] via-slate-900/80 to-slate-950 p-6 shadow-xl shadow-orange-950/20"
+      className="relative scroll-mt-8 overflow-hidden rounded-2xl border border-orange-400/20 bg-gradient-to-br from-orange-400/[0.08] via-slate-900/80 to-slate-950 p-5 shadow-xl shadow-orange-950/20"
     >
       <div
         aria-hidden="true"
@@ -79,7 +79,7 @@ export default function MissionCard({
       <div className="relative">
         {/* Header */}
 
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center justify-between gap-3.5">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-orange-300">
               {available
@@ -94,14 +94,14 @@ export default function MissionCard({
             </h2>
           </div>
 
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-orange-400/20 bg-orange-400/10 text-orange-300">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-orange-400/20 bg-orange-400/10 text-orange-300">
             <TargetIcon />
           </div>
         </div>
 
         {/* Mission content */}
 
-        <div className="mt-5 rounded-2xl border border-white/10 bg-white/[0.035] p-4">
+        <div className="mt-4 rounded-xl border border-white/10 bg-white/[0.035] p-3.5">
           <p className="text-base font-semibold leading-7 text-white">
             {title}
           </p>
@@ -117,9 +117,9 @@ export default function MissionCard({
 
         {available &&
           description && (
-            <details className="group mt-4 rounded-2xl border border-white/10 bg-slate-950/30">
-              <summary className="cursor-pointer list-none px-4 py-3 text-sm font-medium text-slate-300 transition hover:text-white">
-                <span className="flex items-center justify-between gap-4">
+            <details className="group mt-3 rounded-xl border border-white/10 bg-slate-950/30">
+              <summary className="cursor-pointer list-none px-3.5 py-2.5 text-sm font-medium text-slate-300 transition hover:text-white">
+                <span className="flex items-center justify-between gap-3.5">
                   Why this mission matters
 
                   <span className="text-slate-500 transition group-open:rotate-180">
@@ -128,7 +128,7 @@ export default function MissionCard({
                 </span>
               </summary>
 
-              <div className="border-t border-white/10 px-4 py-4">
+              <div className="border-t border-white/10 px-3.5 py-3.5">
                 <p className="text-sm leading-7 text-slate-300">
                   {description}
                 </p>
@@ -155,7 +155,7 @@ export default function MissionCard({
             </details>
           )}
 
-        <div className="mt-5">
+        <div className="mt-4">
           {available &&
           missionId ? (
             <CompleteMissionButton

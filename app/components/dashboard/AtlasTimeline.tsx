@@ -54,11 +54,11 @@ export default function AtlasTimeline({
   );
 
   return (
-    <section className="overflow-hidden rounded-3xl border border-slate-700/80 bg-slate-900/60 p-6 shadow-xl shadow-slate-950/20">
+    <section className="overflow-hidden rounded-2xl border border-slate-700/80 bg-slate-900/60 p-5 shadow-xl shadow-slate-950/20">
       {/* Header */}
 
       <div className="flex items-start gap-3">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-blue-400/20 bg-blue-400/10 text-blue-300">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-blue-400/20 bg-blue-400/10 text-blue-300">
           <TimelineIcon />
         </div>
 
@@ -67,7 +67,7 @@ export default function AtlasTimeline({
             Recent Milestones
           </p>
 
-          <h2 className="mt-1 text-xl font-semibold text-white">
+          <h2 className="mt-1 text-lg font-semibold text-white">
             Atlas Timeline
           </h2>
         </div>
@@ -76,11 +76,11 @@ export default function AtlasTimeline({
       {/* Timeline preview */}
 
       {timeline.length > 0 ? (
-        <ol className="mt-5 space-y-4">
+        <ol className="mt-4 space-y-3">
           {timeline.map((item, index) => (
             <li
               key={`${item.title}-${item.created_at}-${index}`}
-              className="flex gap-3 rounded-2xl border border-white/10 bg-slate-950/30 p-4"
+              className="flex gap-3 rounded-xl border border-white/10 bg-slate-950/30 p-3.5"
             >
               <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-blue-400/25 bg-blue-400/10 text-sm">
                 {item.icon}
@@ -110,7 +110,7 @@ export default function AtlasTimeline({
           ))}
         </ol>
       ) : (
-        <div className="mt-5 rounded-2xl border border-dashed border-slate-700 bg-slate-950/30 p-6 text-center">
+        <div className="mt-4 rounded-xl border border-dashed border-slate-700 bg-slate-950/30 p-5 text-center">
           <p className="text-sm font-medium text-white">
             Your timeline is ready
           </p>

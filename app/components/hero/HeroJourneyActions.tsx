@@ -12,21 +12,21 @@ export default function HeroJourneyActions() {
 
   return (
     <>
-      <div className="mt-12 flex flex-col gap-5 sm:flex-row">
+      <div className="mt-9 flex flex-col gap-3 sm:flex-row">
         {isLoaded ? (
           <Link
             href={journeyHref}
-            className="inline-flex items-center justify-center rounded-2xl bg-blue-600 px-8 py-4 text-lg font-semibold text-white transition hover:bg-blue-500"
+            className="inline-flex items-center justify-center rounded-xl bg-blue-600 px-6 py-3.5 text-base font-semibold text-white transition hover:bg-blue-500"
           >
             Start Your Journey →
           </Link>
         ) : (
-          <div className="h-[60px] w-56 animate-pulse rounded-2xl bg-blue-600/40" />
+          <div className="h-[52px] w-52 animate-pulse rounded-xl bg-blue-600/40" />
         )}
 
         <a
           href="#how-it-works"
-          className="inline-flex items-center justify-center rounded-2xl border border-white/15 bg-white/5 px-8 py-4 text-lg font-medium text-white backdrop-blur-md transition hover:bg-white/10"
+          className="inline-flex items-center justify-center rounded-xl border border-white/15 bg-white/5 px-6 py-3.5 text-base font-medium text-white backdrop-blur-md transition hover:bg-white/10"
         >
           Explore How It Works →
         </a>
