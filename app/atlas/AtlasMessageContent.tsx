@@ -22,7 +22,7 @@ type ContentBlock =
 
 const DECORATIVE_LINE = /^[\s*_~—–=-]{3,}$/;
 const TABLE_DIVIDER = /^\|?\s*:?-{3,}:?\s*(?:\|\s*:?-{3,}:?\s*)+\|?$/;
-const TIME_RANGE_LINE = /^(\d{1,2}:\d{2}\s*[–—-]\s*\d{1,2}:\d{2})\s*[–—-]\s*(.+)$/;
+const TIME_RANGE_LINE = /^(\d{1,2}(?::\d{2})?\s*(?:AM|PM)?\s*[–—-]\s*\d{1,2}(?::\d{2})?\s*(?:AM|PM)?)\s*(?:\||[–—-])\s*(.+)$/i;
 const LABEL_LINE = /^(Primary North Star|North Star|Current Mission|Mission|Primary Focus|Today['’]s Focus|Goal|Recommendation|Next Step)\s*:\s*(.+)$/i;
 
 function cleanPlainText(value: string) {
@@ -84,29 +84,27 @@ function renderInline(text: string): ReactNode[] {
 }
 
 function normalizeLine(rawLine: string) {
-  return rawLine.replace(/^\s*>+\s?/, "").replace(/^\s*#{1,6}\s+/, "").trimEnd();
+  return rawLine
+    .replace(/^\s*>+\s?/, "")
+    .replace(/^\s*#{1,6}\s+/, "")
+    .trimEnd();
 }
 
 function prepareContent(content: string) {
   let prepared = content.replace(/\r\n/g, "\n").trim();
 
   /*
-   * Some LLM responses contain a correctly structured schedule but omit the
-   * line breaks between time blocks. Insert only structural line breaks here;
-   * no user content is rewritten or discarded.
+   * Models occasionally return a good schedule without actual line breaks.
+   * Split before each time range so the renderer can turn every block into a
+   * compact schedule row instead of displaying a wall of text.
    */
   prepared = prepared.replace(
-    /\s+(?=\d{1,2}:\d{2}\s*[–—-]\s*\d{1,2}:\d{2}\b)/g,
+    /\s+(?=\d{1,2}(?::\d{2})?\s*(?:AM|PM)?\s*[–—-]\s*\d{1,2}(?::\d{2})?\s*(?:AM|PM)?\s*(?:\||[–—-]))/gi,
     "\n"
   );
 
   prepared = prepared.replace(
     /\s+(?=(?:Primary North Star|North Star|Current Mission|Mission|Primary Focus|Today['’]s Focus|Recommendation|Next Step)\s*:)/gi,
-    "\n"
-  );
-
-  prepared = prepared.replace(
-    /\s+(?=(?:Time\s*[–—-]\s*Block\s*[–—-]\s*Core Activity))/gi,
     "\n"
   );
 
@@ -133,11 +131,7 @@ function looksLikeHeading(line: string) {
     return false;
   }
 
-  if (/^Time\s*[–—-]\s*Block/i.test(clean)) {
-    return true;
-  }
-
-  if (/^(?:Today['’]s Action Plan|Your .*Day Plan|Action Plan)/i.test(clean)) {
+  if (/^(?:Today['’]s Action Plan|Your .*Day Plan|Action Plan|Your Day Plan)/i.test(clean)) {
     return true;
   }
 
@@ -166,14 +160,30 @@ function scheduleItemFromLine(line: string): ScheduleItem | null {
     return null;
   }
 
-  const time = cleanPlainText(match[1]);
-  const pieces = match[2]
+  const time = cleanPlainText(match[1]).replace(/\s+/g, " ");
+  const rest = match[2].trim();
+  const pipePieces = rest
+    .split(/\s*\|\s*/)
+    .map((piece) => cleanPlainText(piece))
+    .filter(Boolean);
+
+  if (pipePieces.length >= 2) {
+    const [title, ...detailParts] = pipePieces;
+
+    return {
+      time,
+      title: title || "Planned block",
+      detail: detailParts.join(" — "),
+    };
+  }
+
+  const dashPieces = rest
     .split(/\s+[–—-]\s+/)
     .map((piece) => cleanPlainText(piece))
     .filter(Boolean);
 
-  const title = pieces.shift() ?? "Planned block";
-  const detail = pieces
+  const title = dashPieces.shift() ?? "Planned block";
+  const detail = dashPieces
     .join(" — ")
     .replace(/\s*[•●▪◦‣]\s*/g, " · ")
     .replace(/(?:\s*·\s*){2,}/g, " · ")
@@ -353,7 +363,7 @@ export default function AtlasMessageContent({
 }: AtlasMessageContentProps) {
   if (isUser) {
     return (
-      <p className="whitespace-pre-wrap text-[15px] leading-7 sm:text-base">
+      <p className="whitespace-pre-wrap text-[15px] leading-6 sm:text-base">
         {cleanPlainText(content)}
       </p>
     );
@@ -362,16 +372,16 @@ export default function AtlasMessageContent({
   const blocks = parseContent(content);
 
   return (
-    <div className="space-y-4 text-[15px] leading-7 text-slate-200 sm:text-base sm:leading-7">
+    <div className="space-y-3.5 text-[15px] leading-6 text-slate-200 sm:text-base sm:leading-7">
       {blocks.map((block, index) => {
         if (block.type === "heading") {
           return (
-            <h3
-              key={`heading-${index}`}
-              className="pt-1 text-base font-semibold tracking-tight text-white sm:text-lg"
-            >
-              {renderInline(block.text)}
-            </h3>
+            <div key={`heading-${index}`} className="flex items-center gap-2.5 pt-1">
+              <span aria-hidden="true" className="h-px w-5 shrink-0 bg-amber-300/60" />
+              <h3 className="text-[15px] font-semibold tracking-tight text-white sm:text-base">
+                {renderInline(block.text)}
+              </h3>
+            </div>
           );
         }
 
@@ -379,35 +389,39 @@ export default function AtlasMessageContent({
           return (
             <div
               key={`label-${index}`}
-              className="border-l-2 border-amber-300/55 pl-3.5"
+              className="rounded-xl border border-white/[0.07] bg-white/[0.025] px-3.5 py-3"
             >
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-amber-200/80">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-amber-200/75">
                 {block.label}
               </p>
-              <p className="mt-1 text-slate-200">{renderInline(block.value)}</p>
+              <p className="mt-1.5 leading-6 text-slate-200">
+                {renderInline(block.value)}
+              </p>
             </div>
           );
         }
 
         if (block.type === "schedule") {
           return (
-            <div key={`schedule-${index}`} className="divide-y divide-white/[0.08] rounded-xl border border-white/[0.08] bg-black/15">
+            <div key={`schedule-${index}`} className="space-y-2">
               {block.items.map((item, itemIndex) => (
                 <div
                   key={`${item.time}-${itemIndex}`}
-                  className="grid gap-2 px-3.5 py-3 sm:grid-cols-[7.5rem_minmax(0,1fr)] sm:gap-4 sm:px-4"
+                  className="rounded-xl border border-white/[0.07] bg-white/[0.025] px-3.5 py-3 sm:px-4"
                 >
-                  <div className="pt-0.5 text-xs font-semibold tabular-nums text-amber-200">
-                    {item.time}
+                  <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
+                    <span className="rounded-full border border-amber-300/20 bg-amber-300/[0.08] px-2.5 py-1 text-[11px] font-semibold tabular-nums text-amber-200">
+                      {item.time}
+                    </span>
+                    <p className="min-w-0 font-semibold leading-5 text-white">
+                      {renderInline(item.title)}
+                    </p>
                   </div>
-                  <div className="min-w-0">
-                    <p className="font-semibold text-white">{item.title}</p>
-                    {item.detail && (
-                      <p className="mt-1 text-sm leading-6 text-slate-400">
-                        {item.detail}
-                      </p>
-                    )}
-                  </div>
+                  {item.detail && (
+                    <p className="mt-2 text-[14px] leading-6 text-slate-400 sm:text-[15px]">
+                      {renderInline(item.detail)}
+                    </p>
+                  )}
                 </div>
               ))}
             </div>
@@ -421,7 +435,7 @@ export default function AtlasMessageContent({
                 <li key={`${item}-${itemIndex}`} className="flex gap-3">
                   <span
                     aria-hidden="true"
-                    className="mt-[0.72rem] h-1.5 w-1.5 shrink-0 rounded-full bg-amber-300"
+                    className="mt-[0.62rem] h-1.5 w-1.5 shrink-0 rounded-full bg-amber-300"
                   />
                   <span className="min-w-0 flex-1">{renderInline(item)}</span>
                 </li>
@@ -432,10 +446,10 @@ export default function AtlasMessageContent({
 
         if (block.type === "ordered-list") {
           return (
-            <ol key={`ordered-${index}`} className="space-y-3">
+            <ol key={`ordered-${index}`} className="space-y-2.5">
               {block.items.map((item, itemIndex) => (
                 <li key={`${item}-${itemIndex}`} className="flex gap-3">
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-amber-300/25 bg-amber-300/10 text-xs font-semibold text-amber-200">
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-amber-300/25 bg-amber-300/[0.08] text-[11px] font-semibold text-amber-200">
                     {itemIndex + 1}
                   </span>
                   <span className="min-w-0 flex-1 pt-0.5">
@@ -459,7 +473,7 @@ export default function AtlasMessageContent({
         }
 
         return (
-          <p key={`paragraph-${index}`} className="text-slate-200">
+          <p key={`paragraph-${index}`} className="max-w-[68ch] text-slate-300">
             {block.lines.map((line, lineIndex) => (
               <span key={`${line}-${lineIndex}`}>
                 {lineIndex > 0 ? " " : null}

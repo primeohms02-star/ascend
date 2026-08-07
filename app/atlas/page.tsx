@@ -327,8 +327,8 @@ export default function AtlasPage() {
                     key={`history-${item.role}-${index}`}
                     className={
                       item.role === "user"
-                        ? "ml-auto max-w-2xl rounded-[22px] border border-amber-200/20 bg-amber-400 px-5 py-4 text-[#17120A] shadow-lg"
-                        : "mr-auto w-full max-w-3xl rounded-[24px] border border-white/10 bg-[#111116]/92 p-5 text-white shadow-lg sm:p-6"
+                        ? "ml-auto max-w-[88%] rounded-2xl border border-amber-200/20 bg-amber-400 px-4 py-3.5 text-[#17120A] sm:max-w-2xl sm:px-5 sm:py-4"
+                        : "mr-auto w-full max-w-3xl"
                     }
                   >
                     {item.role === "user" ? (
@@ -337,14 +337,14 @@ export default function AtlasPage() {
                         <AtlasMessageContent content={item.message} isUser />
                       </>
                     ) : (
-                      <div className="flex items-start gap-4">
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-amber-300/25 bg-amber-300/10 text-xs font-black tracking-[0.08em] text-amber-200">
-                          A
+                      <div>
+                        <div className="mb-2.5 flex items-center gap-2 px-1">
+                          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-amber-300/25 bg-amber-300/[0.08] text-[10px] font-black tracking-[0.08em] text-amber-200">
+                            A
+                          </div>
+                          <p className="text-sm font-semibold text-white">Atlas</p>
                         </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="mb-3 text-sm font-semibold text-white">
-                            Atlas
-                          </p>
+                        <div className="rounded-2xl border border-white/[0.08] bg-[#0D0D12]/95 px-4 py-4 sm:px-5 sm:py-5">
                           <AtlasMessageContent content={item.message} />
                         </div>
                       </div>
@@ -366,8 +366,8 @@ export default function AtlasPage() {
               key={`current-${item.role}-${index}`}
               className={
                 item.role === "user"
-                  ? "ml-auto max-w-2xl rounded-[22px] border border-amber-200/20 bg-amber-400 px-5 py-4 text-[#17120A] shadow-lg"
-                  : "mr-auto w-full max-w-3xl rounded-[24px] border border-white/10 bg-[#111116]/92 p-5 text-white shadow-lg sm:p-6"
+                  ? "ml-auto max-w-[88%] rounded-2xl border border-amber-200/20 bg-amber-400 px-4 py-3.5 text-[#17120A] sm:max-w-2xl sm:px-5 sm:py-4"
+                  : "mr-auto w-full max-w-3xl"
               }
             >
               {item.role === "user" ? (
@@ -376,14 +376,14 @@ export default function AtlasPage() {
                   <AtlasMessageContent content={item.message} isUser />
                 </>
               ) : (
-                <div className="flex items-start gap-4">
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-amber-300/25 bg-amber-300/10 text-xs font-black tracking-[0.08em] text-amber-200">
-                    A
+                <div>
+                  <div className="mb-2.5 flex items-center gap-2 px-1">
+                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-amber-300/25 bg-amber-300/[0.08] text-[10px] font-black tracking-[0.08em] text-amber-200">
+                      A
+                    </div>
+                    <p className="text-sm font-semibold text-white">Atlas</p>
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="mb-3 text-sm font-semibold text-white">
-                      Atlas
-                    </p>
+                  <div className="rounded-2xl border border-white/[0.08] bg-[#0D0D12]/95 px-4 py-4 sm:px-5 sm:py-5">
                     <AtlasMessageContent content={item.message} />
                   </div>
                 </div>

@@ -468,7 +468,10 @@ Keep normal paragraphs short.
 
 Use bullets or numbered steps when presenting several actions, options or requirements.
 
-For a schedule or day plan, put every time block on its own line. Never compress multiple time blocks into one paragraph.
+For a schedule or day plan, put every time block on its own line using this exact structure:
+HH:MM–HH:MM | Short activity title | One concise explanation
+
+Keep day plans to a practical number of blocks. Do not turn them into a minute-by-minute wall of text.
 
 Do not use markdown tables for daily plans.
 
@@ -518,36 +521,17 @@ export async function runAtlasBrain({
       message
     );
 
-  const missionStartedAt =
-    liveMission?.created_at
-      ? Date.parse(liveMission.created_at)
-      : Number.NaN;
-
   const relevantHistory =
-    (atlas.memory ?? [])
-      .filter(
-        (storedMessage: any) =>
-          storedMessage.role === "user" ||
-          storedMessage.role === "assistant" ||
-          storedMessage.role === "atlas"
-      )
-      .filter((storedMessage: any) => {
-        if (
-          !isDayPlanningRequest ||
-          !Number.isFinite(missionStartedAt)
-        ) {
-          return true;
-        }
-
-        const messageCreatedAt =
-          Date.parse(storedMessage.created_at ?? "");
-
-        return (
-          !Number.isFinite(messageCreatedAt) ||
-          messageCreatedAt >= missionStartedAt
-        );
-      })
-      .slice(-12);
+    isDayPlanningRequest
+      ? []
+      : (atlas.memory ?? [])
+          .filter(
+            (storedMessage: any) =>
+              storedMessage.role === "user" ||
+              storedMessage.role === "assistant" ||
+              storedMessage.role === "atlas"
+          )
+          .slice(-12);
 
   const liveStateReminder = `
 LIVE CURRENT STATE FOR THIS REPLY
@@ -562,8 +546,8 @@ Never describe an older mission as current.
 
 ${
   isDayPlanningRequest
-    ? `The user is asking for a day plan. Build a FRESH plan around the CURRENT MISSION above as today's primary objective. Do not reuse or continue an older day plan from conversation history. Supporting tasks may help the North Star, but they must not replace or contradict the current mission. Start by naming the current mission once, then use a short heading and one clearly separated time block per line with a concise action and reason.`
-    : "Use the current mission above whenever the user's request depends on what they should be doing now."
+    ? `The user is asking for a fresh day plan. Use the CURRENT MISSION above only as silent live context so an old mission can never leak into the answer. Do NOT print, quote, label or restate the current mission or North Star. Do NOT add a "Current Mission" or "Mission" section. Do not reuse or continue an older day plan. Build a balanced, useful plan for today and let the live mission influence priorities only where it naturally belongs. Return a short heading followed by clearly separated time blocks using exactly: HH:MM–HH:MM | Short activity title | One concise explanation. Keep the plan readable and practical rather than exhaustive.`
+    : "Use the current mission above whenever the user's request depends on what they should be doing now, but do not repeat it unless doing so directly helps answer the user's question."
 }
 `;
 
