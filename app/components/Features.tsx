@@ -1,9 +1,3 @@
-"use client";
-
-import {
-  motion,
-} from "framer-motion";
-
 import {
   Compass,
   Globe2,
@@ -107,9 +101,6 @@ export default function Features() {
         aria-hidden="true"
         className="pointer-events-none absolute inset-0"
       >
-        <div className="absolute -left-40 top-32 h-96 w-96 rounded-full bg-blue-600/10 blur-[140px]" />
-
-        <div className="absolute -right-40 bottom-20 h-96 w-96 rounded-full bg-cyan-500/10 blur-[140px]" />
       </div>
 
       <div className="relative mx-auto max-w-7xl">
@@ -148,29 +139,9 @@ export default function Features() {
                 system.icon;
 
               return (
-                <motion.article
+                <article
                   key={system.name}
-                  initial={{
-                    opacity: 0,
-                    y: 30,
-                  }}
-                  whileInView={{
-                    opacity: 1,
-                    y: 0,
-                  }}
-                  viewport={{
-                    once: true,
-                    amount: 0.2,
-                  }}
-                  transition={{
-                    duration: 0.5,
-                    delay:
-                      index * 0.07,
-                  }}
-                  whileHover={{
-                    y: -6,
-                  }}
-                  className={`group relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.035] p-5 shadow-2xl shadow-transparent backdrop-blur-xl transition duration-300 hover:border-white/20 ${system.glow}`}
+                  className={`group relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.035] p-5 shadow-2xl shadow-transparent transition duration-300 hover:border-white/20 ${system.glow}`}
                 >
                   <div className="absolute right-0 top-0 h-32 w-32 translate-x-10 -translate-y-10 rounded-full bg-white/[0.035] blur-2xl" />
 
@@ -210,7 +181,7 @@ export default function Features() {
                       </p>
                     </div>
                   </div>
-                </motion.article>
+                </article>
               );
             }
           )}

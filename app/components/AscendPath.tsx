@@ -1,9 +1,3 @@
-"use client";
-
-import {
-  motion,
-} from "framer-motion";
-
 import {
   Activity,
   Brain,
@@ -64,10 +58,6 @@ export default function AscendPath() {
       aria-labelledby="ascend-path-heading"
       className="relative overflow-hidden border-t border-white/[0.06] bg-[#070A10] px-6 py-20 sm:py-24"
     >
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute left-1/2 top-1/2 h-[520px] w-[760px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-blue-600/[0.07] blur-[170px]"
-      />
 
       <div className="relative mx-auto max-w-7xl">
         <div className="mx-auto max-w-3xl text-center">
@@ -104,25 +94,9 @@ export default function AscendPath() {
             const Icon = step.icon;
 
             return (
-              <motion.article
+              <article
                 key={step.name}
-                initial={{
-                  opacity: 0,
-                  y: 20,
-                }}
-                whileInView={{
-                  opacity: 1,
-                  y: 0,
-                }}
-                viewport={{
-                  once: true,
-                  amount: 0.4,
-                }}
-                transition={{
-                  duration: 0.45,
-                  delay: index * 0.05,
-                }}
-                className="relative rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4 text-center backdrop-blur-xl sm:p-5 xl:border-transparent xl:bg-transparent xl:p-2"
+                className="relative rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4 text-center sm:p-5 xl:border-transparent xl:bg-transparent xl:p-2"
               >
                 <div className="relative z-10 mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-blue-400/20 bg-[#0A101C] text-cyan-300 shadow-[0_0_30px_rgba(37,99,235,0.12)]">
                   <Icon
@@ -142,7 +116,7 @@ export default function AscendPath() {
                 <p className="mt-2 text-xs leading-5 text-slate-500">
                   {step.detail}
                 </p>
-              </motion.article>
+              </article>
             );
           })}
         </div>

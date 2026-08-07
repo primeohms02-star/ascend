@@ -1,273 +1,148 @@
-import {
-  loadAtlasContext,
-} from "./brain";
+import { calculateAscension } from "./ascension";
+import { buildDailyBriefing } from "./dailyBriefing";
+import { buildTimeline } from "./timeline";
+import { loadAtlasMemories } from "./memory";
+import { getActiveMission } from "./missionService";
 
-import {
-  calculateAscension,
-} from "./ascension";
+import { getProfile } from "@/lib/supabase/profiles";
+import { getProgress } from "@/lib/supabase/atlasProgress";
+import { getMomentum } from "@/lib/supabase/atlasMomentum";
 
-import type {
-  Recommendation,
-} from "@/lib/engine/recommendations";
+import type { Recommendation } from "@/lib/engine/recommendations";
 
-export async function getAtlasDashboard(
-  clerkId: string
-) {
-  const atlas =
-    await loadAtlasContext(
-      clerkId
-    );
-
+export async function getAtlasDashboard(clerkId: string) {
   /*
-   * Only an active mission can be displayed as the
-   * user's current mission.
+   * The dashboard only needs the user's current profile, active mission,
+   * progression, momentum and recent milestones. Loading the complete Atlas
+   * conversation/knowledge/strategy context here made every dashboard visit
+   * perform many database reads that the page never renders.
    */
-  const currentMission =
-    atlas.missions?.find(
-      (mission: any) =>
-        mission.status ===
-        "active"
-    ) ?? null;
+  const [storedProfile, currentMission, progressRecord, momentum, atlasMemories] =
+    await Promise.all([
+      getProfile(clerkId),
+      getActiveMission(clerkId),
+      getProgress(clerkId),
+      getMomentum(clerkId),
+      loadAtlasMemories(clerkId),
+    ]);
 
-  /*
-   * atlas_progress is the canonical source of
-   * Ascension XP and level.
-   */
-  const ascensionScore =
-    Number(
-      atlas.atlasProgress
-        ?.ascension_score ?? 0
-    );
+  const profile =
+    storedProfile ??
+    ({
+      clerk_id: clerkId,
+      full_name: "",
+      email: "",
+      journey: "Purpose Discovery",
+      north_star: "",
+      progress: 0,
+      completed_steps: 0,
+      current_streak: 0,
+      longest_streak: 0,
+      last_mission_date: null,
+    } as const);
 
-  const ascension =
-    calculateAscension(
-      ascensionScore
-    );
+  const ascensionScore = Number(progressRecord?.ascension_score ?? 0);
+  const ascension = calculateAscension(ascensionScore);
 
-  let recommendedNext:
-    Recommendation;
+  let recommendedNext: Recommendation;
 
   if (currentMission) {
     recommendedNext = {
-      id:
-        `mission-${currentMission.id}`,
-
-      title:
-        "Continue Your Current Mission",
-
-      description:
-        currentMission.mission,
-
-      priority:
-        "high",
-
-      category:
-        "Current Mission",
-
-      action:
-        "Go to Mission",
-
-      href:
-        "#mission",
+      id: `mission-${currentMission.id}`,
+      title: "Continue Your Current Mission",
+      description: currentMission.mission,
+      priority: "high",
+      category: "Current Mission",
+      action: "Go to Mission",
+      href: "#mission",
     };
-  } else if (
-    !atlas.profile?.north_star
-  ) {
+  } else if (!profile.north_star) {
     recommendedNext = {
-      id:
-        "start-journey",
-
-      title:
-        "Define Your North Star",
-
+      id: "start-journey",
+      title: "Define Your North Star",
       description:
         "Complete ASCEND onboarding so Atlas can understand your identity, immediate goal, challenges and long-term direction.",
-
-      priority:
-        "high",
-
-      category:
-        "Direction",
-
-      action:
-        "Start Your Journey",
-
-      href:
-        "/onboarding",
+      priority: "high",
+      category: "Direction",
+      action: "Start Your Journey",
+      href: "/onboarding",
     };
   } else {
     recommendedNext = {
-      id:
-        "recalibrate-direction",
-
-      title:
-        "Prepare Your Next Mission",
-
+      id: "recalibrate-direction",
+      title: "Prepare Your Next Mission",
       description:
         "Start the journey process again to confirm or update your direction and allow Atlas to prepare a newly aligned mission.",
-
-      priority:
-        "high",
-
-      category:
-        "Direction",
-
-      action:
-        "Update Your Journey",
-
-      href:
-        "/onboarding",
+      priority: "high",
+      category: "Direction",
+      action: "Update Your Journey",
+      href: "/onboarding",
     };
   }
 
-  const completeTimeline =
-    atlas.timeline ?? [];
+  const completeTimeline = buildTimeline(atlasMemories as any);
+  const timelinePreview = completeTimeline.slice(0, 3);
 
-  /*
-   * Display only the three most recent milestones.
-   */
-  const timelinePreview =
-    completeTimeline.slice(
-      0,
-      3
-    );
+  const journey = profile.journey ?? "Purpose Discovery";
+  const northStar = profile.north_star ?? "";
+  const dailyBriefing = buildDailyBriefing({
+    journey,
+    northStar,
+    missionTitle: currentMission?.mission ?? "No active mission",
+    missionReason: currentMission?.reason ?? "",
+    progress: ascension.score,
+  });
+
+  const currentStreak = Number(momentum?.current_streak ?? 0);
 
   return {
     dailyBriefing: {
-      ...atlas.dailyBriefing,
-
-      focus:
-        currentMission
-          ?.mission ??
-        recommendedNext.title,
+      ...dailyBriefing,
+      focus: currentMission?.mission ?? recommendedNext.title,
     },
 
     compass: {
-      northStar:
-        atlas.profile
-          ?.north_star ??
-        "Discover your purpose",
-
-      /*
-       * This represents progress within the current
-       * Ascension level, not a scientific measurement
-       * of alignment with the user's North Star.
-       */
-      alignment:
-        ascension.progressPercent,
+      northStar: northStar || "Discover your purpose",
+      alignment: ascension.progressPercent,
     },
 
     mission: {
-      title:
-        currentMission
-          ?.mission ??
-        "No Active Mission",
-
+      title: currentMission?.mission ?? "No Active Mission",
       description:
-        currentMission
-          ?.reason ??
+        currentMission?.reason ??
         "Start or update your journey so Atlas can prepare a mission aligned with your current direction.",
-
-      missionId:
-        currentMission?.id ??
-        "",
-
-      available:
-        Boolean(
-          currentMission
-        ),
+      missionId: currentMission?.id ?? "",
+      available: Boolean(currentMission),
     },
 
     progress: {
-      progress:
-        ascension.progressPercent,
-
-      momentum:
-        `${
-          atlas.momentum
-            ?.current_streak ?? 0
-        } Day Streak`,
-
-      message:
-        atlas.momentumMessage ??
-        "Keep moving toward your North Star.",
+      progress: ascension.progressPercent,
+      momentum: `${currentStreak} Day Streak`,
+      message: "Keep moving toward your North Star.",
     },
 
     identity: {
-      title:
-        ascension.title,
-
-      level:
-        ascension.level,
+      title: ascension.title,
+      level: ascension.level,
     },
 
     ascension,
 
     atlasProgress: {
-      ascension_score:
-        ascension.score,
-
-      level:
-        ascension.level,
-
-      title:
-        ascension.title,
-
-      currentLevelStart:
-        ascension.currentLevelStart,
-
-      nextLevelTarget:
-        ascension.nextLevelTarget,
-
-      progressPercent:
-        ascension.progressPercent,
-
-      xpIntoLevel:
-        ascension.xpIntoLevel,
-
-      xpRequiredForLevel:
-        ascension.xpRequiredForLevel,
+      ascension_score: ascension.score,
+      level: ascension.level,
+      title: ascension.title,
+      currentLevelStart: ascension.currentLevelStart,
+      nextLevelTarget: ascension.nextLevelTarget,
+      progressPercent: ascension.progressPercent,
+      xpIntoLevel: ascension.xpIntoLevel,
+      xpRequiredForLevel: ascension.xpRequiredForLevel,
     },
 
-    profile:
-      atlas.profile,
-
-    strategy:
-      atlas.strategy,
-
-    knowledge:
-      atlas.knowledge,
-
-    reflection:
-      atlas.reflection,
-
-    journey:
-      atlas.journey,
-
-    compassAnswers:
-      atlas.compassAnswers,
-
-    compassResults:
-      atlas.compassResults,
-
-    opportunities:
-      atlas.opportunities ??
-      [],
-
-    recommendations: [
-      recommendedNext,
-    ],
-
-    timeline:
-      timelinePreview,
-
-    timelineTotal:
-      completeTimeline.length,
-
-    completedMissionCount:
-      Number(
-        atlas.momentum
-          ?.completed_missions ?? 0
-      ),
+    profile,
+    recommendations: [recommendedNext],
+    timeline: timelinePreview,
+    timelineTotal: completeTimeline.length,
+    completedMissionCount: Number(momentum?.completed_missions ?? 0),
   };
 }

@@ -5,8 +5,6 @@ import Link from "next/link";
 
 import { useAuth } from "@clerk/nextjs";
 
-import { motion } from "framer-motion";
-
 import {
   ArrowRight,
 } from "lucide-react";
@@ -27,27 +25,11 @@ export default function CTA() {
         aria-hidden="true"
         className="pointer-events-none absolute inset-0"
       >
-        <div className="absolute left-1/2 top-1/2 h-[620px] w-[620px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-blue-600/15 blur-[170px]" />
 
         <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:64px_64px] [mask-image:radial-gradient(circle_at_center,black,transparent_75%)]" />
       </div>
 
-      <motion.div
-        initial={{
-          opacity: 0,
-          y: 30,
-        }}
-        whileInView={{
-          opacity: 1,
-          y: 0,
-        }}
-        viewport={{
-          once: true,
-          amount: 0.3,
-        }}
-        transition={{
-          duration: 0.65,
-        }}
+      <div
         className="relative mx-auto max-w-4xl overflow-hidden rounded-3xl border border-blue-400/20 bg-gradient-to-br from-blue-500/[0.12] via-slate-950/90 to-cyan-500/[0.08] px-6 py-12 text-center shadow-[0_0_100px_rgba(37,99,235,0.12)] sm:px-10 md:py-16"
       >
         <div className="relative mx-auto h-16 w-16">
@@ -108,7 +90,7 @@ export default function CTA() {
 
                   <Link
                     href="/atlas"
-                    className="inline-flex w-full items-center justify-center rounded-xl border border-white/10 bg-white/5 px-6 py-3.5 text-sm sm:text-base font-semibold text-slate-200 backdrop-blur-xl transition hover:border-cyan-400/30 hover:bg-white/10 hover:text-white sm:w-auto"
+                    className="inline-flex w-full items-center justify-center rounded-xl border border-white/10 bg-white/5 px-6 py-3.5 text-sm sm:text-base font-semibold text-slate-200 transition hover:border-cyan-400/30 hover:bg-white/10 hover:text-white sm:w-auto"
                   >
                     Talk with Atlas
                   </Link>
@@ -129,7 +111,7 @@ export default function CTA() {
 
                   <Link
                     href="/sign-in"
-                    className="inline-flex w-full items-center justify-center rounded-xl border border-white/10 bg-white/5 px-6 py-3.5 text-sm sm:text-base font-semibold text-slate-200 backdrop-blur-xl transition hover:border-blue-400/30 hover:bg-white/10 hover:text-white sm:w-auto"
+                    className="inline-flex w-full items-center justify-center rounded-xl border border-white/10 bg-white/5 px-6 py-3.5 text-sm sm:text-base font-semibold text-slate-200 transition hover:border-blue-400/30 hover:bg-white/10 hover:text-white sm:w-auto"
                   >
                     Sign In
                   </Link>
@@ -144,7 +126,7 @@ export default function CTA() {
             </p>
           </>
         )}
-      </motion.div>
+      </div>
     </section>
   );
 }

@@ -72,10 +72,6 @@ export default function Footer() {
       id="contact"
       className="relative overflow-hidden border-t border-white/[0.08] bg-[#030509] px-6 pb-10 pt-20"
     >
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -left-40 top-0 h-96 w-96 rounded-full bg-blue-600/[0.08] blur-[150px]"
-      />
 
       <div className="relative mx-auto max-w-7xl">
         <div className="grid gap-14 md:grid-cols-2 lg:grid-cols-[1.5fr_1fr_1fr_1fr]">

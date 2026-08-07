@@ -45,16 +45,13 @@ export default function PublicPageShell({
     <main className="relative min-h-screen overflow-hidden bg-[#030509] text-white">
       <div
         aria-hidden="true"
-        className="pointer-events-none fixed inset-0"
+        className="pointer-events-none absolute inset-0"
       >
-        <div className="absolute -left-48 top-20 h-[34rem] w-[34rem] rounded-full bg-blue-600/10 blur-[150px]" />
-
-        <div className="absolute -right-48 top-1/3 h-[30rem] w-[30rem] rounded-full bg-cyan-400/[0.07] blur-[150px]" />
 
         <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.018)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.018)_1px,transparent_1px)] bg-[size:72px_72px] [mask-image:radial-gradient(circle_at_top,black,transparent_75%)]" />
       </div>
 
-      <header className="relative z-10 border-b border-white/[0.08] bg-[#030509]/80 backdrop-blur-2xl">
+      <header className="relative z-10 border-b border-white/[0.08] bg-[#030509]/80">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-6 px-5 py-5 sm:px-6 lg:px-8">
           <Link
             href="/"

@@ -36,8 +36,6 @@ export function NotificationProvider({
   function showNotification(
     notification: NotificationData
   ) {
-    console.log("NOTIFICATION:", notification);
-
     setNotification(notification);
 
     setTimeout(() => {

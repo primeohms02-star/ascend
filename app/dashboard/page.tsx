@@ -281,11 +281,6 @@ export default async function DashboardPage() {
               href="/opportunities"
               className="group relative scroll-mt-8 overflow-hidden rounded-2xl border border-emerald-400/20 bg-gradient-to-br from-emerald-400/[0.08] via-slate-900/80 to-slate-950 p-5 transition hover:border-emerald-400/35 hover:bg-emerald-400/[0.04]"
             >
-              <div
-                aria-hidden="true"
-                className="pointer-events-none absolute -right-20 -top-20 h-48 w-48 rounded-full bg-emerald-500/10 blur-3xl"
-              />
-
               <div className="relative">
                 <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-emerald-400/20 bg-emerald-400/10 text-emerald-300">
                   <OpportunityIcon />

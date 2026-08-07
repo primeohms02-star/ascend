@@ -1,5 +1,3 @@
-"use client";
-
 type Props = {
   greeting: string;
   summary: string;
@@ -14,10 +12,10 @@ export default function ConversationCard({
   oracle,
 }: Props) {
   return (
-    <div className="mt-16 w-full rounded-3xl border border-white/10 bg-white/5 p-8 backdrop-blur-xl">
+    <div className="mt-12 w-full rounded-2xl border border-white/10 bg-[#111116]/88 p-5 shadow-lg sm:p-6">
 
       <div className="mb-6 flex items-center gap-3">
-        <div className="h-3 w-3 rounded-full bg-amber-400 animate-pulse" />
+        <div className="h-2.5 w-2.5 rounded-full bg-amber-400" />
 
         <span className="text-sm uppercase tracking-[0.35em] text-slate-400">
           ATLAS

@@ -1,9 +1,3 @@
-"use client";
-
-import {
-  motion,
-} from "framer-motion";
-
 import {
   Compass,
   SearchCheck,
@@ -62,10 +56,6 @@ export default function HowItWorks() {
       aria-labelledby="how-it-works-heading"
       className="relative overflow-hidden border-t border-white/[0.06] bg-[#070A10] px-6 py-20 sm:py-24"
     >
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute left-1/2 top-1/2 h-[620px] w-[620px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-blue-600/[0.07] blur-[170px]"
-      />
 
       <div className="relative mx-auto max-w-7xl">
         <div className="mx-auto mb-16 max-w-3xl text-center">
@@ -111,25 +101,8 @@ export default function HowItWorks() {
                   step.icon;
 
                 return (
-                  <motion.article
+                  <article
                     key={step.number}
-                    initial={{
-                      opacity: 0,
-                      y: 30,
-                    }}
-                    whileInView={{
-                      opacity: 1,
-                      y: 0,
-                    }}
-                    viewport={{
-                      once: true,
-                      amount: 0.25,
-                    }}
-                    transition={{
-                      duration: 0.5,
-                      delay:
-                        index * 0.08,
-                    }}
                     className="group relative"
                   >
                     <div className="relative z-10 mx-auto flex h-20 w-20 items-center justify-center rounded-full border border-blue-400/20 bg-[#0A101C] shadow-[0_0_35px_rgba(37,99,235,0.12)] transition group-hover:border-cyan-400/40 group-hover:shadow-[0_0_45px_rgba(34,211,238,0.18)]">
@@ -165,29 +138,14 @@ export default function HowItWorks() {
                         }
                       </p>
                     </div>
-                  </motion.article>
+                  </article>
                 );
               }
             )}
           </div>
         </div>
 
-        <motion.div
-          initial={{
-            opacity: 0,
-            y: 20,
-          }}
-          whileInView={{
-            opacity: 1,
-            y: 0,
-          }}
-          viewport={{
-            once: true,
-          }}
-          transition={{
-            delay: 0.2,
-            duration: 0.6,
-          }}
+        <div
           className="mx-auto mt-10 max-w-4xl rounded-2xl border border-cyan-400/15 bg-gradient-to-r from-cyan-400/[0.07] via-blue-500/[0.08] to-cyan-400/[0.07] p-5 text-center"
         >
           <p className="text-base font-semibold text-white">
@@ -200,7 +158,7 @@ export default function HowItWorks() {
             your journey more clearly and make your
             next direction more relevant.
           </p>
-        </motion.div>
+        </div>
       </div>
     </section>
   );

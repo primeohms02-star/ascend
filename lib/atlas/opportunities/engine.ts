@@ -50,18 +50,10 @@ export async function discoverOpportunities(
 ): Promise<
   RankedOpportunity[]
 > {
-  console.log(
-    "Searching opportunities for:",
-    profile.careerGoal
-  );
 
   const opportunities =
     await loadOpportunitySources();
 
-  console.log(
-    "Fetched:",
-    opportunities.length
-  );
 
   const filtered =
     filterOpportunities(
@@ -69,10 +61,6 @@ export async function discoverOpportunities(
       profile
     );
 
-  console.log(
-    "Filtered:",
-    filtered.length
-  );
 
   const matched =
     matchOpportunities(
@@ -80,20 +68,12 @@ export async function discoverOpportunities(
       profile
     );
 
-  console.log(
-    "Matched:",
-    matched.length
-  );
 
   const recommended =
     recommend(
       matched
     );
 
-  console.log(
-    "Recommended:",
-    recommended.length
-  );
 
   const ranked =
     await rankOpportunities(
@@ -101,10 +81,6 @@ export async function discoverOpportunities(
       profile
     );
 
-  console.log(
-    "Ranked:",
-    ranked.length
-  );
 
   /*
    * Do not block the opportunity feed by

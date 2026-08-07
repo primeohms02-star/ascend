@@ -61,21 +61,22 @@ export async function POST(
      * This does not complete, replace, or create
      * any mission.
      */
-    const atlasResult =
-      await runAtlasBrain({
-        clerkId: userId,
-        message: cleanMessage,
-      });
+    const [atlasResult, fact] =
+      await Promise.all([
+        runAtlasBrain({
+          clerkId: userId,
+          message: cleanMessage,
+        }),
 
-    /*
-     * Extracting stable long-term memory is allowed.
-     * Temporary questions, missions, progress, and
-     * plans should return NONE.
-     */
-    const fact =
-      await extractPermanentMemory(
-        cleanMessage
-      );
+        /*
+         * Permanent-memory extraction depends only on the
+         * user's message, so it can run while Atlas thinks
+         * instead of adding a second wait to every reply.
+         */
+        extractPermanentMemory(
+          cleanMessage
+        ),
+      ]);
 
     /*
      * Save only the conversation and any genuinely

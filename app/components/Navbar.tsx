@@ -11,11 +11,6 @@ import Link from "next/link";
 import { useAuth } from "@clerk/nextjs";
 
 import {
-  AnimatePresence,
-  motion,
-} from "framer-motion";
-
-import {
   Menu,
   X,
 } from "lucide-react";
@@ -94,7 +89,7 @@ export default function Navbar() {
             block: "start",
           });
       },
-      mobileOpen ? 240 : 0
+      0
     );
   }
 
@@ -102,7 +97,7 @@ export default function Navbar() {
     <header className="fixed inset-x-0 top-0 z-50 px-4">
       <nav
         aria-label="Main navigation"
-        className="mx-auto mt-4 max-w-7xl rounded-2xl border border-white/10 bg-[#070A10]/80 px-4 py-3 shadow-[0_8px_40px_rgba(0,0,0,0.35)] backdrop-blur-2xl sm:px-6"
+        className="mx-auto mt-4 max-w-7xl rounded-2xl border border-white/10 bg-[#070A10]/96 px-4 py-3 shadow-[0_8px_28px_rgba(0,0,0,0.3)] sm:px-6"
       >
         <div className="flex items-center justify-between gap-4">
           {/* Brand */}
@@ -228,27 +223,11 @@ export default function Navbar() {
 
         {/* Mobile navigation */}
 
-        <AnimatePresence initial={false}>
-          {mobileOpen && (
-            <motion.div
-              id="mobile-navigation"
-              initial={{
-                opacity: 0,
-                height: 0,
-              }}
-              animate={{
-                opacity: 1,
-                height: "auto",
-              }}
-              exit={{
-                opacity: 0,
-                height: 0,
-              }}
-              transition={{
-                duration: 0.22,
-              }}
-              className="overflow-hidden md:hidden"
-            >
+        {mobileOpen && (
+          <div
+            id="mobile-navigation"
+            className="overflow-hidden md:hidden"
+          >
               <div className="mt-4 border-t border-white/10 pt-4">
                 <div className="flex flex-col gap-2">
                   {navigation.map((item) => (
@@ -314,9 +293,8 @@ export default function Navbar() {
                   )}
                 </div>
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+          </div>
+        )}
       </nav>
     </header>
   );

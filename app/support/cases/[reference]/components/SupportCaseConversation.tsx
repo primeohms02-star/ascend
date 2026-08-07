@@ -189,7 +189,7 @@ export default function SupportCaseConversation({
   useEffect(() => {
     conversationEndRef.current?.scrollIntoView(
       {
-        behavior: "smooth",
+        behavior: "auto",
         block: "nearest",
       }
     );

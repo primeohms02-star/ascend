@@ -30,8 +30,6 @@ export default function CompassStepPage() {
     try {
       await saveCompassAnswer(step, answer);
 
-      console.log("✅ Answer saved!");
-
       if (step < questions.length) {
         router.push(`/compass/${step + 1}`);
       } else {

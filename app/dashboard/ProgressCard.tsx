@@ -34,12 +34,7 @@ export default function ProgressCard({
   );
 
   return (
-    <section className="relative overflow-hidden rounded-2xl border border-cyan-400/20 bg-gradient-to-br from-cyan-400/[0.07] via-slate-900/80 to-slate-950 p-5 shadow-xl shadow-cyan-950/20">
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -bottom-20 -right-20 h-52 w-52 rounded-full bg-cyan-500/10 blur-3xl"
-      />
-
+    <section className="relative overflow-hidden rounded-2xl border border-cyan-400/20 bg-gradient-to-br from-cyan-400/[0.07] via-slate-900/80 to-slate-950 p-5 shadow-lg shadow-cyan-950/15">
       <div className="relative">
         {/* Header */}
 
@@ -74,7 +69,7 @@ export default function ProgressCard({
 
           <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-800">
             <div
-              className="h-full rounded-full bg-gradient-to-r from-cyan-500 to-blue-400 transition-all duration-700"
+              className="h-full rounded-full bg-gradient-to-r from-cyan-500 to-blue-400 transition-[width] duration-500"
               style={{
                 width: `${safeProgress}%`,
               }}

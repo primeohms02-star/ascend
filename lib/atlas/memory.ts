@@ -34,7 +34,8 @@ export async function loadAtlasMemories(
 }
 
 export async function loadConversation(
-  clerkId: string
+  clerkId: string,
+  limit = 50
 ) {
   /*
    * Load the newest messages first so the database
@@ -60,7 +61,12 @@ export async function loadConversation(
       .order("created_at", {
         ascending: false,
       })
-      .limit(50);
+      .limit(
+        Math.max(
+          1,
+          Math.min(50, Math.round(limit))
+        )
+      );
 
   if (error) {
     console.error(

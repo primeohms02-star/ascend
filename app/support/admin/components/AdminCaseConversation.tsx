@@ -175,7 +175,7 @@ export default function AdminCaseConversation({
   useEffect(() => {
     conversationEndRef.current?.scrollIntoView(
       {
-        behavior: "smooth",
+        behavior: "auto",
         block: "nearest",
       }
     );

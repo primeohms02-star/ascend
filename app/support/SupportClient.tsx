@@ -144,7 +144,7 @@ export default function SupportPage() {
 
   useEffect(() => {
     conversationEndRef.current?.scrollIntoView({
-      behavior: "smooth",
+      behavior: "auto",
       block: "nearest",
     });
   }, [conversation, loading]);
@@ -294,17 +294,6 @@ export default function SupportPage() {
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-[#020617] via-[#07111f] to-[#0f172a] text-white">
-      {/* Ambient background */}
-
-      <div
-        aria-hidden="true"
-        className="pointer-events-none fixed inset-0 overflow-hidden"
-      >
-        <div className="absolute -left-40 top-32 h-96 w-96 rounded-full bg-blue-600/10 blur-[130px]" />
-
-        <div className="absolute -right-40 top-1/3 h-96 w-96 rounded-full bg-cyan-500/10 blur-[130px]" />
-      </div>
-
       <div className="relative mx-auto max-w-7xl px-5 py-8 sm:px-6 lg:px-8">
         {/* Header */}
 
@@ -376,7 +365,7 @@ export default function SupportPage() {
 
             <form
               onSubmit={handleSubmit}
-              className="rounded-3xl border border-blue-400/20 bg-slate-950/60 p-4 shadow-2xl shadow-blue-950/20 backdrop-blur-xl sm:p-5"
+              className="rounded-3xl border border-blue-400/20 bg-slate-950/60 p-4 shadow-2xl shadow-blue-950/20 sm:p-5"
             >
               <label
                 htmlFor="support-message"
@@ -479,7 +468,7 @@ export default function SupportPage() {
           <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1.45fr)_minmax(300px,0.75fr)]">
             {/* Support conversation */}
 
-            <section className="overflow-hidden rounded-3xl border border-white/10 bg-slate-950/60 shadow-2xl shadow-slate-950/40 backdrop-blur-xl">
+            <section className="overflow-hidden rounded-3xl border border-white/10 bg-slate-950/60 shadow-2xl shadow-slate-950/40">
               <div className="border-b border-white/10 px-5 py-5 sm:px-7">
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-400/10 text-cyan-300">
@@ -628,7 +617,7 @@ export default function SupportPage() {
             <aside className="space-y-5 lg:sticky lg:top-28">
               {/* Live diagnosis */}
 
-              <section className="rounded-3xl border border-white/10 bg-slate-950/60 p-6 backdrop-blur-xl">
+              <section className="rounded-3xl border border-white/10 bg-slate-950/60 p-6">
                 <p className="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-300">
                   Live Diagnosis
                 </p>

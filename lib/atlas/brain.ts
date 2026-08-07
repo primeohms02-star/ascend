@@ -1,10 +1,18 @@
 import {
-  getCurrentUserBrain,
-} from "@/lib/services/user";
+  getProfile,
+} from "@/lib/supabase/profiles";
 
 import {
-  buildTimeline,
-} from "@/lib/atlas/timeline";
+  getProgress,
+} from "@/lib/supabase/atlasProgress";
+
+import {
+  calculateAscension,
+} from "@/lib/atlas/ascension";
+
+import {
+  getActiveMission,
+} from "@/lib/atlas/missionService";
 
 import {
   loadOnboardingContext,
@@ -20,7 +28,6 @@ import {
 
 import {
   loadConversation,
-  loadAtlasMemories,
   saveUserMessage,
   saveAtlasReply,
   saveFact,
@@ -47,10 +54,6 @@ import {
 } from "./momentum";
 
 import {
-  loadJourney,
-} from "./journey";
-
-import {
   loadCompassAnswers,
 } from "../compass/answers";
 
@@ -68,12 +71,16 @@ export async function loadAtlasContext(
   clerkId: string
 ) {
   /*
-   * These reads are independent. Running the complete
-   * Atlas context in one parallel wave avoids waiting for
-   * the core brain before the remaining live context starts.
+   * Atlas chat needs live strategic context, but it does not need the entire
+   * legacy user-brain graph. Read only the records used by the current Atlas
+   * prompt, all in one parallel wave. This also reads the active mission
+   * directly, so historical missions can never become the live mission by
+   * accident.
    */
   const [
-    brain,
+    storedProfile,
+    atlasProgress,
+    activeMission,
     onboardingContext,
     musicProfile,
     strategy,
@@ -81,96 +88,65 @@ export async function loadAtlasContext(
     facts,
     reflection,
     momentum,
-    journey,
     compassAnswers,
     compassResults,
     memory,
-    atlasMemories,
   ] = await Promise.all([
-    getCurrentUserBrain(
-      clerkId
-    ),
-
-    loadOnboardingContext(
-      clerkId
-    ),
-
-    loadMusicProfile(
-      clerkId
-    ),
-
-    loadStrategy(
-      clerkId
-    ),
-
-    loadKnowledge(
-      clerkId
-    ),
-
-    loadFacts(
-      clerkId
-    ),
-
-    loadLatestReflection(
-      clerkId
-    ),
-
-    loadMomentum(
-      clerkId
-    ),
-
-    loadJourney(
-      clerkId
-    ),
-
-    loadCompassAnswers(
-      clerkId
-    ),
-
-    loadCompassResults(
-      clerkId
-    ),
-
-    loadConversation(
-      clerkId
-    ),
-
-    loadAtlasMemories(
-      clerkId
-    ),
+    getProfile(clerkId),
+    getProgress(clerkId),
+    getActiveMission(clerkId),
+    loadOnboardingContext(clerkId),
+    loadMusicProfile(clerkId),
+    loadStrategy(clerkId),
+    loadKnowledge(clerkId),
+    loadFacts(clerkId),
+    loadLatestReflection(clerkId),
+    loadMomentum(clerkId),
+    loadCompassAnswers(clerkId),
+    loadCompassResults(clerkId),
+    loadConversation(clerkId, 12),
   ]);
 
+  const profile =
+    storedProfile ??
+    ({
+      clerk_id: clerkId,
+      full_name: "",
+      email: "",
+      journey: "Purpose Discovery",
+      north_star: "",
+      progress: 0,
+      completed_steps: 0,
+      current_streak: 0,
+      longest_streak: 0,
+      last_mission_date: null,
+    } as const);
+
+  const ascension = calculateAscension(
+    Number(atlasProgress?.ascension_score ?? 0)
+  );
+
   return {
-    ...brain,
-
+    profile,
+    atlasProgress,
+    ascension,
+    missions: activeMission ? [activeMission] : [],
+    activeMission,
     onboardingContext,
-
     musicProfile,
-
     strategy,
-
     knowledge,
-
     facts,
-
     reflection,
-
     momentum,
-
-    journey,
-
+    journey: {
+      clerk_id: profile.clerk_id,
+      journey: profile.journey ?? "Purpose Discovery",
+      north_star: profile.north_star ?? "",
+    },
     compassAnswers,
-
     compassResults,
-
     memory,
-
-    atlasMemories,
-
-    timeline:
-      buildTimeline(
-        atlasMemories as any
-      ),
   };
 }
 
@@ -188,14 +164,7 @@ export async function buildAtlasContext(
       clerkId
     );
 
-  const mission =
-    atlas.missions?.find(
-      (
-        storedMission: any
-      ) =>
-        storedMission.status ===
-        "active"
-    ) ?? null;
+  const mission = atlas.activeMission ?? null;
 
   const ascensionScore =
     Number(
@@ -208,6 +177,20 @@ export async function buildAtlasContext(
       atlas.ascension
         ?.level ?? 1
     );
+
+  /*
+   * Strategy may contain a legacy today_mission value. Never send a stale
+   * current-mission field back to the model: overlay the authoritative live
+   * mission for prompt context without mutating stored strategy.
+   */
+  const strategyForPrompt =
+    atlas.strategy
+      ? {
+          ...atlas.strategy,
+          today_mission:
+            mission?.mission ?? null,
+        }
+      : null;
 
   const systemPrompt = `
 You are ATLAS, the strategic intelligence inside ASCEND.
@@ -359,7 +342,7 @@ Mission completion occurs only through the approved mission-completion interface
 LIVE STRATEGY
 =============================
 
-${JSON.stringify(atlas.strategy)}
+${JSON.stringify(strategyForPrompt)}
 
 Strategy is supporting context.
 
@@ -472,6 +455,26 @@ Do not repeat the same observation unnecessarily.
 Do not invent progress, achievements, memories, opportunities or certainty.
 
 Every response should help the user understand, decide, reflect or act more clearly.
+
+=============================
+RESPONSE FORMAT
+=============================
+
+Make every response easy to scan.
+
+Use short section headings only when they improve clarity.
+
+Keep normal paragraphs short.
+
+Use bullets or numbered steps when presenting several actions, options or requirements.
+
+For a schedule or day plan, put every time block on its own line. Never compress multiple time blocks into one paragraph.
+
+Do not use markdown tables for daily plans.
+
+Do not use decorative symbols, repeated punctuation, pseudo-code or visual clutter.
+
+Leave a blank line between major sections.
 `;
 
   return {
@@ -500,6 +503,70 @@ export async function runAtlasBrain({
       clerkId
     );
 
+  const liveMission = atlas.activeMission ?? null;
+
+  const liveNorthStar =
+    atlas.profile?.north_star ??
+    atlas.onboardingContext?.north_star ??
+    "Not yet defined";
+
+  const isDayPlanningRequest =
+    /\b(plan|structure|organize|organise)\b[\s\S]{0,28}\b(day|today)\b/i.test(
+      message
+    ) ||
+    /\b(day|today)\b[\s\S]{0,28}\b(plan|schedule)\b/i.test(
+      message
+    );
+
+  const missionStartedAt =
+    liveMission?.created_at
+      ? Date.parse(liveMission.created_at)
+      : Number.NaN;
+
+  const relevantHistory =
+    (atlas.memory ?? [])
+      .filter(
+        (storedMessage: any) =>
+          storedMessage.role === "user" ||
+          storedMessage.role === "assistant" ||
+          storedMessage.role === "atlas"
+      )
+      .filter((storedMessage: any) => {
+        if (
+          !isDayPlanningRequest ||
+          !Number.isFinite(missionStartedAt)
+        ) {
+          return true;
+        }
+
+        const messageCreatedAt =
+          Date.parse(storedMessage.created_at ?? "");
+
+        return (
+          !Number.isFinite(messageCreatedAt) ||
+          messageCreatedAt >= missionStartedAt
+        );
+      })
+      .slice(-12);
+
+  const liveStateReminder = `
+LIVE CURRENT STATE FOR THIS REPLY
+
+Current North Star: ${liveNorthStar}
+Current Mission: ${liveMission?.mission ?? "None"}
+Current Mission Reason: ${liveMission?.reason ?? "None"}
+
+This live state overrides any older mission, plan, North Star or today_mission mentioned in conversation history, memory, strategy, reflections or previous Atlas replies.
+
+Never describe an older mission as current.
+
+${
+  isDayPlanningRequest
+    ? `The user is asking for a day plan. Build a FRESH plan around the CURRENT MISSION above as today's primary objective. Do not reuse or continue an older day plan from conversation history. Supporting tasks may help the North Star, but they must not replace or contradict the current mission. Start by naming the current mission once, then use a short heading and one clearly separated time block per line with a concise action and reason.`
+    : "Use the current mission above whenever the user's request depends on what they should be doing now."
+}
+`;
+
   const conversation = [
     {
       role:
@@ -509,35 +576,25 @@ export async function runAtlasBrain({
         atlas.systemPrompt,
     },
 
-    ...(
-      atlas.memory ?? []
-    )
-      .slice(-12)
-      .filter(
-        (
-          storedMessage: any
-        ) =>
-          storedMessage.role ===
-            "user" ||
-          storedMessage.role ===
-            "assistant" ||
-          storedMessage.role ===
-            "atlas"
-      )
-      .map(
-        (
-          storedMessage: any
-        ) => ({
-          role:
-            storedMessage.role ===
-            "atlas"
-              ? "assistant"
-              : storedMessage.role,
+    ...relevantHistory.map(
+      (storedMessage: any) => ({
+        role:
+          storedMessage.role === "atlas"
+            ? "assistant"
+            : storedMessage.role,
 
-          content:
-            storedMessage.message,
-        })
-      ),
+        content:
+          storedMessage.message,
+      })
+    ),
+
+    {
+      role:
+        "system" as const,
+
+      content:
+        liveStateReminder,
+    },
 
     {
       role:
@@ -554,7 +611,7 @@ export async function runAtlasBrain({
         GROQ_MODEL,
 
       temperature:
-        0.7,
+        0.45,
 
       max_completion_tokens:
         1200,
@@ -584,7 +641,7 @@ export async function runAtlasBrain({
           GROQ_MODEL,
 
         temperature:
-          0.7,
+          0.45,
 
         max_completion_tokens:
           800,
@@ -618,18 +675,11 @@ export async function runAtlasBrain({
 
     if (remainingReply) {
       reply =
-        `${reply.trimEnd()} ${remainingReply.trimStart()}`;
+        `${reply.trimEnd()}\n\n${remainingReply.trimStart()}`;
     }
   }
 
-  const mission =
-    atlas.missions?.find(
-      (
-        storedMission: any
-      ) =>
-        storedMission.status ===
-        "active"
-    ) ?? null;
+  const mission = atlas.activeMission ?? null;
 
   return {
     reply,

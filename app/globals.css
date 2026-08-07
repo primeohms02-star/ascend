@@ -1,19 +1,36 @@
 @import "tailwindcss";
 
 html {
+  min-height: 100%;
   scroll-behavior: smooth;
   -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  background: #020617;
+  color-scheme: dark;
+  overscroll-behavior-x: none;
+  overscroll-behavior-y: none;
 }
 
 body {
   margin: 0;
+  min-height: 100dvh;
   padding: 0;
-  background: #ffffff;
+  overflow-x: hidden;
+  background: #020617;
   color: #111827;
   font-family: Arial, Helvetica, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overscroll-behavior-x: none;
+  overscroll-behavior-y: none;
+}
+
+button,
+a,
+input,
+textarea,
+select {
+  touch-action: manipulation;
 }
 
 button,
@@ -24,31 +41,57 @@ select {
 }
 
 /*
- * Mobile Safari can become GPU-bound when several
- * large backdrop and ambient blur layers overlap.
- * Keep the glass appearance while lowering the
- * compositing cost on compact Apple devices.
+ * Keep ASCEND's glass treatment, but cap the blur radius globally.
+ * Large backdrop-filter values force frequent full-surface recomposites while
+ * scrolling and are a common source of dropped frames on mid-range devices.
  */
+.backdrop-blur,
+.backdrop-blur-sm,
+.backdrop-blur-md,
+.backdrop-blur-lg,
+.backdrop-blur-xl,
+.backdrop-blur-2xl,
+.backdrop-blur-3xl {
+  -webkit-backdrop-filter: blur(10px) !important;
+  backdrop-filter: blur(10px) !important;
+}
+
+/*
+ * Compact/touch devices get an even lighter compositor path. This covers
+ * iPhone/iPad, Android phones/tablets and touch-first Windows devices.
+ */
+@media (max-width: 1024px), (pointer: coarse) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .backdrop-blur,
+  .backdrop-blur-sm,
+  .backdrop-blur-md,
+  .backdrop-blur-lg,
+  .backdrop-blur-xl,
+  .backdrop-blur-2xl,
+  .backdrop-blur-3xl {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+
+  [class*="blur-["] {
+    filter: blur(48px) !important;
+  }
+
+  [class*="overflow-y-auto"],
+  [class*="overflow-auto"] {
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Safari input zoom prevention without changing the visual scale. */
 @supports (-webkit-touch-callout: none) {
-  @media (max-width: 767px) {
-    .backdrop-blur,
-    .backdrop-blur-sm,
-    .backdrop-blur-md,
-    .backdrop-blur-xl,
-    .backdrop-blur-2xl,
-    .backdrop-blur-3xl {
-      -webkit-backdrop-filter: blur(8px) !important;
-      backdrop-filter: blur(8px) !important;
-    }
-
-    [class*="blur-["] {
-      filter: blur(56px) !important;
-    }
-
-    [class*="overflow-y-auto"],
-    [class*="overflow-auto"] {
-      -webkit-overflow-scrolling: touch;
-    }
+  input,
+  textarea,
+  select {
+    font-size: 16px;
   }
 }
 
@@ -68,7 +111,6 @@ select {
 }
 
 @keyframes atlasOrb {
-
   0% {
     transform: translateX(-50%) translateY(0px);
   }
@@ -76,46 +118,10 @@ select {
   100% {
     transform: translateX(-50%) translateY(500px);
   }
-
 }
 
 .animate-atlas-orb {
-
   animation: atlasOrb 5s linear infinite alternate;
-
-}
-
-/*
- * Cross-device performance pass.
- * Keep below-the-fold homepage sections out of the initial paint work
- * until the browser approaches them. Browsers without content-visibility
- * support simply ignore these declarations.
- */
-#main-content > section:not(:first-child) {
-  content-visibility: auto;
-  contain-intrinsic-size: 800px;
-}
-
-/*
- * Touch devices and compact screens are more sensitive to stacked
- * backdrop filters and very large arbitrary blur layers. This applies
- * the same restrained glass treatment across iOS, Android and tablets.
- */
-@media (max-width: 1024px), (pointer: coarse) {
-  .backdrop-blur,
-  .backdrop-blur-sm,
-  .backdrop-blur-md,
-  .backdrop-blur-lg,
-  .backdrop-blur-xl,
-  .backdrop-blur-2xl,
-  .backdrop-blur-3xl {
-    -webkit-backdrop-filter: blur(8px) !important;
-    backdrop-filter: blur(8px) !important;
-  }
-
-  [class*="blur-["] {
-    filter: blur(56px) !important;
-  }
 }
 
 /* Homepage compass: CSS-only motion avoids a large client animation runtime. */
@@ -178,6 +184,25 @@ select {
 
 .ascend-scroll-dot {
   animation: ascendScrollDot 1.8s ease-in-out infinite;
+}
+
+/* Continuous decorative motion is unnecessary on touch-first devices. */
+@media (pointer: coarse), (max-width: 767px) {
+  .ascend-compass-ring-cw,
+  .ascend-compass-ring-ccw,
+  .ascend-compass-scan-ring,
+  .ascend-compass-glow-slow,
+  .ascend-compass-glow-slower,
+  .ascend-compass-glow-north,
+  .ascend-compass-halo,
+  .ascend-compass-jewel-pulse,
+  .ascend-compass-beam,
+  .ascend-compass-north-marker,
+  .ascend-compass-light-sweep,
+  .ascend-compass-needle-drift,
+  .ascend-scroll-dot {
+    animation: none !important;
+  }
 }
 
 @keyframes ascendCompassEnter {
