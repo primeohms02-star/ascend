@@ -186,10 +186,31 @@ select {
   animation: ascendScrollDot 1.8s ease-in-out infinite;
 }
 
-/* Continuous decorative motion is unnecessary on touch-first devices. */
+/*
+ * Touch-first devices keep the Compass alive with transform-only motion.
+ * Large glow/sweep animations remain disabled because animating blurred layers
+ * is expensive while scrolling on mobile GPUs.
+ */
 @media (pointer: coarse), (max-width: 767px) {
-  .ascend-compass-ring-cw,
-  .ascend-compass-ring-ccw,
+  .ascend-compass-ring-cw {
+    animation: ascendCompassRotate 42s linear infinite;
+    will-change: transform;
+  }
+
+  .ascend-compass-ring-ccw {
+    animation: ascendCompassRotateReverse 58s linear infinite;
+    will-change: transform;
+  }
+
+  .ascend-compass-needle-drift {
+    animation: ascendNeedleDriftSmall 7.5s 1.3s ease-in-out infinite;
+    will-change: transform;
+  }
+
+  .ascend-compass-north-marker {
+    animation: ascendCompassMarker 4.5s ease-in-out infinite;
+  }
+
   .ascend-compass-scan-ring,
   .ascend-compass-glow-slow,
   .ascend-compass-glow-slower,
@@ -197,9 +218,7 @@ select {
   .ascend-compass-halo,
   .ascend-compass-jewel-pulse,
   .ascend-compass-beam,
-  .ascend-compass-north-marker,
   .ascend-compass-light-sweep,
-  .ascend-compass-needle-drift,
   .ascend-scroll-dot {
     animation: none !important;
   }
