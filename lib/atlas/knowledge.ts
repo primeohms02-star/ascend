@@ -68,7 +68,8 @@ export async function saveKnowledge(
 }
 
 export async function loadKnowledge(
-  userId: string
+  userId: string,
+  limit = 50
 ) {
   const { data, error } =
     await supabaseServer
@@ -78,7 +79,7 @@ export async function loadKnowledge(
       .order("confidence", {
         ascending: false,
       })
-      .limit(50);
+      .limit(Math.max(1, Math.min(50, Math.floor(limit))));
 
   if (error) {
     console.error(

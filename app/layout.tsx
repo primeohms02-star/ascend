@@ -7,6 +7,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 
 import AscendStructuredData from "@/app/components/AscendStructuredData";
 import { NotificationProvider } from "@/app/context/NotificationContext";
+import GlobalHaptics from "@/app/components/interaction/GlobalHaptics";
 
 import "./globals.css";
 
@@ -163,6 +164,7 @@ export default function RootLayout({
       <html lang="en">
         <body>
           <AscendStructuredData />
+          <GlobalHaptics />
 
           <NotificationProvider>
             {children}

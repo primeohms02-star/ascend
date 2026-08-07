@@ -15,6 +15,12 @@ import {
   isValidAtlasImage,
 } from "@/lib/atlas/vision";
 
+function shouldExtractPermanentMemory(message: string) {
+  return /\b(?:my (?:long[- ]term )?(?:goal|goals|values|preference|preferences|career|ambition|ambitions)|i (?:prefer|value|work as|study|have experience in|am skilled in)|i['’]m (?:a|an)|i am (?:a|an)|i want to become|i plan to become)\b/i.test(
+    message
+  );
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { userId } = await auth();
@@ -47,7 +53,9 @@ export async function POST(request: NextRequest) {
     const pageContext =
       typeof body.context === "string" ? body.context.trim().slice(0, 2200) : "";
 
-    const factPromise = extractPermanentMemory(cleanMessage);
+    const factPromise = shouldExtractPermanentMemory(cleanMessage)
+      ? extractPermanentMemory(cleanMessage)
+      : Promise.resolve("NONE");
 
     let visualContext = "";
 

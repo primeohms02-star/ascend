@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import AppShell from "@/app/components/navigation/AppShell";
 import ContextualAtlasLink from "@/app/components/atlas/ContextualAtlasLink";
 import MissionCard from "@/app/dashboard/MissionCard";
-import { getAtlasDashboard } from "@/lib/atlas/dashboard";
+import { getActionSnapshot } from "@/lib/atlas/dashboard";
 
 export default async function ActionPage() {
   const { userId } = await auth();
@@ -14,8 +14,8 @@ export default async function ActionPage() {
     redirect("/sign-in");
   }
 
-  const dashboard = await getAtlasDashboard(userId);
-  const context = `Action page. Current mission: ${dashboard.mission.title}. Why it matters: ${dashboard.mission.description}`;
+  const action = await getActionSnapshot(userId);
+  const context = `Action page. Current mission: ${action.mission.title}. Why it matters: ${action.mission.description}`;
 
   return (
     <AppShell>
@@ -31,11 +31,11 @@ export default async function ActionPage() {
 
           <div className="mt-6">
             <MissionCard
-              title={dashboard.mission.title}
-              description={dashboard.mission.description}
-              missionId={dashboard.mission.missionId}
-              available={dashboard.mission.available}
-              northStar={dashboard.compass.northStar}
+              title={action.mission.title}
+              description={action.mission.description}
+              missionId={action.mission.missionId}
+              available={action.mission.available}
+              northStar={action.northStar}
             />
           </div>
 

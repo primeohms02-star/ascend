@@ -6,7 +6,7 @@ import AtlasTimeline from "@/app/components/dashboard/AtlasTimeline";
 import AscensionProgress from "@/app/dashboard/AscensionProgress";
 import IdentityCard from "@/app/dashboard/IdentityCard";
 import ProgressCard from "@/app/dashboard/ProgressCard";
-import { getAtlasDashboard } from "@/lib/atlas/dashboard";
+import { getProgressSnapshot } from "@/lib/atlas/dashboard";
 
 export default async function ProgressPage() {
   const { userId } = await auth();
@@ -15,7 +15,7 @@ export default async function ProgressPage() {
     redirect("/sign-in");
   }
 
-  const dashboard = await getAtlasDashboard(userId);
+  const progress = await getProgressSnapshot(userId);
 
   return (
     <AppShell>
@@ -30,17 +30,17 @@ export default async function ProgressPage() {
           </header>
 
           <div className="mt-6 grid gap-4 lg:grid-cols-2">
-            <AscensionProgress ascension={dashboard.ascension} />
-            <IdentityCard title={dashboard.identity.title} level={dashboard.identity.level} />
+            <AscensionProgress ascension={progress.ascension} />
+            <IdentityCard title={progress.identity.title} level={progress.identity.level} />
           </div>
 
           <div className="mt-4 grid items-start gap-4 lg:grid-cols-2">
             <ProgressCard
-              progress={dashboard.progress.progress}
-              momentum={dashboard.progress.momentum}
-              message={dashboard.progress.message}
+              progress={progress.progress.progress}
+              momentum={progress.progress.momentum}
+              message={progress.progress.message}
             />
-            <AtlasTimeline timeline={dashboard.timeline} totalCount={dashboard.timelineTotal} />
+            <AtlasTimeline timeline={progress.timeline} totalCount={progress.timelineTotal} />
           </div>
         </div>
       </main>

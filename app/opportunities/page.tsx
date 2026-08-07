@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
@@ -11,6 +10,7 @@ import OpportunitySearch from "./components/OpportunitySearch";
 
 import OpportunityFeed from "@/app/components/OpportunityFeed";
 import AppShell from "@/app/components/navigation/AppShell";
+import PreviousPageButton from "@/app/components/navigation/PreviousPageButton";
 
 function BackArrowIcon() {
   return (
@@ -101,14 +101,14 @@ function OpportunitiesContent() {
         {/* Back navigation */}
 
         <nav aria-label="Opportunity navigation">
-          <Link
-            href="/dashboard"
+          <PreviousPageButton
+            fallbackHref="/dashboard"
             className="group inline-flex items-center gap-2 rounded-xl border border-slate-700/80 bg-slate-900/60 px-4 py-2.5 text-sm font-medium text-slate-300 transition hover:border-cyan-400/30 hover:bg-cyan-400/10 hover:text-cyan-300 focus:outline-none focus:ring-2 focus:ring-cyan-400/50"
           >
             <BackArrowIcon />
 
-            Back to Dashboard
-          </Link>
+            Back
+          </PreviousPageButton>
         </nav>
 
         {/* Page header */}

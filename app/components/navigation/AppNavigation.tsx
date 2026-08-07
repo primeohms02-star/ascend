@@ -1,14 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 import {
   ChartNoAxesCombined,
   CircleHelp,
   Compass,
+  Globe2,
   Home,
   Library,
   Menu,
@@ -84,6 +85,20 @@ const discoverItems: NavigationItem[] = [
   },
 ];
 
+const supportItem: NavigationItem = {
+  label: "Support",
+  href: "/support",
+  icon: CircleHelp,
+  isActive: (pathname) => pathname.startsWith("/support"),
+};
+
+const homepageItem: NavigationItem = {
+  label: "Homepage",
+  href: "/",
+  icon: Globe2,
+  isActive: (pathname) => pathname === "/",
+};
+
 const mobilePrimaryItems = [
   primaryItems[0],
   primaryItems[1],
@@ -100,15 +115,25 @@ function NavigationLink({
   pathname: string;
   onNavigate?: () => void;
 }) {
+  const router = useRouter();
   const active = item.isActive(pathname);
   const Icon = item.icon;
+
+  const warmRoute = () => {
+    if (item.href.startsWith("/")) {
+      router.prefetch(item.href);
+    }
+  };
 
   return (
     <Link
       href={item.href}
+      prefetch
+      onPointerEnter={warmRoute}
+      onTouchStart={warmRoute}
       onClick={onNavigate}
       aria-current={active ? "page" : undefined}
-      className={`group flex min-h-11 items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition ${
+      className={`group flex min-h-11 items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-colors duration-150 ${
         active
           ? "bg-cyan-400/10 text-cyan-200"
           : "text-slate-400 hover:bg-white/[0.045] hover:text-white"
@@ -122,13 +147,29 @@ function NavigationLink({
 
 export default function AppNavigation() {
   const pathname = usePathname();
+  const router = useRouter();
   const [moreOpen, setMoreOpen] = useState(false);
+
+  useEffect(() => {
+    setMoreOpen(false);
+  }, [pathname]);
+
+  const moreIsActive =
+    moreOpen ||
+    journeyItems.slice(0, 2).some((item) => item.isActive(pathname)) ||
+    discoverItems.slice(1).some((item) => item.isActive(pathname)) ||
+    pathname.startsWith("/support");
 
   return (
     <>
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 border-r border-white/[0.07] bg-[#060A11] lg:flex lg:flex-col">
         <div className="flex h-20 items-center border-b border-white/[0.07] px-5">
-          <Link href="/dashboard" className="flex items-center gap-3" aria-label="ASCEND dashboard">
+          <Link
+            href="/dashboard"
+            prefetch
+            className="flex items-center gap-3"
+            aria-label="ASCEND dashboard"
+          >
             <span className="relative h-10 w-10 shrink-0">
               <Image
                 src="/ascend-navbar-logo.png"
@@ -178,25 +219,19 @@ export default function AppNavigation() {
           </div>
         </nav>
 
-        <div className="border-t border-white/[0.07] p-3">
-          <NavigationLink
-            item={{
-              label: "Support",
-              href: "/support",
-              icon: CircleHelp,
-              isActive: (currentPath) => currentPath.startsWith("/support"),
-            }}
-            pathname={pathname}
-          />
+        <div className="space-y-1 border-t border-white/[0.07] p-3">
+          <NavigationLink item={homepageItem} pathname={pathname} />
+          <NavigationLink item={supportItem} pathname={pathname} />
         </div>
       </aside>
 
       {moreOpen && (
-        <div className="fixed inset-0 z-50 bg-black/55 lg:hidden" onClick={() => setMoreOpen(false)}>
+        <div className="fixed inset-0 z-50 bg-black/65 lg:hidden" onClick={() => setMoreOpen(false)}>
           <div
-            className="absolute inset-x-3 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] rounded-2xl border border-white/10 bg-[#0A0F18] p-3 shadow-2xl"
+            className="absolute inset-x-3 bottom-[calc(5.6rem+env(safe-area-inset-bottom))] overflow-hidden rounded-[26px] border border-cyan-300/10 bg-gradient-to-b from-[#0B1422] to-[#070C14] p-3 shadow-[0_24px_70px_rgba(0,0,0,0.58)]"
             onClick={(event) => event.stopPropagation()}
           >
+            <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-white/15" aria-hidden="true" />
             <div className="flex items-center justify-between px-2 pb-2">
               <div>
                 <p className="text-sm font-semibold text-white">More of ASCEND</p>
@@ -206,7 +241,7 @@ export default function AppNavigation() {
                 type="button"
                 onClick={() => setMoreOpen(false)}
                 aria-label="Close more navigation"
-                className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 text-slate-300"
+                className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/[0.03] text-slate-300"
               >
                 <X size={18} aria-hidden="true" />
               </button>
@@ -222,12 +257,12 @@ export default function AppNavigation() {
                 />
               ))}
               <NavigationLink
-                item={{
-                  label: "Support",
-                  href: "/support",
-                  icon: CircleHelp,
-                  isActive: (currentPath) => currentPath.startsWith("/support"),
-                }}
+                item={homepageItem}
+                pathname={pathname}
+                onNavigate={() => setMoreOpen(false)}
+              />
+              <NavigationLink
+                item={supportItem}
                 pathname={pathname}
                 onNavigate={() => setMoreOpen(false)}
               />
@@ -238,9 +273,9 @@ export default function AppNavigation() {
 
       <nav
         aria-label="ASCEND mobile navigation"
-        className="fixed inset-x-0 bottom-0 z-40 border-t border-white/[0.08] bg-[#060A11] px-2 pb-[env(safe-area-inset-bottom)] lg:hidden"
+        className="fixed inset-x-3 bottom-[max(0.6rem,env(safe-area-inset-bottom))] z-40 overflow-hidden rounded-[24px] border border-white/[0.09] bg-[#07101C] px-1.5 shadow-[0_18px_48px_rgba(0,0,0,0.5),0_0_0_1px_rgba(34,211,238,0.025)] lg:hidden"
       >
-        <div className="mx-auto grid max-w-lg grid-cols-5">
+        <div className="mx-auto grid max-w-lg grid-cols-5 gap-0.5 py-1.5">
           {mobilePrimaryItems.map((item) => {
             const Icon = item.icon;
             const active = item.isActive(pathname);
@@ -249,12 +284,23 @@ export default function AppNavigation() {
               <Link
                 key={item.label}
                 href={item.href}
+                prefetch
+                onPointerEnter={() => router.prefetch(item.href)}
+                onTouchStart={() => router.prefetch(item.href)}
                 aria-current={active ? "page" : undefined}
-                className={`flex min-h-[68px] flex-col items-center justify-center gap-1 text-[11px] font-medium transition ${
-                  active ? "text-cyan-300" : "text-slate-500"
+                className={`relative flex min-h-[58px] flex-col items-center justify-center gap-1 rounded-[17px] text-[10px] font-semibold transition-colors duration-150 ${
+                  active
+                    ? "bg-cyan-400/[0.09] text-cyan-200"
+                    : "text-slate-500 active:bg-white/[0.04]"
                 }`}
               >
-                <Icon size={20} strokeWidth={1.8} aria-hidden="true" />
+                {active && (
+                  <span
+                    aria-hidden="true"
+                    className="absolute top-1.5 h-0.5 w-5 rounded-full bg-cyan-300/80"
+                  />
+                )}
+                <Icon size={19} strokeWidth={active ? 2 : 1.75} aria-hidden="true" />
                 <span>{item.label}</span>
               </Link>
             );
@@ -264,13 +310,19 @@ export default function AppNavigation() {
             type="button"
             onClick={() => setMoreOpen((current) => !current)}
             aria-expanded={moreOpen}
-            className={`flex min-h-[68px] flex-col items-center justify-center gap-1 text-[11px] font-medium transition ${
-              moreOpen || journeyItems.slice(0, 2).some((item) => item.isActive(pathname)) || discoverItems.slice(1).some((item) => item.isActive(pathname)) || pathname.startsWith("/support")
-                ? "text-cyan-300"
-                : "text-slate-500"
+            className={`relative flex min-h-[58px] flex-col items-center justify-center gap-1 rounded-[17px] text-[10px] font-semibold transition-colors duration-150 ${
+              moreIsActive
+                ? "bg-cyan-400/[0.09] text-cyan-200"
+                : "text-slate-500 active:bg-white/[0.04]"
             }`}
           >
-            <Menu size={20} strokeWidth={1.8} aria-hidden="true" />
+            {moreIsActive && (
+              <span
+                aria-hidden="true"
+                className="absolute top-1.5 h-0.5 w-5 rounded-full bg-cyan-300/80"
+              />
+            )}
+            <Menu size={19} strokeWidth={moreIsActive ? 2 : 1.75} aria-hidden="true" />
             <span>More</span>
           </button>
         </div>

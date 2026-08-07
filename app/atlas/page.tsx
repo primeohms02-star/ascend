@@ -5,7 +5,10 @@ import { useRouter } from "next/navigation";
 import { Image as ImageIcon, Paperclip, X } from "lucide-react";
 
 import AppShell from "@/app/components/navigation/AppShell";
-import { ATLAS_CONTEXT_SESSION_KEY } from "@/app/components/atlas/ContextualAtlasLink";
+import {
+  ATLAS_CONTEXT_SESSION_KEY,
+  ATLAS_RETURN_SESSION_KEY,
+} from "@/app/components/atlas/ContextualAtlasLink";
 import { getGreeting } from "@/lib/utils/greeting";
 
 import CompassRose from "@/app/components/atlas/CompassRose";
@@ -215,6 +218,7 @@ export default function AtlasPage() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [surfaceContext, setSurfaceContext] = useState("");
+  const [returnTo, setReturnTo] = useState("");
   const [attachment, setAttachment] = useState<AtlasAttachment | null>(null);
   const [attachmentError, setAttachmentError] = useState("");
 
@@ -237,12 +241,16 @@ export default function AtlasPage() {
     const contextualPrompt = params.get("prompt")?.trim();
     const contextualSurface = params.get("context")?.trim();
     let storedSurface = "";
+    let storedReturnTo = "";
 
     try {
       storedSurface = window.sessionStorage.getItem(ATLAS_CONTEXT_SESSION_KEY)?.trim() ?? "";
+      storedReturnTo = window.sessionStorage.getItem(ATLAS_RETURN_SESSION_KEY)?.trim() ?? "";
       window.sessionStorage.removeItem(ATLAS_CONTEXT_SESSION_KEY);
+      window.sessionStorage.removeItem(ATLAS_RETURN_SESSION_KEY);
     } catch {
       storedSurface = "";
+      storedReturnTo = "";
     }
 
     if (contextualPrompt) {
@@ -252,7 +260,25 @@ export default function AtlasPage() {
     if (storedSurface || contextualSurface) {
       setSurfaceContext((storedSurface || contextualSurface || "").slice(0, 2200));
     }
+
+    if (storedReturnTo.startsWith("/") && !storedReturnTo.startsWith("/atlas")) {
+      setReturnTo(storedReturnTo);
+    }
   }, []);
+
+  function handleBack() {
+    if (returnTo) {
+      router.back();
+      return;
+    }
+
+    if (window.history.length > 1) {
+      router.back();
+      return;
+    }
+
+    router.push("/dashboard");
+  }
 
   useEffect(() => {
     if (currentConversation.length === 0) {
@@ -461,10 +487,10 @@ export default function AtlasPage() {
       <main className="relative min-h-screen overflow-x-hidden bg-gradient-to-b from-black via-[#0A0A0F] to-[#18181B] px-5 py-20 text-white sm:px-8">
         <button
           type="button"
-          onClick={() => router.push("/dashboard")}
+          onClick={handleBack}
           className="absolute left-5 top-6 z-20 rounded-full border border-white/10 bg-[#111116]/90 px-5 py-2 text-sm text-slate-300 transition hover:border-amber-400 hover:text-white sm:left-8 sm:top-8"
         >
-          ← Home
+          ← Back
         </button>
 
         <CompassRose />

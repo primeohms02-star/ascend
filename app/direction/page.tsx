@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import AppShell from "@/app/components/navigation/AppShell";
 import ContextualAtlasLink from "@/app/components/atlas/ContextualAtlasLink";
 import CompassCard from "@/app/dashboard/CompassCard";
-import { getAtlasDashboard } from "@/lib/atlas/dashboard";
+import { getDirectionSnapshot } from "@/lib/atlas/dashboard";
 
 export default async function DirectionPage() {
   const { userId } = await auth();
@@ -14,8 +14,8 @@ export default async function DirectionPage() {
     redirect("/sign-in");
   }
 
-  const dashboard = await getAtlasDashboard(userId);
-  const atlasContext = `Direction page. Current North Star: ${dashboard.compass.northStar}`;
+  const direction = await getDirectionSnapshot(userId);
+  const atlasContext = `Direction page. Current North Star: ${direction.northStar}`;
 
   return (
     <AppShell>
@@ -30,7 +30,7 @@ export default async function DirectionPage() {
           </header>
 
           <div className="mt-6">
-            <CompassCard northStar={dashboard.compass.northStar} alignment={dashboard.compass.alignment} />
+            <CompassCard northStar={direction.northStar} alignment={direction.alignment} />
           </div>
 
           <section className="mt-5 grid gap-4 sm:grid-cols-2">

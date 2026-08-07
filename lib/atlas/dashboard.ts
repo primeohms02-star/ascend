@@ -10,6 +10,84 @@ import { getMomentum } from "@/lib/supabase/atlasMomentum";
 
 import type { Recommendation } from "@/lib/engine/recommendations";
 
+function fallbackProfile(clerkId: string) {
+  return {
+    clerk_id: clerkId,
+    full_name: "",
+    email: "",
+    journey: "Purpose Discovery",
+    north_star: "",
+    progress: 0,
+    completed_steps: 0,
+    current_streak: 0,
+    longest_streak: 0,
+    last_mission_date: null,
+  } as const;
+}
+
+export async function getDirectionSnapshot(clerkId: string) {
+  const [storedProfile, progressRecord] = await Promise.all([
+    getProfile(clerkId),
+    getProgress(clerkId),
+  ]);
+
+  const profile = storedProfile ?? fallbackProfile(clerkId);
+  const ascension = calculateAscension(Number(progressRecord?.ascension_score ?? 0));
+
+  return {
+    northStar: profile.north_star || "Discover your purpose",
+    alignment: ascension.progressPercent,
+  };
+}
+
+export async function getActionSnapshot(clerkId: string) {
+  const [storedProfile, currentMission] = await Promise.all([
+    getProfile(clerkId),
+    getActiveMission(clerkId),
+  ]);
+
+  const profile = storedProfile ?? fallbackProfile(clerkId);
+
+  return {
+    northStar: profile.north_star || "Discover your purpose",
+    mission: {
+      title: currentMission?.mission ?? "No Active Mission",
+      description:
+        currentMission?.reason ??
+        "Start or update your journey so Atlas can prepare a mission aligned with your current direction.",
+      missionId: currentMission?.id ?? "",
+      available: Boolean(currentMission),
+    },
+  };
+}
+
+export async function getProgressSnapshot(clerkId: string) {
+  const [progressRecord, momentum, atlasMemories] = await Promise.all([
+    getProgress(clerkId),
+    getMomentum(clerkId),
+    loadAtlasMemories(clerkId),
+  ]);
+
+  const ascension = calculateAscension(Number(progressRecord?.ascension_score ?? 0));
+  const completeTimeline = buildTimeline(atlasMemories as any);
+  const currentStreak = Number(momentum?.current_streak ?? 0);
+
+  return {
+    ascension,
+    identity: {
+      title: ascension.title,
+      level: ascension.level,
+    },
+    progress: {
+      progress: ascension.progressPercent,
+      momentum: `${currentStreak} Day Streak`,
+      message: "Keep moving toward your North Star.",
+    },
+    timeline: completeTimeline.slice(0, 3),
+    timelineTotal: completeTimeline.length,
+  };
+}
+
 export async function getAtlasDashboard(clerkId: string) {
   /*
    * The dashboard only needs the user's current profile, active mission,
@@ -26,20 +104,7 @@ export async function getAtlasDashboard(clerkId: string) {
       loadAtlasMemories(clerkId),
     ]);
 
-  const profile =
-    storedProfile ??
-    ({
-      clerk_id: clerkId,
-      full_name: "",
-      email: "",
-      journey: "Purpose Discovery",
-      north_star: "",
-      progress: 0,
-      completed_steps: 0,
-      current_streak: 0,
-      longest_streak: 0,
-      last_mission_date: null,
-    } as const);
+  const profile = storedProfile ?? fallbackProfile(clerkId);
 
   const ascensionScore = Number(progressRecord?.ascension_score ?? 0);
   const ascension = calculateAscension(ascensionScore);

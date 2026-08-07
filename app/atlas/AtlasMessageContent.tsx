@@ -20,7 +20,7 @@ type ContentBlock =
   | { type: "ordered-list"; items: string[] }
   | { type: "code"; value: string };
 
-const DECORATIVE_LINE = /^[\s*_~—–=-]{3,}$/;
+const DECORATIVE_LINE = /^[\s#*_~|:;—–=-]{2,}$/;
 const TABLE_DIVIDER = /^\|?\s*:?-{3,}:?\s*(?:\|\s*:?-{3,}:?\s*)+\|?$/;
 const TIME_RANGE_LINE = /^(\d{1,2}(?::\d{2})?\s*(?:AM|PM)?\s*(?:to|[–—-])\s*\d{1,2}(?::\d{2})?\s*(?:AM|PM)?)\s*(?:\||[–—-])\s*(.+)$/i;
 const LABEL_LINE = /^(Primary North Star|North Star|Current Mission|Mission|Primary Focus|Today['’]s Focus|Goal|Recommendation|Next Step)\s*:\s*(.+)$/i;
@@ -34,6 +34,9 @@ function cleanPlainText(value: string) {
     .replace(/~~([^~]+)~~/g, "$1")
     .replace(/(^|\s)[*_~]+(?=\S)/g, "$1")
     .replace(/([^\s])[*_~]+(?=\s|$|[.,!?;:])/g, "$1")
+    .replace(/\|+/g, " ")
+    .replace(/(^|\s)#{1,6}(?=\s|$)/g, "$1")
+    .replace(/:{2,}/g, ":")
     .replace(/\s{2,}/g, " ")
     .trim();
 }
@@ -92,6 +95,22 @@ function normalizeLine(rawLine: string) {
 
 function prepareContent(content: string) {
   let prepared = content.replace(/\r\n/g, "\n").trim();
+
+  // Defensive cleanup for older replies or any malformed model output that
+  // reaches the renderer. Atlas should never expose raw table markers, empty
+  // Markdown headings or inline pseudo-table cells to the user.
+  prepared = prepared
+    .replace(/^\s*#{1,6}\s*$/gm, "")
+    .replace(/\bItem\s*:\s*Details\s*:?/gi, "")
+    .replace(/\bArea\s*;?\s*How it matches\s*;?\s*Gaps\s*\/\s*Things to verify\s*;?/gi, "")
+    .replace(/\bCriterion\s*:\s*Question\s*:\s*Score\s*\(\s*1\s*(?:to|[-–—])\s*5\s*\)\s*:?/gi, "")
+    .replace(/\s*\|\s*/g, "\n")
+    .replace(/;\s*(?=(?:Title|Type|Location|Sector|Core duties|Typical deliverables|Potential timeline|Key selling points|North Star|Current Mission|Mission|Primary Focus|Declared skills|Current challenges|Criterion|Question|Score|Recommendation|Next Step)\s*:)/gi, "\n")
+    .replace(/\s*•\s*/g, "\n• ")
+    .replace(/\b(\d+(?::\d{2})?\s*(?:AM|PM)?)\s*[–—-]\s*(\d+(?::\d{2})?\s*(?:AM|PM)?)\b/gi, "$1 to $2")
+    .replace(/([^\n])\s+[—–]\s+([^\n])/g, "$1. $2")
+    .replace(/([^\n])\s+-\s+([^\n])/g, "$1. $2")
+    .replace(/\n{3,}/g, "\n\n");
 
   // Legacy Atlas replies sometimes put multiple schedule entries on one line.
   // Split them before parsing so old history also reads cleanly.
