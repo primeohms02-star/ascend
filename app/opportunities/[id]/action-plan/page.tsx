@@ -2,11 +2,13 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
 
+import AppShell from "@/app/components/navigation/AppShell";
 import AtlasActionPlanDashboard from "./components/AtlasActionPlanDashboard";
 
+import { generateAtlasActionPlan } from "@/lib/atlas/opportunities/action-plan";
 import { getOpportunityById } from "@/lib/atlas/opportunities/connector";
 import { generateAtlasInsight } from "@/lib/atlas/opportunities/insight";
-import { generateAtlasActionPlan } from "@/lib/atlas/opportunities/action-plan";
+import { getOpportunityStatus } from "@/lib/atlas/opportunities/memory";
 
 type Props = {
   params: Promise<{
@@ -16,6 +18,7 @@ type Props = {
   searchParams: Promise<{
     source?: string;
     filter?: string;
+    returnTo?: string;
   }>;
 };
 
@@ -38,78 +41,74 @@ function BackArrowIcon() {
   );
 }
 
+function getSafeReturnPath(value: string | undefined): string {
+  if (value === "/opportunities" || value?.startsWith("/opportunities?")) {
+    return value;
+  }
+
+  return "/opportunities?page=1";
+}
+
 export default async function AtlasActionPlanPage({
   params,
   searchParams,
 }: Props) {
   const { id } = await params;
-  const { source, filter } = await searchParams;
+  const { source, filter, returnTo } = await searchParams;
 
   const { userId } = await auth();
 
-  if (!userId) {
-    notFound();
-  }
-
-  if (!source) {
+  if (!userId || !source) {
     notFound();
   }
 
   const decodedId = decodeURIComponent(id);
-
-  const opportunity = await getOpportunityById(
-    decodedId,
-    source
-  );
+  const opportunity = await getOpportunityById(decodedId, source);
 
   if (!opportunity) {
     notFound();
   }
 
+  const [initialStatus] = await Promise.all([
+    getOpportunityStatus(userId, opportunity.id),
+  ]);
+
   const insight = generateAtlasInsight(opportunity);
-
-  const actionPlan = generateAtlasActionPlan(
-    opportunity,
-    insight
-  );
-
-  const encodedOpportunityId = encodeURIComponent(
-    opportunity.id
-  );
+  const actionPlan = generateAtlasActionPlan(opportunity, insight);
+  const encodedOpportunityId = encodeURIComponent(opportunity.id);
+  const safeReturnTo = getSafeReturnPath(returnTo);
 
   const decisionPageHref =
     `/opportunities/${encodedOpportunityId}` +
-    `?source=${encodeURIComponent(source)}${
-      filter
-        ? `&filter=${encodeURIComponent(filter)}`
-        : ""
-    }`;
+    `?source=${encodeURIComponent(source)}` +
+    `&returnTo=${encodeURIComponent(safeReturnTo)}` +
+    `${filter ? `&filter=${encodeURIComponent(filter)}` : ""}`;
 
-  const progressStorageId =
-    `${source}:${opportunity.id}`;
+  const progressStorageId = `${source}:${opportunity.id}`;
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-[#020617] via-[#08111f] to-[#0f172a]">
-      <div className="mx-auto max-w-6xl space-y-8 px-6 py-10">
-        {/* Back navigation */}
+    <AppShell>
+      <main className="min-h-screen bg-gradient-to-br from-[#020617] via-[#08111f] to-[#0f172a]">
+        <div className="mx-auto max-w-6xl space-y-8 px-5 py-8 sm:px-6 sm:py-10">
+          <nav aria-label="Action plan navigation">
+            <Link
+              href={decisionPageHref}
+              className="group inline-flex items-center gap-2 rounded-xl border border-slate-700/80 bg-slate-900/60 px-4 py-2.5 text-sm font-medium text-slate-300 transition hover:border-cyan-400/30 hover:bg-cyan-400/10 hover:text-cyan-300 focus:outline-none focus:ring-2 focus:ring-cyan-400/50"
+            >
+              <BackArrowIcon />
+              Back to Atlas Decision
+            </Link>
+          </nav>
 
-        <nav aria-label="Action plan navigation">
-          <Link
-            href={decisionPageHref}
-            className="group inline-flex items-center gap-2 rounded-xl border border-slate-700/80 bg-slate-900/60 px-4 py-2.5 text-sm font-medium text-slate-300 transition hover:border-cyan-400/30 hover:bg-cyan-400/10 hover:text-cyan-300 focus:outline-none focus:ring-2 focus:ring-cyan-400/50"
-          >
-            <BackArrowIcon />
-
-            Back to Atlas Decision
-          </Link>
-        </nav>
-
-        <AtlasActionPlanDashboard
-          plan={actionPlan}
-          opportunityId={progressStorageId}
-          opportunityTitle={opportunity.title}
-        />
-      </div>
-    </main>
+          <AtlasActionPlanDashboard
+            plan={actionPlan}
+            opportunityId={progressStorageId}
+            opportunityTitle={opportunity.title}
+            opportunity={opportunity}
+            initialStatus={initialStatus}
+          />
+        </div>
+      </main>
+    </AppShell>
   );
 }

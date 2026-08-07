@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
 
+import AppShell from "@/app/components/navigation/AppShell";
 import OpportunityLibraryView from "./components/OpportunityLibraryView";
 
 import {
@@ -55,14 +56,16 @@ export default async function OpportunityLibraryPage({
     ]);
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-[#020617] via-[#08111f] to-[#0f172a]">
-      <div className="mx-auto max-w-6xl px-6 py-10">
-        <OpportunityLibraryView
-          category={category}
-          initialOpportunities={opportunities}
-          counts={counts}
-        />
-      </div>
-    </main>
+    <AppShell>
+      <main className="min-h-screen bg-gradient-to-br from-[#020617] via-[#08111f] to-[#0f172a]">
+        <div className="mx-auto max-w-6xl px-5 py-8 sm:px-6 sm:py-10">
+          <OpportunityLibraryView
+            category={category}
+            initialOpportunities={opportunities}
+            counts={counts}
+          />
+        </div>
+      </main>
+    </AppShell>
   );
 }

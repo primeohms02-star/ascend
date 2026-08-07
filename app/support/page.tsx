@@ -12,12 +12,17 @@ import {
 
 import SupportClient from "./SupportClient";
 import PublicAccountAccessForm from "./components/PublicAccountAccessForm";
+import AppShell from "@/app/components/navigation/AppShell";
 
 export default async function SupportPage() {
   const { userId } = await auth();
 
   if (userId) {
-    return <SupportClient />;
+    return (
+      <AppShell>
+        <SupportClient />
+      </AppShell>
+    );
   }
 
   return (

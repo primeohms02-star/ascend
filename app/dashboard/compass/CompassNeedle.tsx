@@ -1,10 +1,3 @@
-"use client";
-
-import {
-  motion,
-  useReducedMotion,
-} from "framer-motion";
-
 type CompassNeedleProps = {
   alignment: number;
 };
@@ -12,9 +5,6 @@ type CompassNeedleProps = {
 export default function CompassNeedle({
   alignment,
 }: CompassNeedleProps) {
-  const reduceMotion =
-    useReducedMotion();
-
   const safeAlignment =
     Math.max(
       0,
@@ -98,30 +88,9 @@ export default function CompassNeedle({
     <div className="relative flex h-64 w-64 items-center justify-center">
       {/* Instrument illumination */}
 
-      <motion.div
+      <div
         aria-hidden="true"
-        animate={
-          reduceMotion
-            ? undefined
-            : {
-                scale: [
-                  1,
-                  1.07,
-                  1,
-                ],
-                opacity: [
-                  0.16,
-                  0.3,
-                  0.16,
-                ],
-              }
-        }
-        transition={{
-          duration: 5,
-          repeat: Infinity,
-          ease: "easeInOut",
-        }}
-        className="absolute inset-[-12%] rounded-full bg-blue-500/25 blur-[65px]"
+        className="absolute inset-[-12%] rounded-full bg-[radial-gradient(circle,rgba(59,130,246,0.22),rgba(37,99,235,0.08)_48%,transparent_74%)]"
       />
 
       <div
@@ -131,24 +100,12 @@ export default function CompassNeedle({
 
       {/* External precision ring */}
 
-      <motion.div
+      <div
         aria-hidden="true"
-        animate={
-          reduceMotion
-            ? undefined
-            : {
-                rotate: 360,
-              }
-        }
-        transition={{
-          duration: 90,
-          repeat: Infinity,
-          ease: "linear",
-        }}
         className="absolute inset-[-3%] rounded-full border border-dashed border-cyan-300/10"
       >
         <span className="absolute left-1/2 top-[-3px] h-1.5 w-1.5 -translate-x-1/2 rounded-full bg-cyan-200 shadow-[0_0_12px_rgba(103,232,249,0.9)]" />
-      </motion.div>
+      </div>
 
       {/* Metallic housing */}
 
@@ -460,164 +417,111 @@ export default function CompassNeedle({
 
             {/* Alignment needle */}
 
-            <motion.g
-              initial={
-                reduceMotion
-                  ? false
-                  : {
-                      rotate:
-                        rotation +
-                        18,
-                    }
-              }
-              animate={{
-                rotate: rotation,
-              }}
-              transition={{
-                duration: 2,
-                ease: [
-                  0.22,
-                  1,
-                  0.36,
-                  1,
-                ],
-              }}
-              style={{
-                transformOrigin:
-                  "250px 250px",
-              }}
-            >
-              <motion.g
-                animate={
-                  reduceMotion
-                    ? undefined
-                    : {
-                        rotate: [
-                          0,
-                          1.3,
-                          -1,
-                          0.6,
-                          0,
-                        ],
-                      }
-                }
-                transition={{
-                  delay: 2,
-                  duration: 7,
-                  repeat: Infinity,
-                  repeatDelay: 0.8,
-                  ease: "easeInOut",
-                }}
-                style={{
-                  transformOrigin:
-                    "250px 250px",
-                }}
-              >
-                {/* Needle shadow */}
+            <g transform={`rotate(${rotation} 250 250)`}>
+              {/* Needle shadow */}
 
-                <path
-                  d="M250 76 L265 250 L250 426 L235 250 Z"
-                  fill="#000000"
-                  opacity="0.65"
-                  filter="url(#dashboard-shadow)"
-                  transform="translate(0 5)"
-                />
+              <path
+                d="M250 76 L265 250 L250 426 L235 250 Z"
+                fill="#000000"
+                opacity="0.65"
+                filter="url(#dashboard-shadow)"
+                transform="translate(0 5)"
+              />
 
-                {/* South needle */}
+              {/* South needle */}
 
-                <path
-                  d="M250 425 L264 250 L250 268 L236 250 Z"
-                  fill="url(#dashboard-south-needle)"
-                  stroke="#E2E8F0"
-                  strokeOpacity="0.25"
-                />
+              <path
+                d="M250 425 L264 250 L250 268 L236 250 Z"
+                fill="url(#dashboard-south-needle)"
+                stroke="#E2E8F0"
+                strokeOpacity="0.25"
+              />
 
-                <path
-                  d="M250 425 L250 268 L236 250 Z"
-                  fill="#0F172A"
-                  opacity="0.5"
-                />
+              <path
+                d="M250 425 L250 268 L236 250 Z"
+                fill="#0F172A"
+                opacity="0.5"
+              />
 
-                {/* North needle */}
+              {/* North needle */}
 
-                <path
-                  d="M250 73 L264 250 L250 235 L236 250 Z"
-                  fill="url(#dashboard-north-needle)"
-                  stroke="#93C5FD"
-                  strokeOpacity="0.62"
-                  strokeWidth="1.2"
-                />
+              <path
+                d="M250 73 L264 250 L250 235 L236 250 Z"
+                fill="url(#dashboard-north-needle)"
+                stroke="#93C5FD"
+                strokeOpacity="0.62"
+                strokeWidth="1.2"
+              />
 
-                <path
-                  d="M250 73 L250 235 L236 250 Z"
-                  fill="#172554"
-                  opacity="0.58"
-                />
+              <path
+                d="M250 73 L250 235 L236 250 Z"
+                fill="#172554"
+                opacity="0.58"
+              />
 
-                <path
-                  d="M250 73 L255 238 L250 235 Z"
-                  fill="#EFF6FF"
-                  opacity="0.68"
-                />
+              <path
+                d="M250 73 L255 238 L250 235 Z"
+                fill="#EFF6FF"
+                opacity="0.68"
+              />
 
-                <path
-                  d="M250 73 L264 250"
-                  fill="none"
-                  stroke="#67E8F9"
-                  strokeWidth="1.5"
-                  strokeOpacity="0.72"
-                  filter="url(#dashboard-glow)"
-                />
+              <path
+                d="M250 73 L264 250"
+                fill="none"
+                stroke="#67E8F9"
+                strokeWidth="1.5"
+                strokeOpacity="0.72"
+                filter="url(#dashboard-glow)"
+              />
 
-                {/* Mechanical hub */}
+              {/* Mechanical hub */}
 
-                <circle
-                  cx="250"
-                  cy="250"
-                  r="29"
-                  fill="#000000"
-                  opacity="0.6"
-                  transform="translate(0 4)"
-                />
+              <circle
+                cx="250"
+                cy="250"
+                r="29"
+                fill="#000000"
+                opacity="0.6"
+                transform="translate(0 4)"
+              />
 
-                <circle
-                  cx="250"
-                  cy="250"
-                  r="26"
-                  fill="#030712"
-                  stroke="#CBD5E1"
-                  strokeOpacity="0.7"
-                  strokeWidth="2"
-                />
+              <circle
+                cx="250"
+                cy="250"
+                r="26"
+                fill="#030712"
+                stroke="#CBD5E1"
+                strokeOpacity="0.7"
+                strokeWidth="2"
+              />
 
-                <circle
-                  cx="250"
-                  cy="250"
-                  r="19"
-                  fill="#111827"
-                  stroke="#475569"
-                  strokeWidth="1.5"
-                />
+              <circle
+                cx="250"
+                cy="250"
+                r="19"
+                fill="#111827"
+                stroke="#475569"
+                strokeWidth="1.5"
+              />
 
-                <circle
-                  cx="250"
-                  cy="250"
-                  r="13"
-                  fill="url(#dashboard-jewel)"
-                  stroke="#BFDBFE"
-                  strokeOpacity="0.72"
-                  filter="url(#dashboard-glow)"
-                />
+              <circle
+                cx="250"
+                cy="250"
+                r="13"
+                fill="url(#dashboard-jewel)"
+                stroke="#BFDBFE"
+                strokeOpacity="0.72"
+                filter="url(#dashboard-glow)"
+              />
 
-                <circle
-                  cx="247"
-                  cy="246"
-                  r="2.5"
-                  fill="#FFFFFF"
-                  opacity="0.9"
-                />
-              </motion.g>
-            </motion.g>
+              <circle
+                cx="247"
+                cy="246"
+                r="2.5"
+                fill="#FFFFFF"
+                opacity="0.9"
+              />
+            </g>
 
             {/* Curved glass reflection */}
 

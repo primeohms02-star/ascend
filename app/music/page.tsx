@@ -2,6 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 
 import { loadMusicProfile } from "@/lib/music/profile";
+import AppShell from "@/app/components/navigation/AppShell";
 
 import MusicPathway from "./MusicPathway";
 
@@ -14,5 +15,9 @@ export default async function MusicPage() {
 
   const profile = await loadMusicProfile(userId);
 
-  return <MusicPathway initialProfile={profile} />;
+  return (
+    <AppShell>
+      <MusicPathway initialProfile={profile} />
+    </AppShell>
+  );
 }

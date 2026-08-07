@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-
 import type { Opportunity } from "@/lib/atlas/opportunities/types";
 
 type Props = {
@@ -16,133 +15,111 @@ export default function ApplyOpportunityButton({
   onApplied,
 }: Props) {
   const [applied, setApplied] = useState(initialApplied);
+  const [applicationOpened, setApplicationOpened] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  async function apply() {
-    if (loading || applied) {
+  function recordApplicationOpened() {
+    setError("");
+
+    if (!opportunity.url) {
+      setError("The original application link is not available for this opportunity.");
       return;
     }
 
-    if (!opportunity.url) {
-      setError(
-        "The original application link is unavailable."
-      );
+    setApplicationOpened(true);
+  }
 
+  async function confirmSubmitted() {
+    if (applied || loading) {
       return;
     }
 
     setLoading(true);
     setError("");
 
-    /*
-     * Open a temporary tab immediately so browsers do not
-     * block it while ASCEND records the application.
-     */
-    const postingWindow = window.open(
-      "about:blank",
-      "_blank"
-    );
-
-    if (postingWindow) {
-      postingWindow.opener = null;
-
-      postingWindow.document.title =
-        "Opening opportunity...";
-
-      postingWindow.document.body.innerHTML = `
-        <div style="
-          min-height:100vh;
-          display:flex;
-          align-items:center;
-          justify-content:center;
-          background:#020617;
-          color:#cbd5e1;
-          font-family:Arial,sans-serif;
-        ">
-          Recording your application and opening the original posting...
-        </div>
-      `;
-    }
-
     try {
-      const response = await fetch(
-        "/api/opportunities/apply",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            opportunity,
-          }),
-        }
-      );
+      const response = await fetch("/api/opportunities/apply", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          opportunity,
+          confirmedSubmitted: true,
+        }),
+      });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(
-          data.error ??
-            "Atlas could not record this application."
-        );
+        throw new Error(data.error ?? "Atlas could not record this submitted application.");
       }
 
       setApplied(true);
+      setApplicationOpened(false);
       onApplied?.();
-
-      if (postingWindow) {
-        postingWindow.location.replace(
-          opportunity.url
-        );
-      } else {
-        const openedWindow = window.open(
-          opportunity.url,
-          "_blank",
-          "noopener,noreferrer"
-        );
-
-        if (!openedWindow) {
-          setError(
-            "Your application was recorded, but the browser blocked the original posting. Allow pop-ups and try opening it again."
-          );
-        }
-      }
     } catch (error) {
-      if (postingWindow) {
-        postingWindow.close();
-      }
-
       setError(
-        error instanceof Error
-          ? error.message
-          : "Atlas could not record this application."
+        error instanceof Error ? error.message : "Atlas could not record this submitted application."
       );
     } finally {
       setLoading(false);
     }
   }
 
+  if (applied) {
+    return (
+      <div>
+        <button
+          type="button"
+          disabled
+          className="rounded-xl border border-cyan-400/25 bg-cyan-400/10 px-5 py-2 font-medium text-cyan-200 opacity-90"
+        >
+          Applied ✓
+        </button>
+      </div>
+    );
+  }
+
   return (
-    <div>
-      <button
-        type="button"
-        onClick={apply}
-        disabled={loading || applied}
-        className="rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 px-5 py-2 font-medium text-white transition-all duration-300 hover:scale-105 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:scale-100"
-      >
-        {loading
-          ? "Opening..."
-          : applied
-            ? "✓ Applied"
-            : "Apply →"}
-      </button>
+    <div className="max-w-sm">
+      {opportunity.url ? (
+        <a
+          href={opportunity.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={recordApplicationOpened}
+          className="inline-flex rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 px-5 py-2 font-medium text-white transition hover:brightness-110"
+        >
+          Apply →
+        </a>
+      ) : (
+        <button
+          type="button"
+          onClick={recordApplicationOpened}
+          className="rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 px-5 py-2 font-medium text-white transition hover:brightness-110"
+        >
+          Apply →
+        </button>
+      )}
+
+      {applicationOpened && (
+        <div className="mt-2 rounded-xl border border-cyan-400/15 bg-cyan-400/[0.06] p-3">
+          <p className="text-xs leading-5 text-slate-300">
+            Opening the application does not mark it as applied. Confirm only after you actually submit it.
+          </p>
+          <button
+            type="button"
+            onClick={confirmSubmitted}
+            disabled={loading}
+            className="mt-2 rounded-lg border border-cyan-400/25 bg-cyan-400/10 px-3 py-2 text-xs font-semibold text-cyan-200 transition hover:bg-cyan-400/15 disabled:opacity-60"
+          >
+            {loading ? "Recording..." : "I submitted my application"}
+          </button>
+        </div>
+      )}
 
       {error && (
-        <p
-          role="alert"
-          className="mt-2 max-w-xs text-xs leading-5 text-rose-300"
-        >
+        <p role="alert" className="mt-2 max-w-xs text-xs leading-5 text-rose-300">
           {error}
         </p>
       )}

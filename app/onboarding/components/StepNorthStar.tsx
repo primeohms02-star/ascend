@@ -59,7 +59,7 @@ export default function StepNorthStar({
             event.target.value
           )
         }
-        placeholder="For example: I have built a strong career in technology, developed valuable AI skills, and use my work to solve meaningful problems in Africa..."
+        placeholder="For example: I am building meaningful work, valuable skills and projects that solve real problems, give me independence and create positive impact in Africa..."
         maxLength={1200}
         className="mt-12 h-56 w-full resize-none rounded-3xl border border-white/10 bg-white/5 p-6 text-lg leading-8 text-white placeholder:text-slate-500 outline-none transition focus:border-blue-500"
       />

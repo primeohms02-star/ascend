@@ -33,10 +33,10 @@ const categoryDetails = {
     label: "Applied Opportunities",
     shortLabel: "Applied",
     description:
-      "Applications you have started or submitted.",
+      "Applications you explicitly confirmed as submitted and are still pursuing.",
     emptyTitle: "No applications recorded yet",
     emptyDescription:
-      "When you apply through ASCEND, the opportunity will appear here.",
+      "After you submit an application, confirm it in ASCEND and it will appear here.",
     accent: "text-cyan-300",
     background: "bg-cyan-400/10",
     border: "border-cyan-400/20",
@@ -45,7 +45,7 @@ const categoryDetails = {
     label: "Completed Opportunities",
     shortLabel: "Completed",
     description:
-      "Application journeys you have completed or closed.",
+      "Submitted application journeys that you later completed or closed.",
     emptyTitle: "No completed opportunities yet",
     emptyDescription:
       "Completed application journeys will be collected here.",
@@ -383,7 +383,7 @@ export default function OpportunityLibraryView({
                       >
                         {isUpdating
                           ? "Updating..."
-                          : "Mark as Completed"}
+                          : "Mark Journey Complete"}
                       </button>
                     )}
 

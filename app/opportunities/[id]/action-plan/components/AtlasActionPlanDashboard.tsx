@@ -1,17 +1,26 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+
+import ApplyOpportunityButton from "@/app/components/ApplyOpportunityButton";
+import ContextualAtlasLink from "@/app/components/atlas/ContextualAtlasLink";
+import ResumeWorkspace from "./ResumeWorkspace";
 
 import type {
   ActionPlanItem,
   ActionPriority,
   AtlasActionPlan,
 } from "@/lib/atlas/opportunities/action-plan";
+import type { OpportunityStatus } from "@/lib/atlas/opportunities/memory";
+import type { Opportunity } from "@/lib/atlas/opportunities/types";
 
 type Props = {
   plan: AtlasActionPlan;
   opportunityId: string;
   opportunityTitle: string;
+  opportunity: Opportunity;
+  initialStatus: OpportunityStatus | null;
 };
 
 type PlanSectionProps = {
@@ -281,6 +290,8 @@ export default function AtlasActionPlanDashboard({
   plan,
   opportunityId,
   opportunityTitle,
+  opportunity,
+  initialStatus,
 }: Props) {
   const storageKey = `ascend-atlas-action-plan:${opportunityId}`;
 
@@ -288,6 +299,8 @@ export default function AtlasActionPlanDashboard({
     useState<Set<string>>(new Set());
 
   const [hasLoaded, setHasLoaded] = useState(false);
+  const [applicationStatus, setApplicationStatus] =
+    useState<OpportunityStatus | null>(initialStatus);
 
   const allItems = useMemo(
     () => [
@@ -364,6 +377,24 @@ export default function AtlasActionPlanDashboard({
 
   const scoreDegrees = readinessScore * 3.6;
 
+  const atlasContext = useMemo(
+    () =>
+      `Atlas Action Plan. Opportunity: ${opportunityTitle}. Organisation: ${opportunity.company}. The user is preparing for this specific opportunity.`,
+    [opportunity.company, opportunityTitle]
+  );
+
+  const applicationWasSubmitted =
+    applicationStatus === "applied" ||
+    applicationStatus === "interview" ||
+    applicationStatus === "completed" ||
+    applicationStatus === "accepted" ||
+    applicationStatus === "rejected";
+
+  const applicationJourneyClosed =
+    applicationStatus === "completed" ||
+    applicationStatus === "accepted" ||
+    applicationStatus === "rejected";
+
   return (
     <div className="space-y-6">
       {/* Action plan header */}
@@ -389,6 +420,16 @@ export default function AtlasActionPlanDashboard({
                 Your path from decision to application
               </p>
             </div>
+          </div>
+
+          <div className="mt-5">
+            <ContextualAtlasLink
+              prompt={`Help me work through my action plan for ${opportunityTitle}.`}
+              context={atlasContext}
+              className="inline-flex min-h-11 items-center justify-center rounded-xl border border-amber-300/20 bg-amber-300/[0.07] px-4 py-2.5 text-sm font-semibold text-amber-200 transition hover:border-amber-300/35 hover:bg-amber-300/[0.1]"
+            >
+              Ask Atlas about this action plan
+            </ContextualAtlasLink>
           </div>
 
           <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_auto] lg:items-center">
@@ -564,6 +605,12 @@ export default function AtlasActionPlanDashboard({
         accent="cyan"
       />
 
+      <ResumeWorkspace
+        opportunityId={opportunityId}
+        opportunityTitle={opportunityTitle}
+        company={opportunity.company}
+      />
+
       <PlanSection
         title="Resume Preparation"
         description="Make your experience and evidence relevant to this opportunity."
@@ -590,6 +637,57 @@ export default function AtlasActionPlanDashboard({
         onToggle={toggleItem}
         accent="emerald"
       />
+
+      {hasLoaded && progress === 100 && (
+        <section className="rounded-3xl border border-emerald-400/20 bg-emerald-400/[0.055] p-6 sm:p-8">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-300">
+            Action plan complete
+          </p>
+
+          <h2 className="mt-2 text-2xl font-semibold text-white">
+            {applicationJourneyClosed
+              ? "This application journey is complete."
+              : applicationWasSubmitted
+                ? "Your application is recorded as submitted."
+                : "Your preparation is complete. Submit when you are ready."}
+          </h2>
+
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-400">
+            {applicationJourneyClosed
+              ? "ASCEND keeps the finished journey in your Library so you can return to it later."
+              : applicationWasSubmitted
+                ? "Opening an application never changes its status. ASCEND only records Applied after you explicitly confirm that you submitted it."
+                : "Open the original application below. It will stay unsubmitted in ASCEND until you confirm that you actually completed the external submission."}
+          </p>
+
+          <div className="mt-5 flex flex-wrap gap-3">
+            {!applicationWasSubmitted && (
+              <ApplyOpportunityButton
+                opportunity={opportunity}
+                onApplied={() => setApplicationStatus("applied")}
+              />
+            )}
+
+            {applicationWasSubmitted && !applicationJourneyClosed && (
+              <Link
+                href="/opportunities/library/applied"
+                className="inline-flex min-h-11 items-center justify-center rounded-xl border border-cyan-400/25 bg-cyan-400/10 px-4 py-2.5 text-sm font-semibold text-cyan-200 transition hover:bg-cyan-400/15"
+              >
+                View submitted application
+              </Link>
+            )}
+
+            {applicationJourneyClosed && (
+              <Link
+                href="/opportunities/library/completed"
+                className="inline-flex min-h-11 items-center justify-center rounded-xl border border-emerald-400/25 bg-emerald-400/10 px-4 py-2.5 text-sm font-semibold text-emerald-200 transition hover:bg-emerald-400/15"
+              >
+                View completed journey
+              </Link>
+            )}
+          </div>
+        </section>
+      )}
     </div>
   );
 }

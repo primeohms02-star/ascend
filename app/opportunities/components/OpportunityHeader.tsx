@@ -69,7 +69,7 @@ export default function OpportunityHeader() {
         <p className="mt-4 max-w-3xl text-base leading-8 text-slate-400 sm:text-lg">
           Atlas discovers, ranks, and explains opportunities so you
           can investigate the right possibilities and make stronger
-          career decisions.
+          decisions about what deserves your time and attention.
         </p>
 
         <div className="mt-7 flex flex-wrap gap-3">

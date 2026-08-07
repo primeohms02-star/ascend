@@ -29,16 +29,58 @@ type Props = {
 
 const options = [
   {
+    icon: Compass,
+    title: "Exploring",
+    description:
+      "Still discovering which direction, project, path or possibility fits you best.",
+  },
+  {
+    icon: Palette,
+    title: "Creator",
+    description:
+      "Building through design, writing, media, art, culture or digital creation.",
+  },
+  {
+    icon: Rocket,
+    title: "Founder or Entrepreneur",
+    description:
+      "Building a business, venture, project or solution that creates value.",
+  },
+  {
     icon: GraduationCap,
     title: "Student",
     description:
-      "Learning, building experience and preparing for future opportunities.",
+      "Learning, building experience and shaping the future you want to create.",
+  },
+  {
+    icon: Microscope,
+    title: "Researcher or Academic",
+    description:
+      "Pursuing research, learning, scholarships, fellowships or academic impact.",
+  },
+  {
+    icon: Globe2,
+    title: "Social Impact Professional",
+    description:
+      "Working toward community, nonprofit, development or public-impact goals.",
+  },
+  {
+    icon: Wrench,
+    title: "Skilled or Technical Professional",
+    description:
+      "Developing practical expertise in a technical, skilled or hands-on field.",
+  },
+  {
+    icon: Laptop,
+    title: "Freelancer",
+    description:
+      "Building an independent path through projects, services and clients.",
   },
   {
     icon: Sprout,
     title: "Recent Graduate",
     description:
-      "Starting your professional journey and looking for direction.",
+      "Starting your next chapter and looking for direction, experience and opportunity.",
   },
   {
     icon: Search,
@@ -50,7 +92,7 @@ const options = [
     icon: TrendingUp,
     title: "Early-Career Professional",
     description:
-      "Building skills, credibility and momentum in your career.",
+      "Building skills, credibility and momentum in your professional path.",
   },
   {
     icon: Briefcase,
@@ -62,19 +104,7 @@ const options = [
     icon: RefreshCw,
     title: "Career Changer",
     description:
-      "Preparing to move into a new role, industry or professional path.",
-  },
-  {
-    icon: Laptop,
-    title: "Freelancer",
-    description:
-      "Building an independent career through projects and clients.",
-  },
-  {
-    icon: Rocket,
-    title: "Founder or Entrepreneur",
-    description:
-      "Building a business, venture or solution that creates value.",
+      "Preparing to move into a new role, industry or professional direction.",
   },
   {
     icon: Building2,
@@ -92,37 +122,7 @@ const options = [
     icon: Shirt,
     title: "Fashion Professional",
     description:
-      "Building a career or business in fashion design, styling, textiles or apparel.",
-  },
-  {
-    icon: Palette,
-    title: "Creator",
-    description:
-      "Growing through design, writing, media, art or digital creation.",
-  },
-  {
-    icon: Microscope,
-    title: "Researcher or Academic",
-    description:
-      "Pursuing research, scholarships, fellowships and academic impact.",
-  },
-  {
-    icon: Globe2,
-    title: "Social Impact Professional",
-    description:
-      "Working toward community, nonprofit or development impact.",
-  },
-  {
-    icon: Wrench,
-    title: "Skilled or Technical Professional",
-    description:
-      "Developing practical expertise in a technical or skilled field.",
-  },
-  {
-    icon: Compass,
-    title: "Exploring",
-    description:
-      "Still discovering which direction and opportunities fit you best.",
+      "Building a career, craft or business in fashion, styling, textiles or apparel.",
   },
 ];
 

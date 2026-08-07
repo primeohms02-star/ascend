@@ -10,79 +10,81 @@ import {
   persistAtlasResponse,
   runAtlasBrain,
 } from "@/lib/atlas/brain";
+import {
+  analyzeAtlasImage,
+  isValidAtlasImage,
+} from "@/lib/atlas/vision";
 
-export async function POST(
-  request: NextRequest
-) {
+export async function POST(request: NextRequest) {
   try {
-    /*
-     * Never trust a Clerk ID supplied by the browser.
-     * The authenticated server session determines the user.
-     */
     const { userId } = await auth();
 
     if (!userId) {
-      return NextResponse.json(
-        {
-          error: "Unauthorized",
-        },
-        {
-          status: 401,
-        }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const body = await request.json();
+    const image = body.image;
+    const hasImage = image !== undefined && image !== null;
 
-    const message = body.message;
-
-    if (
-      typeof message !== "string" ||
-      message.trim().length === 0
-    ) {
+    if (hasImage && !isValidAtlasImage(image)) {
       return NextResponse.json(
-        {
-          error:
-            "A message is required.",
-        },
-        {
-          status: 400,
-        }
+        { error: "Atlas supports JPEG, PNG and WebP image attachments that fit within the vision request limit." },
+        { status: 400 }
       );
     }
 
-    const cleanMessage =
-      message.trim();
+    const message = typeof body.message === "string" ? body.message.trim() : "";
 
-    /*
-     * Atlas answers using live profile, mission,
-     * Compass, momentum, and conversation context.
-     *
-     * This does not complete, replace, or create
-     * any mission.
-     */
-    const [atlasResult, fact] =
-      await Promise.all([
-        runAtlasBrain({
-          clerkId: userId,
-          message: cleanMessage,
-        }),
+    if (!message && !hasImage) {
+      return NextResponse.json(
+        { error: "A message or image is required." },
+        { status: 400 }
+      );
+    }
 
-        /*
-         * Permanent-memory extraction depends only on the
-         * user's message, so it can run while Atlas thinks
-         * instead of adding a second wait to every reply.
-         */
-        extractPermanentMemory(
-          cleanMessage
-        ),
-      ]);
+    const cleanMessage = message || "Please analyze this image.";
+    const pageContext =
+      typeof body.context === "string" ? body.context.trim().slice(0, 2200) : "";
 
-    /*
-     * Save only the conversation and any genuinely
-     * permanent fact. This does not change mission
-     * or progression state.
-     */
+    const factPromise = extractPermanentMemory(cleanMessage);
+
+    let visualContext = "";
+
+    if (hasImage && isValidAtlasImage(image)) {
+      try {
+        const visualSummary = await analyzeAtlasImage({
+          image,
+          userMessage: cleanMessage,
+        });
+
+        visualContext = `Uploaded image analysis:\n${visualSummary}`;
+      } catch (error) {
+        console.error("Atlas Image Analysis Error:", error);
+
+        return NextResponse.json(
+          {
+            error:
+              "Atlas could not analyze that image right now. Your text conversations are still available.",
+          },
+          { status: 502 }
+        );
+      }
+    }
+
+    const surfaceContext = [pageContext, visualContext]
+      .filter(Boolean)
+      .join("\n\n");
+
+    const [atlasResult, fact] = await Promise.all([
+      runAtlasBrain({
+        clerkId: userId,
+        message: cleanMessage,
+        surfaceContext: surfaceContext || undefined,
+      }),
+      factPromise,
+    ]);
+
     await persistAtlasResponse({
       clerkId: userId,
       profile: atlasResult.profile,
@@ -91,25 +93,16 @@ export async function POST(
       fact,
     });
 
-    return NextResponse.json({
-      reply: atlasResult.reply,
-    });
+    return NextResponse.json({ reply: atlasResult.reply });
   } catch (error) {
-    console.error(
-      "Atlas Chat Error:",
-      error
-    );
+    console.error("Atlas Chat Error:", error);
 
     return NextResponse.json(
       {
-        error:
-          "Atlas encountered an error.",
-        reply:
-          "I encountered a problem while thinking about that. Please try again.",
+        error: "Atlas encountered an error.",
+        reply: "I encountered a problem while thinking about that. Please try again.",
       },
-      {
-        status: 500,
-      }
+      { status: 500 }
     );
   }
 }

@@ -45,7 +45,7 @@ const features = [
     number: "04",
     title: "Opportunities",
     description:
-      "Discover jobs, scholarships, grants, fellowships, courses, competitions and programs matched to your actual journey.",
+      "Discover external possibilities including grants, programmes, roles, scholarships, fellowships, courses, competitions and more, matched to your actual journey.",
     accent:
       "border-sky-400/20 bg-sky-400/[0.05]",
   },

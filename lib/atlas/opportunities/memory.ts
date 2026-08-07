@@ -44,7 +44,6 @@ const CATEGORY_STATUSES: Record<
     "completed",
     "accepted",
     "rejected",
-    "ignored",
   ],
 };
 
@@ -84,6 +83,26 @@ export async function updateOpportunityStatus(
     })
     .eq("user_id", userId)
     .eq("opportunity_id", opportunityId);
+}
+
+
+export async function getOpportunityStatus(
+  userId: string,
+  opportunityId: string
+): Promise<OpportunityStatus | null> {
+  const { data, error } = await supabaseServer
+    .from("atlas_opportunity_memory")
+    .select("status")
+    .eq("user_id", userId)
+    .eq("opportunity_id", opportunityId)
+    .maybeSingle();
+
+  if (error) {
+    console.error("Get Opportunity Status Error:", error);
+    return null;
+  }
+
+  return data?.status ? (data.status as OpportunityStatus) : null;
 }
 
 export async function removeSavedOpportunity(

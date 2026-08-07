@@ -263,7 +263,7 @@ export default function OpportunityCard({
 
           <div className="mt-5 border-t border-white/10 pt-4">
             <p className="text-xs text-slate-500">
-              Estimated career-readiness gain
+              Estimated readiness gain
             </p>
 
             <p className="mt-1 font-semibold text-cyan-300">
@@ -313,17 +313,19 @@ export default function OpportunityCard({
               Atlas Decision
             </Link>
 
-            <SaveOpportunityButton
-              key={`save-${status ?? "none"}`}
-              opportunity={opportunity}
-              initialSaved={status === "saved"}
-              onStatusChange={(saved) =>
-                onStatusChange?.(
-                  opportunity.id,
-                  saved ? "saved" : undefined
-                )
-              }
-            />
+            {(!status || status === "saved") && (
+              <SaveOpportunityButton
+                key={`save-${status ?? "none"}`}
+                opportunity={opportunity}
+                initialSaved={status === "saved"}
+                onStatusChange={(saved) =>
+                  onStatusChange?.(
+                    opportunity.id,
+                    saved ? "saved" : undefined
+                  )
+                }
+              />
+            )}
 
             <ApplyOpportunityButton
               key={`apply-${status ?? "none"}`}

@@ -28,16 +28,40 @@ type Props = {
 
 const goals = [
   {
-    icon: Briefcase,
-    title: "Find a Job",
+    icon: Compass,
+    title: "Discover My Purpose",
     description:
-      "Find employment that matches your skills, interests and direction.",
+      "Gain clarity about who you are, what matters and what direction fits you best.",
   },
   {
-    icon: Sprout,
-    title: "Find an Internship",
+    icon: Wrench,
+    title: "Learn New Skills",
     description:
-      "Build practical experience and strengthen your professional readiness.",
+      "Build valuable abilities that strengthen the future you are creating.",
+  },
+  {
+    icon: Rocket,
+    title: "Build a Business",
+    description:
+      "Start, validate or grow a business, venture or project that creates meaningful value.",
+  },
+  {
+    icon: Palette,
+    title: "Grow as a Creator",
+    description:
+      "Develop your craft, body of work, audience and creative opportunities.",
+  },
+  {
+    icon: DollarSign,
+    title: "Find Grants or Funding",
+    description:
+      "Discover funding for a project, business, research, creative work or social initiative.",
+  },
+  {
+    icon: Handshake,
+    title: "Build My Network",
+    description:
+      "Create valuable relationships, mentorships, communities and partnerships.",
   },
   {
     icon: GraduationCap,
@@ -49,19 +73,19 @@ const goals = [
     icon: Globe2,
     title: "Join a Fellowship",
     description:
-      "Access leadership, research and professional growth programmes.",
+      "Access leadership, research, community and growth programmes.",
   },
   {
-    icon: DollarSign,
-    title: "Find Grants or Funding",
+    icon: Sprout,
+    title: "Find an Internship",
     description:
-      "Discover funding for a project, business, research or social initiative.",
+      "Build practical experience and strengthen your readiness for what comes next.",
   },
   {
-    icon: Rocket,
-    title: "Build a Business",
+    icon: Briefcase,
+    title: "Find a Job",
     description:
-      "Start, validate or grow a business that creates meaningful value.",
+      "Find employment that matches your skills, interests and direction.",
   },
   {
     icon: Landmark,
@@ -76,10 +100,10 @@ const goals = [
       "Develop your fashion craft, brand, portfolio and access relevant industry opportunities.",
   },
   {
-    icon: Wrench,
-    title: "Learn New Skills",
+    icon: Laptop,
+    title: "Grow My Freelance Career",
     description:
-      "Build valuable abilities that improve your future opportunities.",
+      "Build a stronger portfolio, find clients and grow independent income.",
   },
   {
     icon: RefreshCw,
@@ -92,30 +116,6 @@ const goals = [
     title: "Advance My Career",
     description:
       "Earn greater responsibility, income, influence or leadership.",
-  },
-  {
-    icon: Laptop,
-    title: "Grow My Freelance Career",
-    description:
-      "Build a stronger portfolio, find clients and grow independent income.",
-  },
-  {
-    icon: Palette,
-    title: "Grow as a Creator",
-    description:
-      "Develop your craft, audience, portfolio and creative opportunities.",
-  },
-  {
-    icon: Handshake,
-    title: "Build My Network",
-    description:
-      "Create valuable professional relationships, mentorships and partnerships.",
-  },
-  {
-    icon: Compass,
-    title: "Discover My Purpose",
-    description:
-      "Gain clarity about who you are and what direction fits you best.",
   },
 ];
 

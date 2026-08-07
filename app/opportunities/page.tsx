@@ -10,6 +10,7 @@ import OpportunityLibrary from "./components/OpportunityLibrary";
 import OpportunitySearch from "./components/OpportunitySearch";
 
 import OpportunityFeed from "@/app/components/OpportunityFeed";
+import AppShell from "@/app/components/navigation/AppShell";
 
 function BackArrowIcon() {
   return (
@@ -63,9 +64,11 @@ function OpportunitiesLoadingFallback() {
 
 export default function OpportunitiesPage() {
   return (
-    <Suspense fallback={<OpportunitiesLoadingFallback />}>
-      <OpportunitiesContent />
-    </Suspense>
+    <AppShell>
+      <Suspense fallback={<OpportunitiesLoadingFallback />}>
+        <OpportunitiesContent />
+      </Suspense>
+    </AppShell>
   );
 }
 

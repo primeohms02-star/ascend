@@ -32,7 +32,7 @@ const libraryItems: LibraryItem[] = [
   {
     label: "Applied",
     description:
-      "Applications currently in progress.",
+      "Applications you confirmed as submitted.",
     countKey: "applied",
     href: "/opportunities/library/applied",
     accent: "cyan",
