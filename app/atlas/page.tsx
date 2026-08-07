@@ -344,7 +344,7 @@ export default function AtlasPage() {
                           </div>
                           <p className="text-sm font-semibold text-white">Atlas</p>
                         </div>
-                        <div className="rounded-2xl border border-white/[0.08] bg-[#0D0D12]/95 px-4 py-4 sm:px-5 sm:py-5">
+                        <div className="px-1 pb-2 sm:px-2">
                           <AtlasMessageContent content={item.message} />
                         </div>
                       </div>
@@ -383,7 +383,7 @@ export default function AtlasPage() {
                     </div>
                     <p className="text-sm font-semibold text-white">Atlas</p>
                   </div>
-                  <div className="rounded-2xl border border-white/[0.08] bg-[#0D0D12]/95 px-4 py-4 sm:px-5 sm:py-5">
+                  <div className="px-1 pb-2 sm:px-2">
                     <AtlasMessageContent content={item.message} />
                   </div>
                 </div>

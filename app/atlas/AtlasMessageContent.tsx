@@ -22,7 +22,7 @@ type ContentBlock =
 
 const DECORATIVE_LINE = /^[\s*_~—–=-]{3,}$/;
 const TABLE_DIVIDER = /^\|?\s*:?-{3,}:?\s*(?:\|\s*:?-{3,}:?\s*)+\|?$/;
-const TIME_RANGE_LINE = /^(\d{1,2}(?::\d{2})?\s*(?:AM|PM)?\s*[–—-]\s*\d{1,2}(?::\d{2})?\s*(?:AM|PM)?)\s*(?:\||[–—-])\s*(.+)$/i;
+const TIME_RANGE_LINE = /^(\d{1,2}(?::\d{2})?\s*(?:AM|PM)?\s*(?:to|[–—-])\s*\d{1,2}(?::\d{2})?\s*(?:AM|PM)?)\s*(?:\||[–—-])\s*(.+)$/i;
 const LABEL_LINE = /^(Primary North Star|North Star|Current Mission|Mission|Primary Focus|Today['’]s Focus|Goal|Recommendation|Next Step)\s*:\s*(.+)$/i;
 
 function cleanPlainText(value: string) {
@@ -58,7 +58,7 @@ function renderInline(text: string): ReactNode[] {
       return (
         <code
           key={`${part}-${index}`}
-          className="rounded-md border border-white/10 bg-black/30 px-1.5 py-0.5 font-mono text-[0.92em] text-cyan-100"
+          className="rounded-md bg-white/[0.07] px-1.5 py-0.5 font-mono text-[0.92em] text-slate-100"
         >
           {part.slice(1, -1)}
         </code>
@@ -72,7 +72,7 @@ function renderInline(text: string): ReactNode[] {
           href={part}
           target="_blank"
           rel="noreferrer"
-          className="break-all text-cyan-300 underline decoration-cyan-400/40 underline-offset-4 transition hover:text-cyan-200"
+          className="break-all text-amber-200 underline decoration-amber-300/35 underline-offset-4 transition hover:text-amber-100"
         >
           {part}
         </a>
@@ -93,13 +93,10 @@ function normalizeLine(rawLine: string) {
 function prepareContent(content: string) {
   let prepared = content.replace(/\r\n/g, "\n").trim();
 
-  /*
-   * Models occasionally return a good schedule without actual line breaks.
-   * Split before each time range so the renderer can turn every block into a
-   * compact schedule row instead of displaying a wall of text.
-   */
+  // Legacy Atlas replies sometimes put multiple schedule entries on one line.
+  // Split them before parsing so old history also reads cleanly.
   prepared = prepared.replace(
-    /\s+(?=\d{1,2}(?::\d{2})?\s*(?:AM|PM)?\s*[–—-]\s*\d{1,2}(?::\d{2})?\s*(?:AM|PM)?\s*(?:\||[–—-]))/gi,
+    /\s+(?=\d{1,2}(?::\d{2})?\s*(?:AM|PM)?\s*(?:to|[–—-])\s*\d{1,2}(?::\d{2})?\s*(?:AM|PM)?\s*(?:\||[–—-]))/gi,
     "\n"
   );
 
@@ -121,7 +118,7 @@ function tableRowToSentence(line: string) {
     .map((cell) => cleanPlainText(cell))
     .filter(Boolean);
 
-  return cells.join(" — ");
+  return cells.join(": ");
 }
 
 function looksLikeHeading(line: string) {
@@ -160,7 +157,9 @@ function scheduleItemFromLine(line: string): ScheduleItem | null {
     return null;
   }
 
-  const time = cleanPlainText(match[1]).replace(/\s+/g, " ");
+  const time = cleanPlainText(match[1])
+    .replace(/\s*[–—-]\s*/g, " to ")
+    .replace(/\s+/g, " ");
   const rest = match[2].trim();
   const pipePieces = rest
     .split(/\s*\|\s*/)
@@ -173,21 +172,17 @@ function scheduleItemFromLine(line: string): ScheduleItem | null {
     return {
       time,
       title: title || "Planned block",
-      detail: detailParts.join(" — "),
+      detail: detailParts.join(". "),
     };
   }
 
-  const dashPieces = rest
-    .split(/\s+[–—-]\s+/)
+  const separatorPieces = rest
+    .split(/\s+[–—]\s+/)
     .map((piece) => cleanPlainText(piece))
     .filter(Boolean);
 
-  const title = dashPieces.shift() ?? "Planned block";
-  const detail = dashPieces
-    .join(" — ")
-    .replace(/\s*[•●▪◦‣]\s*/g, " · ")
-    .replace(/(?:\s*·\s*){2,}/g, " · ")
-    .trim();
+  const title = separatorPieces.shift() ?? "Planned block";
+  const detail = separatorPieces.join(". ").trim();
 
   return {
     time,
@@ -292,7 +287,7 @@ function parseContent(content: string): ContentBlock[] {
       blocks.push({
         type: "label",
         label: cleanPlainText(labelMatch[1]),
-        value: cleanPlainText(labelMatch[2]),
+        value: labelMatch[2].trim(),
       });
       continue;
     }
@@ -315,7 +310,7 @@ function parseContent(content: string): ContentBlock[] {
         flushList();
       }
       listType = "unordered-list";
-      listItems.push(cleanPlainText(unorderedMatch[1]));
+      listItems.push(unorderedMatch[1].trim());
       continue;
     }
 
@@ -326,7 +321,7 @@ function parseContent(content: string): ContentBlock[] {
         flushList();
       }
       listType = "ordered-list";
-      listItems.push(cleanPlainText(orderedMatch[1]));
+      listItems.push(orderedMatch[1].trim());
       continue;
     }
 
@@ -372,72 +367,58 @@ export default function AtlasMessageContent({
   const blocks = parseContent(content);
 
   return (
-    <div className="space-y-3.5 text-[15px] leading-6 text-slate-200 sm:text-base sm:leading-7">
+    <div className="space-y-5 text-[16px] leading-7 text-[#ECECF1] sm:text-[17px] sm:leading-8">
       {blocks.map((block, index) => {
         if (block.type === "heading") {
           return (
-            <div key={`heading-${index}`} className="flex items-center gap-2.5 pt-1">
-              <span aria-hidden="true" className="h-px w-5 shrink-0 bg-amber-300/60" />
-              <h3 className="text-[15px] font-semibold tracking-tight text-white sm:text-base">
-                {renderInline(block.text)}
-              </h3>
-            </div>
+            <h3
+              key={`heading-${index}`}
+              className="pt-1 text-[17px] font-semibold tracking-tight text-white sm:text-lg"
+            >
+              {renderInline(block.text)}
+            </h3>
           );
         }
 
         if (block.type === "label") {
           return (
-            <div
-              key={`label-${index}`}
-              className="rounded-xl border border-white/[0.07] bg-white/[0.025] px-3.5 py-3"
-            >
-              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-amber-200/75">
-                {block.label}
-              </p>
-              <p className="mt-1.5 leading-6 text-slate-200">
-                {renderInline(block.value)}
-              </p>
-            </div>
+            <p key={`label-${index}`} className="max-w-[70ch]">
+              <strong className="font-semibold text-white">{block.label}:</strong>{" "}
+              {renderInline(block.value)}
+            </p>
           );
         }
 
         if (block.type === "schedule") {
           return (
-            <div key={`schedule-${index}`} className="space-y-2">
+            <ul
+              key={`schedule-${index}`}
+              className="list-disc space-y-3.5 pl-6 marker:text-slate-400"
+            >
               {block.items.map((item, itemIndex) => (
-                <div
-                  key={`${item.time}-${itemIndex}`}
-                  className="rounded-xl border border-white/[0.07] bg-white/[0.025] px-3.5 py-3 sm:px-4"
-                >
-                  <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
-                    <span className="rounded-full border border-amber-300/20 bg-amber-300/[0.08] px-2.5 py-1 text-[11px] font-semibold tabular-nums text-amber-200">
-                      {item.time}
-                    </span>
-                    <p className="min-w-0 font-semibold leading-5 text-white">
-                      {renderInline(item.title)}
-                    </p>
-                  </div>
-                  {item.detail && (
-                    <p className="mt-2 text-[14px] leading-6 text-slate-400 sm:text-[15px]">
-                      {renderInline(item.detail)}
-                    </p>
-                  )}
-                </div>
+                <li key={`${item.time}-${itemIndex}`} className="pl-1">
+                  <strong className="font-semibold text-white">{item.time}:</strong>{" "}
+                  <span className="font-semibold text-white">
+                    {renderInline(item.title)}
+                  </span>
+                  {item.detail ? (
+                    <span className="text-[#ECECF1]">. {renderInline(item.detail)}</span>
+                  ) : null}
+                </li>
               ))}
-            </div>
+            </ul>
           );
         }
 
         if (block.type === "unordered-list") {
           return (
-            <ul key={`unordered-${index}`} className="space-y-2.5">
+            <ul
+              key={`unordered-${index}`}
+              className="list-disc space-y-3.5 pl-6 marker:text-slate-400"
+            >
               {block.items.map((item, itemIndex) => (
-                <li key={`${item}-${itemIndex}`} className="flex gap-3">
-                  <span
-                    aria-hidden="true"
-                    className="mt-[0.62rem] h-1.5 w-1.5 shrink-0 rounded-full bg-amber-300"
-                  />
-                  <span className="min-w-0 flex-1">{renderInline(item)}</span>
+                <li key={`${item}-${itemIndex}`} className="pl-1">
+                  {renderInline(item)}
                 </li>
               ))}
             </ul>
@@ -446,15 +427,13 @@ export default function AtlasMessageContent({
 
         if (block.type === "ordered-list") {
           return (
-            <ol key={`ordered-${index}`} className="space-y-2.5">
+            <ol
+              key={`ordered-${index}`}
+              className="list-decimal space-y-3.5 pl-6 marker:font-semibold marker:text-slate-400"
+            >
               {block.items.map((item, itemIndex) => (
-                <li key={`${item}-${itemIndex}`} className="flex gap-3">
-                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-amber-300/25 bg-amber-300/[0.08] text-[11px] font-semibold text-amber-200">
-                    {itemIndex + 1}
-                  </span>
-                  <span className="min-w-0 flex-1 pt-0.5">
-                    {renderInline(item)}
-                  </span>
+                <li key={`${item}-${itemIndex}`} className="pl-1">
+                  {renderInline(item)}
                 </li>
               ))}
             </ol>
@@ -473,7 +452,7 @@ export default function AtlasMessageContent({
         }
 
         return (
-          <p key={`paragraph-${index}`} className="max-w-[68ch] text-slate-300">
+          <p key={`paragraph-${index}`} className="max-w-[70ch] text-[#ECECF1]">
             {block.lines.map((line, lineIndex) => (
               <span key={`${line}-${lineIndex}`}>
                 {lineIndex > 0 ? " " : null}

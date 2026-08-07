@@ -460,24 +460,38 @@ Every response should help the user understand, decide, reflect or act more clea
 RESPONSE FORMAT
 =============================
 
-Make every response easy to scan.
+Write like a polished conversational assistant, not like a database, spreadsheet or report generator.
 
-Use short section headings only when they improve clarity.
+Make every response easy to scan on a phone.
 
-Keep normal paragraphs short.
+Use normal Markdown-style structure:
+- short paragraphs for explanation;
+- simple bullet points for several actions, options, exercises, requirements or recommendations;
+- numbered steps only when sequence matters;
+- short headings only when a longer answer genuinely needs sections;
+- bold only for useful labels or key phrases.
 
-Use bullets or numbered steps when presenting several actions, options or requirements.
+Every bullet or numbered item must be on its own line. Never run several items together inside one paragraph.
 
-For a schedule or day plan, put every time block on its own line using this exact structure:
-HH:MM–HH:MM | Short activity title | One concise explanation
+Never create table-like text. Never create column headers such as "Block / Exercise / Sets / Reps / Why it helps".
+
+Do not use the pipe character (|) in replies.
+
+Do not use em dashes, en dashes or hyphens as visual separators between fields or ideas. Hyphenated words are fine when grammatically necessary. Prefer a colon, full stop or a new line instead.
+
+For a schedule or day plan, use ordinary bullet points exactly like this:
+- **07:00 to 07:30:** Morning reset. One concise explanation.
+- **08:00 to 09:00:** Focus block. One concise explanation.
+
+Use "to" between schedule times instead of a dash.
 
 Keep day plans to a practical number of blocks. Do not turn them into a minute-by-minute wall of text.
 
-Do not use markdown tables for daily plans.
+Do not use markdown tables.
 
 Do not use decorative symbols, repeated punctuation, pseudo-code or visual clutter.
 
-Leave a blank line between major sections.
+Leave a blank line between paragraphs, sections and lists where it improves readability.
 `;
 
   return {
@@ -485,6 +499,61 @@ Leave a blank line between major sections.
 
     systemPrompt,
   };
+}
+
+function normalizeAtlasReplyFormatting(value: string) {
+  let normalized = value
+    .replace(/\r\n/g, "\n")
+    .replace(/[ \t]+$/gm, "")
+    .trim();
+
+  /*
+   * Keep Atlas conversational even if the model falls back to a legacy
+   * table-like schedule format. Time ranges become plain language, pipe
+   * schedules become normal Markdown bullets, and spaced dash separators are
+   * replaced with punctuation. Hyphens inside words are intentionally kept.
+   */
+  normalized = normalized.replace(
+    /(\b\d{1,2}(?::\d{2})?\s*(?:AM|PM)?)\s*[–—-]\s*(\d{1,2}(?::\d{2})?\s*(?:AM|PM)?\b)/gi,
+    "$1 to $2"
+  );
+
+  normalized = normalized.replace(
+    /(^|\n)\s*(\d{1,2}(?::\d{2})?\s*(?:AM|PM)?\s+to\s+\d{1,2}(?::\d{2})?\s*(?:AM|PM)?)\s*\|\s*([^|\n]+?)\s*\|\s*([^\n]+)/gi,
+    (_match, prefix, time, title, detail) =>
+      `${prefix}- **${time.trim()}:** ${title.trim()}. ${detail.trim()}`
+  );
+
+  normalized = normalized
+    .split("\n")
+    .filter(
+      (line) =>
+        !/^\s*(?:block|time)\s*[—–|/-]\s*(?:exercise|activity|focus)/i.test(line) &&
+        !/^\s*(?:block|time)\s+(?:exercise|activity|focus)\s+(?:sets|duration)/i.test(line)
+    )
+    .map((line) => {
+      const legacyColumns = line
+        .split(/\s+[—–]\s+/)
+        .map((part) => part.trim())
+        .filter(Boolean);
+
+      if (legacyColumns.length >= 3 && !/^[-*]\s/.test(line.trim())) {
+        const [label, ...details] = legacyColumns;
+        return `- **${label}:** ${details.join(". ")}`;
+      }
+
+      return line;
+    })
+    .join("\n");
+
+  normalized = normalized
+    .replace(/\s+\|\s+/g, ": ")
+    .replace(/\s+[—–]\s+/g, ": ")
+    .replace(/\s+to\s+/gi, " to ")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+
+  return normalized;
 }
 
 /*
@@ -546,7 +615,7 @@ Never describe an older mission as current.
 
 ${
   isDayPlanningRequest
-    ? `The user is asking for a fresh day plan. Use the CURRENT MISSION above only as silent live context so an old mission can never leak into the answer. Do NOT print, quote, label or restate the current mission or North Star. Do NOT add a "Current Mission" or "Mission" section. Do not reuse or continue an older day plan. Build a balanced, useful plan for today and let the live mission influence priorities only where it naturally belongs. Return a short heading followed by clearly separated time blocks using exactly: HH:MM–HH:MM | Short activity title | One concise explanation. Keep the plan readable and practical rather than exhaustive.`
+    ? `The user is asking for a fresh day plan. Use the CURRENT MISSION above only as silent live context so an old mission can never leak into the answer. Do NOT print, quote, label or restate the current mission or North Star. Do NOT add a "Current Mission" or "Mission" section. Do not reuse or continue an older day plan. Build a balanced, useful plan for today and let the live mission influence priorities only where it naturally belongs. Present the plan as clean Markdown-style bullet points. Put each time block on its own line using: - **07:00 to 07:30:** Short activity title. One concise explanation. Never use pipes, table columns, em-dash separators or en-dash separators. Keep the plan readable and practical rather than exhaustive.`
     : "Use the current mission above whenever the user's request depends on what they should be doing now, but do not repeat it unless doing so directly helps answer the user's question."
 }
 `;
@@ -662,6 +731,8 @@ ${
         `${reply.trimEnd()}\n\n${remainingReply.trimStart()}`;
     }
   }
+
+  reply = normalizeAtlasReplyFormatting(reply);
 
   const mission = atlas.activeMission ?? null;
 
