@@ -1,102 +1,118 @@
 "use client";
 
 import { motion } from "framer-motion";
+import {
+  ArrowRight,
+  Briefcase,
+  Compass,
+  DollarSign,
+  GraduationCap,
+  Globe2,
+  Handshake,
+  Landmark,
+  Laptop,
+  Palette,
+  RefreshCw,
+  Rocket,
+  Shirt,
+  Sprout,
+  TrendingUp,
+  Wrench,
+} from "lucide-react";
 
 type Props = {
   value: string;
-
   onSelect: (goal: string) => void;
-
   onNext: () => void;
 };
 
 const goals = [
   {
-    emoji: "💼",
+    icon: Briefcase,
     title: "Find a Job",
     description:
       "Find employment that matches your skills, interests and direction.",
   },
   {
-    emoji: "🌱",
+    icon: Sprout,
     title: "Find an Internship",
     description:
       "Build practical experience and strengthen your professional readiness.",
   },
   {
-    emoji: "🎓",
+    icon: GraduationCap,
     title: "Win a Scholarship",
     description:
       "Find funding for education, research or professional development.",
   },
   {
-    emoji: "🌍",
+    icon: Globe2,
     title: "Join a Fellowship",
     description:
       "Access leadership, research and professional growth programmes.",
   },
   {
-    emoji: "💰",
+    icon: DollarSign,
     title: "Find Grants or Funding",
     description:
       "Discover funding for a project, business, research or social initiative.",
   },
   {
-    emoji: "🚀",
+    icon: Rocket,
     title: "Build a Business",
     description:
       "Start, validate or grow a business that creates meaningful value.",
   },
   {
-    emoji: "🏦",
+    icon: Landmark,
     title: "Build a Finance Career",
     description:
       "Find opportunities and build skills across banking, accounting, investment or finance.",
   },
   {
-    emoji: "👗",
+    icon: Shirt,
     title: "Grow in Fashion",
     description:
       "Develop your fashion craft, brand, portfolio and access relevant industry opportunities.",
   },
   {
-    emoji: "🛠️",
+    icon: Wrench,
     title: "Learn New Skills",
     description:
       "Build valuable abilities that improve your future opportunities.",
   },
   {
-    emoji: "🔄",
+    icon: RefreshCw,
     title: "Change Careers",
     description:
       "Prepare for a deliberate transition into a new professional path.",
   },
   {
-    emoji: "📈",
+    icon: TrendingUp,
     title: "Advance My Career",
     description:
       "Earn greater responsibility, income, influence or leadership.",
   },
   {
-    emoji: "🧑‍💻",
+    icon: Laptop,
     title: "Grow My Freelance Career",
     description:
       "Build a stronger portfolio, find clients and grow independent income.",
   },
   {
-    emoji: "🎨",
+    icon: Palette,
     title: "Grow as a Creator",
     description:
       "Develop your craft, audience, portfolio and creative opportunities.",
   },
   {
-    emoji: "🤝",
+    icon: Handshake,
     title: "Build My Network",
     description:
       "Create valuable professional relationships, mentorships and partnerships.",
   },
   {
-    emoji: "🧭",
+    icon: Compass,
     title: "Discover My Purpose",
     description:
       "Gain clarity about who you are and what direction fits you best.",
@@ -110,17 +126,9 @@ export default function StepGoal({
 }: Props) {
   return (
     <motion.div
-      initial={{
-        opacity: 0,
-        x: 40,
-      }}
-      animate={{
-        opacity: 1,
-        x: 0,
-      }}
-      transition={{
-        duration: 0.5,
-      }}
+      initial={{ opacity: 0, x: 40 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ duration: 0.5 }}
     >
       <div className="mb-10 text-center">
         <p className="mb-4 text-sm uppercase tracking-[0.3em] text-blue-500">
@@ -139,16 +147,14 @@ export default function StepGoal({
 
       <div className="grid max-h-[60vh] gap-4 overflow-y-auto pr-2 md:grid-cols-2">
         {goals.map((goal) => {
-          const active =
-            value === goal.title;
+          const active = value === goal.title;
+          const Icon = goal.icon;
 
           return (
             <button
               key={goal.title}
               type="button"
-              onClick={() =>
-                onSelect(goal.title)
-              }
+              onClick={() => onSelect(goal.title)}
               aria-pressed={active}
               className={`rounded-3xl border p-6 text-left transition-all duration-300 ${
                 active
@@ -156,8 +162,14 @@ export default function StepGoal({
                   : "border-white/10 bg-white/5 hover:-translate-y-1 hover:border-blue-500/50 hover:bg-white/10"
               }`}
             >
-              <div className="mb-4 text-3xl">
-                {goal.emoji}
+              <div
+                className={`mb-4 flex h-11 w-11 items-center justify-center rounded-xl border ${
+                  active
+                    ? "border-blue-400/40 bg-blue-500/15 text-blue-200"
+                    : "border-white/10 bg-white/5 text-slate-300"
+                }`}
+              >
+                <Icon size={21} strokeWidth={1.8} aria-hidden="true" />
               </div>
 
               <h3 className="mb-2 text-xl font-semibold text-white">
@@ -177,9 +189,10 @@ export default function StepGoal({
           type="button"
           onClick={onNext}
           disabled={!value}
-          className="rounded-2xl bg-blue-600 px-8 py-4 font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
+          className="inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-8 py-4 font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          Continue →
+          Continue
+          <ArrowRight size={18} aria-hidden="true" />
         </button>
       </div>
     </motion.div>

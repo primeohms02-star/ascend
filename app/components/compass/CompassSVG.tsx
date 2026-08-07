@@ -1,14 +1,4 @@
-"use client";
-
-import {
-  motion,
-  useReducedMotion,
-} from "framer-motion";
-
 export default function CompassSVG() {
-  const reduceMotion =
-    useReducedMotion();
-
   /*
    * 120 precision marks create a realistic
    * instrument dial at three-degree intervals.
@@ -637,7 +627,8 @@ const y =
 
       {/* Animated directional scanning halo */}
 
-      <motion.circle
+      <circle
+        className="ascend-compass-scan-ring"
         cx="250"
         cy="250"
         r="115"
@@ -646,21 +637,8 @@ const y =
         strokeWidth="1.5"
         strokeDasharray="3 16"
         opacity="0.24"
-        animate={
-          reduceMotion
-            ? undefined
-            : {
-                rotate: 360,
-              }
-        }
-        transition={{
-          duration: 55,
-          repeat: Infinity,
-          ease: "linear",
-        }}
         style={{
-          transformOrigin:
-            "250px 250px",
+          transformOrigin: "250px 250px",
         }}
       />
 

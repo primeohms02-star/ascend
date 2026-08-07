@@ -1,3 +1,5 @@
+import { unstable_cache } from "next/cache";
+
 import type {
   RankedOpportunity,
 } from "./types";
@@ -26,6 +28,22 @@ import {
   rankOpportunities,
 } from "./intelligence";
 
+/*
+ * Opportunity source data is public and identical for every user.
+ * Cache the expensive connector sweep once and keep personalization
+ * (filtering, matching and ranking) user-specific.
+ */
+const loadOpportunitySources = unstable_cache(
+  async () => fetchAllSources(),
+  [
+    "atlas-opportunity-sources",
+    "v1",
+  ],
+  {
+    revalidate: 300,
+  }
+);
+
 export async function discoverOpportunities(
   profile:
     OpportunityProfile
@@ -38,7 +56,7 @@ export async function discoverOpportunities(
   );
 
   const opportunities =
-    await fetchAllSources();
+    await loadOpportunitySources();
 
   console.log(
     "Fetched:",

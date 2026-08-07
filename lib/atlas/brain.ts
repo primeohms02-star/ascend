@@ -67,12 +67,13 @@ import {
 export async function loadAtlasContext(
   clerkId: string
 ) {
-  const brain =
-    await getCurrentUserBrain(
-      clerkId
-    );
-
+  /*
+   * These reads are independent. Running the complete
+   * Atlas context in one parallel wave avoids waiting for
+   * the core brain before the remaining live context starts.
+   */
   const [
+    brain,
     onboardingContext,
     musicProfile,
     strategy,
@@ -86,6 +87,10 @@ export async function loadAtlasContext(
     memory,
     atlasMemories,
   ] = await Promise.all([
+    getCurrentUserBrain(
+      clerkId
+    ),
+
     loadOnboardingContext(
       clerkId
     ),

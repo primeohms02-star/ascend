@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { ArrowRight } from "lucide-react";
 
 type Props = {
   onNext: () => void;
@@ -31,9 +32,10 @@ export default function StepWelcome({ onNext }: Props) {
 
       <button
         onClick={onNext}
-        className="mt-14 rounded-2xl bg-blue-600 px-10 py-4 text-lg font-semibold text-white transition hover:bg-blue-500"
+        className="mt-14 inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-10 py-4 text-lg font-semibold text-white transition hover:bg-blue-500"
       >
-        Begin →
+        Begin
+        <ArrowRight size={19} aria-hidden="true" />
       </button>
     </motion.div>
   );

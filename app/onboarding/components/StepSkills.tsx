@@ -8,6 +8,8 @@ import {
   motion,
 } from "framer-motion";
 
+import { ArrowRight, Check, X } from "lucide-react";
+
 type Props = {
   value: string[];
 
@@ -261,7 +263,7 @@ export default function StepSkills({
                       aria-hidden="true"
                       className="mr-2 text-blue-300"
                     >
-                      ✓
+                      <Check size={13} strokeWidth={2.5} aria-hidden="true" />
                     </span>
                   )}
 
@@ -352,7 +354,7 @@ export default function StepSkills({
                     aria-hidden="true"
                     className="ml-2 opacity-60"
                   >
-                    ×
+                    <X size={13} strokeWidth={2.3} aria-hidden="true" />
                   </span>
                 </button>
               )
@@ -381,7 +383,10 @@ export default function StepSkills({
           }
           className="w-full rounded-2xl bg-blue-600 px-8 py-4 font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
         >
-          Continue →
+          <span className="inline-flex items-center gap-2">
+            Continue
+            <ArrowRight size={18} aria-hidden="true" />
+          </span>
         </button>
       </div>
     </motion.div>

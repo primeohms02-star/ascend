@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { ArrowRight } from "lucide-react";
 
 type Props = {
   value: string;
@@ -80,9 +81,10 @@ export default function StepNorthStar({
           disabled={
             value.trim().length < 20
           }
-          className="rounded-2xl bg-blue-600 px-8 py-4 font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
+          className="inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-8 py-4 font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          Build My Compass →
+          Build My Compass
+          <ArrowRight size={18} aria-hidden="true" />
         </button>
       </div>
     </motion.div>

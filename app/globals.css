@@ -84,3 +84,209 @@ select {
   animation: atlasOrb 5s linear infinite alternate;
 
 }
+
+/*
+ * Cross-device performance pass.
+ * Keep below-the-fold homepage sections out of the initial paint work
+ * until the browser approaches them. Browsers without content-visibility
+ * support simply ignore these declarations.
+ */
+#main-content > section:not(:first-child) {
+  content-visibility: auto;
+  contain-intrinsic-size: 800px;
+}
+
+/*
+ * Touch devices and compact screens are more sensitive to stacked
+ * backdrop filters and very large arbitrary blur layers. This applies
+ * the same restrained glass treatment across iOS, Android and tablets.
+ */
+@media (max-width: 1024px), (pointer: coarse) {
+  .backdrop-blur,
+  .backdrop-blur-sm,
+  .backdrop-blur-md,
+  .backdrop-blur-lg,
+  .backdrop-blur-xl,
+  .backdrop-blur-2xl,
+  .backdrop-blur-3xl {
+    -webkit-backdrop-filter: blur(8px) !important;
+    backdrop-filter: blur(8px) !important;
+  }
+
+  [class*="blur-["] {
+    filter: blur(56px) !important;
+  }
+}
+
+/* Homepage compass: CSS-only motion avoids a large client animation runtime. */
+.ascend-home-compass {
+  animation: ascendCompassEnter 700ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.ascend-compass-ring-cw {
+  animation: ascendCompassRotate 90s linear infinite;
+}
+
+.ascend-compass-ring-ccw,
+.ascend-compass-scan-ring {
+  animation: ascendCompassRotateReverse 120s linear infinite;
+}
+
+.ascend-compass-glow-slow {
+  animation: ascendCompassGlow 6s ease-in-out infinite;
+}
+
+.ascend-compass-glow-slower {
+  animation: ascendCompassGlowSoft 9s ease-in-out infinite;
+}
+
+.ascend-compass-glow-north,
+.ascend-compass-halo,
+.ascend-compass-jewel-pulse,
+.ascend-compass-beam {
+  animation: ascendCompassPulse 4.5s ease-in-out infinite;
+}
+
+.ascend-compass-north-marker {
+  animation: ascendCompassMarker 3.5s ease-in-out infinite;
+}
+
+.ascend-compass-light-sweep {
+  animation: ascendCompassSweep 15s ease-in-out infinite;
+}
+
+.ascend-compass-needle {
+  animation: ascendNeedleCalibrate 1.25s cubic-bezier(0.22, 1, 0.36, 1) both;
+  transform-origin: 50% 50%;
+}
+
+.ascend-compass-needle-drift {
+  animation: ascendNeedleDrift 12s 1.3s ease-in-out infinite;
+}
+
+.ascend-compass-needle[data-state="lost"] .ascend-compass-needle-drift {
+  animation-duration: 9s;
+}
+
+.ascend-compass-needle[data-state="growing"] .ascend-compass-needle-drift {
+  animation-name: ascendNeedleDriftSmall;
+}
+
+.ascend-compass-needle[data-state="ascending"] .ascend-compass-needle-drift {
+  animation-name: ascendNeedleDriftTiny;
+}
+
+.ascend-scroll-dot {
+  animation: ascendScrollDot 1.8s ease-in-out infinite;
+}
+
+@keyframes ascendCompassEnter {
+  from {
+    opacity: 0;
+    transform: scale(0.9) rotate(-4deg);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+@keyframes ascendCompassRotate {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes ascendCompassRotateReverse {
+  to {
+    transform: rotate(-360deg);
+  }
+}
+
+@keyframes ascendCompassGlow {
+  0%, 100% {
+    opacity: 0.72;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.035);
+  }
+}
+
+@keyframes ascendCompassGlowSoft {
+  0%, 100% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.86;
+    transform: scale(1.025);
+  }
+}
+
+@keyframes ascendCompassPulse {
+  0%, 100% {
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes ascendCompassMarker {
+  0%, 100% {
+    opacity: 0.62;
+    transform: translateX(-50%) scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: translateX(-50%) scale(1.06);
+  }
+}
+
+@keyframes ascendCompassSweep {
+  0%, 45%, 100% {
+    opacity: 0;
+    transform: translateX(0) rotate(18deg);
+  }
+  55% {
+    opacity: 0.55;
+  }
+  70% {
+    opacity: 0;
+    transform: translateX(720%) rotate(18deg);
+  }
+}
+
+@keyframes ascendNeedleCalibrate {
+  from {
+    transform: rotate(28deg);
+  }
+  to {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes ascendNeedleDrift {
+  0%, 100% { transform: rotate(0deg); }
+  28% { transform: rotate(-2.6deg); }
+  55% { transform: rotate(1.8deg); }
+  78% { transform: rotate(-0.8deg); }
+}
+
+@keyframes ascendNeedleDriftSmall {
+  0%, 100% { transform: rotate(0deg); }
+  35% { transform: rotate(-1.2deg); }
+  70% { transform: rotate(0.8deg); }
+}
+
+@keyframes ascendNeedleDriftTiny {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(0.45deg); }
+}
+
+@keyframes ascendScrollDot {
+  0%, 100% { transform: translateY(0); opacity: 0.7; }
+  50% { transform: translateY(12px); opacity: 1; }
+}

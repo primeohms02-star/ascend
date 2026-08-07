@@ -11,6 +11,8 @@ import {
   motion,
 } from "framer-motion";
 
+import { Compass } from "lucide-react";
+
 import type {
   OnboardingAnswers,
 } from "./types";
@@ -171,9 +173,12 @@ export default function StepBuilding({
         className="mx-auto mb-10 h-36 w-36"
       >
         <div className="flex h-full w-full items-center justify-center rounded-full border border-blue-500/30 bg-blue-500/5">
-          <span className="text-5xl">
-            🧭
-          </span>
+          <Compass
+            size={48}
+            strokeWidth={1.5}
+            className="text-blue-300"
+            aria-hidden="true"
+          />
         </div>
       </motion.div>
 

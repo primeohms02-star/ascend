@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { ArrowRight, Check } from "lucide-react";
 
 type Props = {
   value: string[];
@@ -118,7 +119,7 @@ export default function StepChallenge({
                         : "border-white/20 text-transparent"
                     }`}
                   >
-                    ✓
+                    <Check size={14} strokeWidth={2.4} aria-hidden="true" />
                   </span>
                 </span>
               </button>
@@ -140,7 +141,10 @@ export default function StepChallenge({
           }
           className="rounded-2xl bg-blue-600 px-8 py-4 font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          Continue →
+          <span className="inline-flex items-center gap-2">
+            Continue
+            <ArrowRight size={18} aria-hidden="true" />
+          </span>
         </button>
       </div>
     </motion.div>
