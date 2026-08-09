@@ -1,20 +1,12 @@
-import type {
-  Metadata,
-} from "next";
-
 import PublicPageShell from "@/app/components/PublicPageShell";
+import { createPublicPageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata = createPublicPageMetadata({
   title: "How It Works",
-
   description:
     "See how ASCEND transforms identity, goals and challenges into a North Star, strategic missions, relevant opportunities and measurable growth.",
-
-  alternates: {
-    canonical:
-      "https://ascendai.space/how-it-works",
-  },
-};
+  path: "/how-it-works",
+});
 
 const steps = [
   {
@@ -92,7 +84,7 @@ export default function HowItWorksPage() {
     >
       <section className="space-y-6">
         {steps.map(
-          (step, index) => (
+          (step) => (
             <article
               key={step.number}
               className="grid gap-6 rounded-3xl border border-white/10 bg-white/[0.03] p-7 md:grid-cols-[100px_minmax(0,1fr)_minmax(260px,0.7fr)] md:items-center md:p-9"

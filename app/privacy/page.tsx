@@ -1,22 +1,14 @@
-import type {
-  Metadata,
-} from "next";
-
 import Link from "next/link";
 
 import PublicPageShell from "@/app/components/PublicPageShell";
+import { createPublicPageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata = createPublicPageMetadata({
   title: "Privacy Policy",
-
   description:
     "Learn how ASCEND collects, uses, protects and manages personal information.",
-
-  alternates: {
-    canonical:
-      "https://ascendai.space/privacy",
-  },
-};
+  path: "/privacy",
+});
 
 const sections = [
   {

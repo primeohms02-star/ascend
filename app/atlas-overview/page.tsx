@@ -1,22 +1,14 @@
-import type {
-  Metadata,
-} from "next";
-
 import Link from "next/link";
 
 import PublicPageShell from "@/app/components/PublicPageShell";
+import { createPublicPageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata = createPublicPageMetadata({
   title: "Atlas Strategic Intelligence",
-
   description:
     "Discover Atlas, ASCEND's strategic intelligence for understanding direction, evaluating opportunities and making difficult decisions.",
-
-  alternates: {
-    canonical:
-      "https://ascendai.space/atlas-overview",
-  },
-};
+  path: "/atlas-overview",
+});
 
 const capabilities = [
   {

@@ -52,9 +52,7 @@ export async function GET() {
         : "You currently have no active mission. Complete onboarding so Atlas can understand your direction and prepare your first mission.";
 
     const notification = buildNotification({
-      profile,
       mission,
-      momentum,
       atlasProgress,
       opportunities: [],
     });

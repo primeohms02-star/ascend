@@ -5,28 +5,56 @@ export type AtlasNotification = {
   priority: number;
 };
 
-export function buildNotification(atlas: any): AtlasNotification | null {
-  const streak = atlas.momentum?.current_streak ?? 0;
-  const progress = atlas.profile?.progress ?? 0;
-  const mission = atlas.mission?.mission ?? "";
+type AtlasNotificationContext = {
+  mission?: {
+    id?: string | null;
+    mission?: string | null;
+    created_at?: string | null;
+  } | null;
+  atlasProgress?: {
+    ascension_score?: number | null;
+  } | null;
+  opportunities?: Array<{
+    title?: string | null;
+  }>;
+};
 
-  // Mission overdue
-  if (streak >= 5 && progress < 100) {
+const MISSION_CHECK_AGE_MS = 48 * 60 * 60 * 1000;
+
+export function buildNotification(
+  atlas: AtlasNotificationContext
+): AtlasNotification | null {
+  const missionTitle = atlas.mission?.mission?.trim() ?? "";
+  const missionCreatedAt = atlas.mission?.created_at
+    ? new Date(atlas.mission.created_at).getTime()
+    : Number.NaN;
+  const missionAge = Date.now() - missionCreatedAt;
+
+  // A check-in requires age evidence; a strong streak does not imply delay.
+  if (
+    missionTitle &&
+    Number.isFinite(missionCreatedAt) &&
+    missionAge >= MISSION_CHECK_AGE_MS
+  ) {
     return {
-      id: "mission-check",
+      id: `mission-check-${atlas.mission?.id ?? missionCreatedAt}`,
       title: "Mission Check-In",
-      message: `You've been working on "${mission}" for a while. What's blocking your progress?`,
+      message: `Your mission “${missionTitle}” is still active. What is blocking completion?`,
       priority: 100,
     };
   }
 
   // Level milestone
+  const ascensionScore = Number(
+    atlas.atlasProgress?.ascension_score ?? 0
+  );
+
   if (
-    atlas.atlasProgress?.ascension_score > 0 &&
-    atlas.atlasProgress.ascension_score % 100 === 0
+    ascensionScore > 0 &&
+    ascensionScore % 100 === 0
   ) {
     return {
-      id: "level-up",
+      id: `level-up-${ascensionScore}`,
       title: "Level Up",
       message: "Excellent work. Your consistency is transforming your identity.",
       priority: 90,
@@ -34,11 +62,13 @@ export function buildNotification(atlas: any): AtlasNotification | null {
   }
 
   // New opportunity
-  if (atlas.opportunities?.length > 0) {
+  const opportunityTitle = atlas.opportunities?.[0]?.title?.trim();
+
+  if (opportunityTitle) {
     return {
-      id: "opportunity",
+      id: `opportunity-${opportunityTitle.toLowerCase().replace(/\s+/g, "-")}`,
       title: "New Opportunity",
-      message: `I found something aligned with your journey: ${atlas.opportunities[0].title}`,
+      message: `I found something aligned with your journey: ${opportunityTitle}`,
       priority: 80,
     };
   }

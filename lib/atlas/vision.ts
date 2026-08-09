@@ -1,4 +1,7 @@
-import { GROQ_VISION_MODEL } from "@/lib/groq/config";
+import {
+  getGroqReasoningOptions,
+  GROQ_VISION_MODEL,
+} from "@/lib/groq/config";
 import { groq } from "@/lib/atlas/groq";
 
 export type AtlasImageInput = {
@@ -34,6 +37,7 @@ export async function analyzeAtlasImage({
 }) {
   const completion = await groq.chat.completions.create({
     model: GROQ_VISION_MODEL,
+    ...getGroqReasoningOptions(GROQ_VISION_MODEL),
     temperature: 0.2,
     max_completion_tokens: 500,
     messages: [
@@ -54,7 +58,7 @@ export async function analyzeAtlasImage({
           },
         ],
       },
-    ] as any,
+    ],
   });
 
   return (

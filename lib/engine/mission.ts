@@ -5,10 +5,6 @@ import {
 } from "./missionLibrary";
 
 import {
-  getCompletedMissionTitles,
-} from "@/lib/atlas/missionService";
-
-import {
   loadBrainState,
 } from "@/lib/atlas/loadBrainState";
 
@@ -28,7 +24,10 @@ import {
   loadOnboardingContext as loadStructuredOnboardingContext,
 } from "@/lib/atlas/onboardingContext";
 
-import { GROQ_MODEL } from "@/lib/groq/config";
+import {
+  getGroqReasoningOptions,
+  GROQ_MODEL,
+} from "@/lib/groq/config";
 
 export type DailyMission = {
   title: string;
@@ -556,14 +555,9 @@ export async function getDailyMission(
     MissionGenerationOptions = {}
 ): Promise<DailyMission> {
   const [
-    completedTitles,
     brain,
     missionContext,
   ] = await Promise.all([
-    getCompletedMissionTitles(
-      userId
-    ),
-
     loadBrainState(
       userId
     ),
@@ -572,6 +566,9 @@ export async function getDailyMission(
       userId
     ),
   ]);
+
+  const completedTitles =
+    brain.completedMissions;
 
   const path =
     getMissionPath(
@@ -691,11 +688,13 @@ export async function getDailyMission(
         model:
           GROQ_MODEL,
 
+        ...getGroqReasoningOptions(),
+
         temperature:
           0.35,
 
         max_completion_tokens:
-          260,
+          600,
 
         messages: [
           {

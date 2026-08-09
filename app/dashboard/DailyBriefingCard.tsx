@@ -14,7 +14,12 @@ export default function DailyBriefingCard({
   oracle,
 }: Props) {
   return (
-    <section className="relative overflow-hidden rounded-2xl border border-blue-500/20 bg-gradient-to-br from-[#0B1220] via-[#111827] to-[#0B1220] p-5 text-white shadow-lg shadow-blue-950/15 sm:p-6">
+    <section className="relative overflow-hidden rounded-2xl border border-blue-500/20 bg-gradient-to-br from-[#0B1220] via-[#111827] to-[#0B1220] p-5 text-white shadow-xl shadow-blue-950/20 sm:p-6">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -right-20 -top-20 h-52 w-52 rounded-full bg-blue-500/10 blur-3xl"
+      />
+
       <div className="relative">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>

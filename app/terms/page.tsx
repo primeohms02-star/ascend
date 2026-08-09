@@ -1,22 +1,14 @@
-import type {
-  Metadata,
-} from "next";
-
 import Link from "next/link";
 
 import PublicPageShell from "@/app/components/PublicPageShell";
+import { createPublicPageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata = createPublicPageMetadata({
   title: "Terms of Service",
-
   description:
     "Review the terms governing access to and use of the ASCEND platform.",
-
-  alternates: {
-    canonical:
-      "https://ascendai.space/terms",
-  },
-};
+  path: "/terms",
+});
 
 const sections = [
   {

@@ -1,4 +1,4 @@
-const siteUrl = "https://ascendai.space";
+import { SITE_URL } from "@/lib/seo";
 
 const structuredData = {
   "@context": "https://schema.org",
@@ -6,19 +6,52 @@ const structuredData = {
   "@graph": [
     {
       "@type": "Organization",
-      "@id": `${siteUrl}/#organization`,
+      "@id": `${SITE_URL}/#organization`,
 
       name: "ASCEND",
+      alternateName: "ASCEND AI",
 
-      url: siteUrl,
+      url: SITE_URL,
+      foundingDate: "2026-06",
+      email: "ascendaispace@gmail.com",
 
       logo: {
         "@type": "ImageObject",
-        url: `${siteUrl}/icon.png`,
+        "@id": `${SITE_URL}/#logo`,
+        url: `${SITE_URL}/ascend-navbar-logo.png`,
+        contentUrl: `${SITE_URL}/ascend-navbar-logo.png`,
+        width: 256,
+        height: 256,
+        caption: "ASCEND",
+      },
+
+      image: {
+        "@id": `${SITE_URL}/#logo`,
       },
 
       description:
-        "ASCEND is an Operating System for Human Potential.",
+        "ASCEND is an operating system for human potential that turns identity, goals and challenges into direction, strategic action and evidence of growth.",
+
+      founder: {
+        "@id": `${SITE_URL}/#founder`,
+      },
+
+      contactPoint: {
+        "@type": "ContactPoint",
+        contactType: "customer support",
+        url: `${SITE_URL}/contact`,
+        email: "ascendaispace@gmail.com",
+        availableLanguage: "English",
+      },
+
+      knowsAbout: [
+        "Purpose discovery",
+        "Personal development",
+        "Strategic decision support",
+        "Career direction",
+        "Opportunity discovery",
+        "Goal setting",
+      ],
 
       sameAs: [
         "https://x.com/Ascendai_space",
@@ -26,30 +59,56 @@ const structuredData = {
     },
 
     {
-      "@type": "WebSite",
-      "@id": `${siteUrl}/#website`,
+      "@type": "Person",
+      "@id": `${SITE_URL}/#founder`,
 
-      name: "ASCEND",
+      name: "Chukwudumebi Orakwue",
 
-      url: siteUrl,
+      url: `${SITE_URL}/about#leadership`,
 
-      description:
-        "An Operating System for Human Potential.",
+      jobTitle: "Founder & CEO",
 
-      publisher: {
-        "@id": `${siteUrl}/#organization`,
+      worksFor: {
+        "@id": `${SITE_URL}/#organization`,
       },
 
-      inLanguage: "en",
+      sameAs: [
+        "https://www.linkedin.com/in/chukwudumebi-orakwue-198230419/",
+      ],
     },
 
     {
-      "@type": "SoftwareApplication",
-      "@id": `${siteUrl}/#software`,
+      "@type": "WebSite",
+      "@id": `${SITE_URL}/#website`,
+
+      name: "ASCEND",
+      alternateName: "ASCEND AI",
+
+      url: SITE_URL,
+
+      description:
+        "ASCEND is an operating system for human potential that helps people turn uncertainty into direction, action and meaningful growth.",
+
+      publisher: {
+        "@id": `${SITE_URL}/#organization`,
+      },
+
+      inLanguage: "en",
+
+      potentialAction: {
+        "@type": "RegisterAction",
+        name: "Create an ASCEND account",
+        target: `${SITE_URL}/sign-up`,
+      },
+    },
+
+    {
+      "@type": "WebApplication",
+      "@id": `${SITE_URL}/#software`,
 
       name: "ASCEND",
 
-      url: siteUrl,
+      url: SITE_URL,
 
       applicationCategory:
         "LifestyleApplication",
@@ -77,10 +136,14 @@ const structuredData = {
       ],
 
       publisher: {
-        "@id": `${siteUrl}/#organization`,
+        "@id": `${SITE_URL}/#organization`,
       },
 
-      image: `${siteUrl}/icon.png`,
+      image: `${SITE_URL}/ascend-opengraph.png`,
+
+      isPartOf: {
+        "@id": `${SITE_URL}/#website`,
+      },
 
       inLanguage: "en",
     },

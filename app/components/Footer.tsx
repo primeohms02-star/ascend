@@ -46,6 +46,10 @@ const exploreLinks = [
     href: "/how-it-works",
   },
   {
+    label: "FAQ",
+    href: "/faq",
+  },
+  {
     label: "Roadmap",
     href: "/roadmap",
   },

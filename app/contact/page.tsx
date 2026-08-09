@@ -1,7 +1,3 @@
-import type {
-  Metadata,
-} from "next";
-
 import Link from "next/link";
 
 import {
@@ -13,18 +9,14 @@ import {
 } from "lucide-react";
 
 import PublicPageShell from "@/app/components/PublicPageShell";
+import { createPublicPageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata = createPublicPageMetadata({
   title: "Contact",
-
   description:
     "Contact ASCEND for product support, feedback, partnerships and other enquiries.",
-
-  alternates: {
-    canonical:
-      "https://ascendai.space/contact",
-  },
-};
+  path: "/contact",
+});
 
 const contactOptions = [
   {
@@ -47,8 +39,8 @@ const contactOptions = [
     title: "Partnerships",
     description:
       "Discuss institutional, educational, opportunity or development partnerships.",
-    href: "/support",
-    action: "Start a Conversation",
+    href: "mailto:ascendaispace@gmail.com",
+    action: "Email ASCEND",
     icon: Building2,
   },
   {

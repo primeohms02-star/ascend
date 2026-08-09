@@ -1,7 +1,6 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useEffect, useState } from "react";
 
 type Star = {
   left: number;
@@ -12,22 +11,26 @@ type Star = {
   delay: number;
 };
 
+function pseudoRandom(seed: number) {
+  const value = Math.sin(seed * 12.9898) * 43758.5453;
+
+  return value - Math.floor(value);
+}
+
+const stars: Star[] = Array.from({ length: 72 }, (_, index) => {
+  const seed = index + 1;
+
+  return {
+    left: pseudoRandom(seed) * 100,
+    top: pseudoRandom(seed + 100) * 100,
+    size: 1 + pseudoRandom(seed + 200) * 2,
+    opacity: pseudoRandom(seed + 300),
+    duration: 2 + pseudoRandom(seed + 400) * 6,
+    delay: pseudoRandom(seed + 500) * 5,
+  };
+});
+
 export default function AtlasBackground() {
-  const [stars, setStars] = useState<Star[]>([]);
-
-  useEffect(() => {
-    const generatedStars = Array.from({ length: 120 }).map(() => ({
-      left: Math.random() * 100,
-      top: Math.random() * 100,
-      size: 1 + Math.random() * 2,
-      opacity: Math.random(),
-      duration: 2 + Math.random() * 6,
-      delay: Math.random() * 5,
-    }));
-
-    setStars(generatedStars);
-  }, []);
-
   return (
     <div className="absolute inset-0 overflow-hidden">
 

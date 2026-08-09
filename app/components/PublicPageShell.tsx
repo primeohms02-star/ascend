@@ -30,6 +30,10 @@ const navigation = [
     href: "/atlas-overview",
   },
   {
+    label: "FAQ",
+    href: "/faq",
+  },
+  {
     label: "Roadmap",
     href: "/roadmap",
   },
@@ -154,6 +158,13 @@ export default function PublicPageShell({
               className="transition hover:text-white"
             >
               Contact
+            </Link>
+
+            <Link
+              href="/faq"
+              className="transition hover:text-white"
+            >
+              FAQ
             </Link>
 
             <Link

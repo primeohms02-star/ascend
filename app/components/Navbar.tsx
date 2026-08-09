@@ -31,6 +31,10 @@ const navigation = [
     href: "/how-it-works",
   },
   {
+    label: "FAQ",
+    href: "/faq",
+  },
+  {
     label: "Music",
     href: "/#ascend-music",
   },

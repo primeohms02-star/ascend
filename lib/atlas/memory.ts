@@ -85,8 +85,7 @@ export async function loadConversation(
 
 export async function saveUserMessage(
   clerkId: string,
-  message: string,
-  _profile: any
+  message: string
 ) {
   const { data, error } =
     await supabaseServer
@@ -115,8 +114,7 @@ export async function saveUserMessage(
 
 export async function saveAtlasReply(
   clerkId: string,
-  reply: string,
-  _profile: any
+  reply: string
 ) {
   const { data, error } =
     await supabaseServer

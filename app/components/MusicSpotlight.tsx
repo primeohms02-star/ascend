@@ -7,6 +7,10 @@ import {
 } from "@clerk/nextjs";
 
 import {
+  motion,
+} from "framer-motion";
+
+import {
   ArrowRight,
   AudioLines,
   Compass,
@@ -61,11 +65,28 @@ export default function MusicSpotlight() {
         aria-hidden="true"
         className="pointer-events-none absolute inset-0"
       >
+        <div className="absolute -left-40 top-20 h-[420px] w-[420px] rounded-full bg-fuchsia-600/10 blur-[150px]" />
+        <div className="absolute -right-32 bottom-0 h-[460px] w-[460px] rounded-full bg-violet-600/10 blur-[160px]" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.035)_1px,transparent_1px)] bg-[size:42px_42px] [mask-image:radial-gradient(circle_at_center,black,transparent_78%)]" />
       </div>
 
       <div className="relative mx-auto grid max-w-7xl items-center gap-10 lg:grid-cols-[0.92fr_1.08fr] lg:gap-20">
-        <div
+        <motion.div
+          initial={{
+            opacity: 0,
+            x: -24,
+          }}
+          whileInView={{
+            opacity: 1,
+            x: 0,
+          }}
+          viewport={{
+            once: true,
+            amount: 0.3,
+          }}
+          transition={{
+            duration: 0.65,
+          }}
         >
           <div className="inline-flex items-center gap-2 rounded-full border border-fuchsia-300/20 bg-fuchsia-400/10 px-4 py-2 text-sm font-semibold text-fuchsia-200">
             <Music2
@@ -121,16 +142,33 @@ export default function MusicSpotlight() {
 
             <Link
               href={userId ? "/opportunities?filter=Music" : "/sign-up"}
-              className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/5 px-6 py-3.5 font-semibold text-slate-200 transition hover:border-fuchsia-300/25 hover:bg-white/10 hover:text-white"
+              className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/5 px-6 py-3.5 font-semibold text-slate-200 backdrop-blur-xl transition hover:border-fuchsia-300/25 hover:bg-white/10 hover:text-white"
             >
               Explore Music Opportunities
             </Link>
           </div>
-        </div>
+        </motion.div>
 
-        <div
+        <motion.div
+          initial={{
+            opacity: 0,
+            y: 28,
+          }}
+          whileInView={{
+            opacity: 1,
+            y: 0,
+          }}
+          viewport={{
+            once: true,
+            amount: 0.25,
+          }}
+          transition={{
+            delay: 0.12,
+            duration: 0.7,
+          }}
           className="relative"
         >
+          <div className="absolute inset-10 rounded-full bg-fuchsia-500/15 blur-[90px]" />
 
           <div className="relative overflow-hidden rounded-3xl border border-fuchsia-300/15 bg-gradient-to-br from-fuchsia-500/[0.12] via-[#0B0A13]/95 to-cyan-500/[0.06] p-5 shadow-[0_0_100px_rgba(168,85,247,0.1)] sm:p-6">
             <div className="flex items-center justify-between gap-4 border-b border-white/[0.08] pb-5">
@@ -207,7 +245,7 @@ export default function MusicSpotlight() {
               </div>
             </div>
           </div>
-        </div>
+        </motion.div>
       </div>
     </section>
   );

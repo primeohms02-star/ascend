@@ -12,8 +12,8 @@ export default function GlobalHaptics() {
 
     const coarsePointer = window.matchMedia("(pointer: coarse)");
 
-    function handlePointerDown(event: PointerEvent) {
-      if (!coarsePointer.matches || event.pointerType === "mouse") {
+    function handleClick(event: MouseEvent) {
+      if (!coarsePointer.matches || event.detail === 0) {
         return;
       }
 
@@ -28,19 +28,25 @@ export default function GlobalHaptics() {
       }
 
       if (
+        interactive.closest('[data-haptic="off"]') ||
+        interactive.closest("[inert]") ||
         interactive.getAttribute("aria-disabled") === "true" ||
         (interactive instanceof HTMLButtonElement && interactive.disabled)
       ) {
         return;
       }
 
-      navigator.vibrate(8);
+      try {
+        navigator.vibrate(8);
+      } catch {
+        // Some browsers expose the API while blocking it in the current mode.
+      }
     }
 
-    document.addEventListener("pointerdown", handlePointerDown, { passive: true });
+    document.addEventListener("click", handleClick, { passive: true });
 
     return () => {
-      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("click", handleClick);
     };
   }, []);
 

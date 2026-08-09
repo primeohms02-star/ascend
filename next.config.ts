@@ -10,6 +10,8 @@ const privateRoutes = [
   "/atlas/:path*",
   "/mission-control/:path*",
   "/music/:path*",
+  "/opportunities/:path*",
+  "/support",
   "/support/admin/:path*",
   "/support/cases/:path*",
   "/sign-in/:path*",

@@ -94,39 +94,48 @@ function normalizeLine(rawLine: string) {
 }
 
 function prepareContent(content: string) {
-  let prepared = content.replace(/\r\n/g, "\n").trim();
+  return content
+    .replace(/\r\n/g, "\n")
+    .split(/(```[\s\S]*?```)/g)
+    .map((segment) => {
+      if (segment.startsWith("```")) {
+        return segment;
+      }
 
-  // Defensive cleanup for older replies or any malformed model output that
-  // reaches the renderer. Atlas should never expose raw table markers, empty
-  // Markdown headings or inline pseudo-table cells to the user.
-  prepared = prepared
-    .replace(/^\s*#{1,6}\s*$/gm, "")
-    .replace(/\bItem\s*:\s*Details\s*:?/gi, "")
-    .replace(/\bArea\s*;?\s*How it matches\s*;?\s*Gaps\s*\/\s*Things to verify\s*;?/gi, "")
-    .replace(/\bCriterion\s*:\s*Question\s*:\s*Score\s*\(\s*1\s*(?:to|[-–—])\s*5\s*\)\s*:?/gi, "")
-    .replace(/\s*\|\s*/g, "\n")
-    .replace(/;\s*(?=(?:Title|Type|Location|Sector|Core duties|Typical deliverables|Potential timeline|Key selling points|North Star|Current Mission|Mission|Primary Focus|Declared skills|Current challenges|Criterion|Question|Score|Recommendation|Next Step)\s*:)/gi, "\n")
-    .replace(/\s*•\s*/g, "\n• ")
-    .replace(/\b(\d+(?::\d{2})?\s*(?:AM|PM)?)\s*[–—-]\s*(\d+(?::\d{2})?\s*(?:AM|PM)?)\b/gi, "$1 to $2")
-    .replace(/([^\n])\s+[—–]\s+([^\n])/g, "$1. $2")
-    .replace(/([^\n])\s+-\s+([^\n])/g, "$1. $2")
-    .replace(/\n{3,}/g, "\n\n");
+      let prepared = segment;
 
-  // Legacy Atlas replies sometimes put multiple schedule entries on one line.
-  // Split them before parsing so old history also reads cleanly.
-  prepared = prepared.replace(
-    /\s+(?=\d{1,2}(?::\d{2})?\s*(?:AM|PM)?\s*(?:to|[–—-])\s*\d{1,2}(?::\d{2})?\s*(?:AM|PM)?\s*(?:\||[–—-]))/gi,
-    "\n"
-  );
+      // Defensive cleanup for older replies or malformed model output. Fenced
+      // code is handled by the parser unchanged and never enters this branch.
+      prepared = prepared
+        .replace(/^\s*#{1,6}\s*$/gm, "")
+        .replace(/\bItem\s*:\s*Details\s*:?/gi, "")
+        .replace(/\bArea\s*;?\s*How it matches\s*;?\s*Gaps\s*\/\s*Things to verify\s*;?/gi, "")
+        .replace(/\bCriterion\s*:\s*Question\s*:\s*Score\s*\(\s*1\s*(?:to|[-–—])\s*5\s*\)\s*:?/gi, "")
+        .replace(/;\s*(?=(?:Title|Type|Location|Sector|Core duties|Typical deliverables|Potential timeline|Key selling points|North Star|Current Mission|Mission|Primary Focus|Declared skills|Current challenges|Criterion|Question|Score|Recommendation|Next Step)\s*:)/gi, "\n")
+        .replace(/\s*•\s*/g, "\n• ")
+        .replace(/\b(\d+(?::\d{2})?\s*(?:AM|PM)?)\s*[–—-]\s*(\d+(?::\d{2})?\s*(?:AM|PM)?)\b/gi, "$1 to $2")
+        .replace(/([^\n])\s+[—–]\s+([^\n])/g, "$1. $2")
+        .replace(/([^\n])\s+-\s+([^\n])/g, "$1. $2")
+        .replace(/\n{3,}/g, "\n\n");
 
-  prepared = prepared.replace(
-    /\s+(?=(?:Primary North Star|North Star|Current Mission|Mission|Primary Focus|Today['’]s Focus|Recommendation|Next Step)\s*:)/gi,
-    "\n"
-  );
+      // Legacy Atlas replies sometimes put multiple schedule entries on one
+      // line. Split them before parsing so old history also reads cleanly.
+      prepared = prepared.replace(
+        /\s+(?=\d{1,2}(?::\d{2})?\s*(?:AM|PM)?\s*(?:to|[–—-])\s*\d{1,2}(?::\d{2})?\s*(?:AM|PM)?\s*(?:\||[–—-]))/gi,
+        "\n"
+      );
 
-  prepared = prepared.replace(/\s+(?=\d+[.)]\s+[A-Z])/g, "\n");
+      prepared = prepared.replace(
+        /\s+(?=(?:Primary North Star|North Star|Current Mission|Mission|Primary Focus|Today['’]s Focus|Recommendation|Next Step)\s*:)/gi,
+        "\n"
+      );
 
-  return prepared;
+      prepared = prepared.replace(/\s+(?=\d+[.)]\s+[A-Z])/g, "\n");
+
+      return prepared;
+    })
+    .join("")
+    .trim();
 }
 
 function tableRowToSentence(line: string) {

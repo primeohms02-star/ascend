@@ -20,7 +20,10 @@ import {
 
 import { loadMusicProfile } from "@/lib/music/profile";
 
-import { GROQ_MODEL } from "@/lib/groq/config";
+import {
+  getGroqReasoningOptions,
+  GROQ_MODEL,
+} from "@/lib/groq/config";
 
 import {
   groq,
@@ -60,6 +63,42 @@ import {
 import {
   loadCompassResults,
 } from "../compass/results";
+
+type AtlasConversationRole =
+  | "user"
+  | "assistant"
+  | "atlas";
+
+type StoredConversationMessage = {
+  role: AtlasConversationRole;
+  message: string;
+};
+
+type GroqConversationMessage = {
+  role: "system" | "user" | "assistant";
+  content: string;
+};
+
+function asRecord(
+  value: unknown
+): Record<string, unknown> {
+  return value !== null && typeof value === "object"
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
+function isStoredConversationMessage(
+  value: unknown
+): value is StoredConversationMessage {
+  const record = asRecord(value);
+
+  return (
+    (record.role === "user" ||
+      record.role === "assistant" ||
+      record.role === "atlas") &&
+    typeof record.message === "string"
+  );
+}
 
 /*
 |---------------------------------------------------------------------------
@@ -202,50 +241,76 @@ export async function buildAtlasContext(
   // longer consume prompt tokens on every reply.
   const compactFacts = (atlas.facts ?? [])
     .slice(0, 15)
-    .map((entry: any) => entry?.fact)
-    .filter(Boolean);
+    .map((entry: unknown) => asRecord(entry).fact)
+    .filter((fact): fact is string => typeof fact === "string" && fact.length > 0);
 
   const compactKnowledge = (atlas.knowledge ?? [])
     .slice(0, 15)
-    .map((entry: any) => ({
-      category: entry?.category ?? "general",
-      fact: entry?.fact ?? "",
-      confidence: entry?.confidence ?? null,
-    }))
-    .filter((entry: any) => entry.fact);
+    .map((entry: unknown) => {
+      const record = asRecord(entry);
+
+      return {
+        category: typeof record.category === "string" ? record.category : "general",
+        fact: typeof record.fact === "string" ? record.fact : "",
+        confidence: record.confidence ?? null,
+      };
+    })
+    .filter((entry) => entry.fact.length > 0);
+
+  const reflectionRecord = asRecord(atlas.reflection);
 
   const compactReflection = atlas.reflection
     ? {
-        reflection: (atlas.reflection as any).reflection ?? "",
-        confidence: (atlas.reflection as any).confidence ?? null,
+        reflection:
+          typeof reflectionRecord.reflection === "string"
+            ? reflectionRecord.reflection
+            : "",
+        confidence: reflectionRecord.confidence ?? null,
       }
     : null;
+
+  const momentumRecord = asRecord(atlas.momentum);
 
   const compactMomentum = atlas.momentum
     ? {
-        current_streak: (atlas.momentum as any).current_streak ?? 0,
-        longest_streak: (atlas.momentum as any).longest_streak ?? 0,
-        completed_missions: (atlas.momentum as any).completed_missions ?? 0,
-        skipped_missions: (atlas.momentum as any).skipped_missions ?? 0,
-        ascension_score: (atlas.momentum as any).ascension_score ?? ascensionScore,
+        current_streak: Number(momentumRecord.current_streak ?? 0),
+        longest_streak: Number(momentumRecord.longest_streak ?? 0),
+        completed_missions: Number(momentumRecord.completed_missions ?? 0),
+        skipped_missions: Number(momentumRecord.skipped_missions ?? 0),
+        ascension_score: Number(momentumRecord.ascension_score ?? ascensionScore),
       }
     : null;
 
+  const compassResultsRecord = asRecord(atlas.compassResults);
+
   const compactCompassResults = atlas.compassResults
     ? {
-        direction: (atlas.compassResults as any).direction ?? "",
-        north_star: (atlas.compassResults as any).north_star ?? "",
-        next_step: (atlas.compassResults as any).next_step ?? "",
+        direction:
+          typeof compassResultsRecord.direction === "string"
+            ? compassResultsRecord.direction
+            : "",
+        north_star:
+          typeof compassResultsRecord.north_star === "string"
+            ? compassResultsRecord.north_star
+            : "",
+        next_step:
+          typeof compassResultsRecord.next_step === "string"
+            ? compassResultsRecord.next_step
+            : "",
       }
     : null;
 
   const compactCompassAnswers = (atlas.compassAnswers ?? [])
     .slice(0, 12)
-    .map((entry: any) => ({
-      question_id: entry?.question_id,
-      answer: entry?.answer ?? "",
-    }))
-    .filter((entry: any) => entry.answer);
+    .map((entry: unknown) => {
+      const record = asRecord(entry);
+
+      return {
+        question_id: record.question_id,
+        answer: typeof record.answer === "string" ? record.answer : "",
+      };
+    })
+    .filter((entry) => entry.answer.length > 0);
 
   const systemPrompt = `
 You are ATLAS, the strategic intelligence inside ASCEND.
@@ -708,12 +773,7 @@ export async function runAtlasBrain({
     isDayPlanningRequest
       ? []
       : (atlas.memory ?? [])
-          .filter(
-            (storedMessage: any) =>
-              storedMessage.role === "user" ||
-              storedMessage.role === "assistant" ||
-              storedMessage.role === "atlas"
-          )
+          .filter(isStoredConversationMessage)
           .slice(-8);
 
   const liveStateReminder = `
@@ -744,7 +804,7 @@ This context describes what the user is currently looking at inside ASCEND. Trea
 `
     : "";
 
-  const conversation = [
+  const conversation: GroqConversationMessage[] = [
     {
       role:
         "system" as const,
@@ -754,11 +814,8 @@ This context describes what the user is currently looking at inside ASCEND. Trea
     },
 
     ...relevantHistory.map(
-      (storedMessage: any) => ({
-        role:
-          storedMessage.role === "atlas"
-            ? "assistant"
-            : storedMessage.role,
+      (storedMessage): GroqConversationMessage => ({
+        role: storedMessage.role === "user" ? "user" : "assistant",
 
         content:
           storedMessage.message,
@@ -787,16 +844,18 @@ This context describes what the user is currently looking at inside ASCEND. Trea
       model:
         GROQ_MODEL,
 
+      ...getGroqReasoningOptions(),
+
       temperature:
         0.35,
 
       max_completion_tokens:
         /\b(?:detailed|comprehensive|thorough|deep dive|in detail|full breakdown)\b/i.test(message)
-          ? 1000
-          : 850,
+          ? 2200
+          : 1400,
 
       messages:
-        conversation as any,
+        conversation,
     });
 
   const firstChoice =
@@ -819,11 +878,13 @@ This context describes what the user is currently looking at inside ASCEND. Trea
         model:
           GROQ_MODEL,
 
+        ...getGroqReasoningOptions(),
+
         temperature:
           0.35,
 
         max_completion_tokens:
-          600,
+          1200,
 
         messages: [
           ...conversation,
@@ -843,7 +904,7 @@ This context describes what the user is currently looking at inside ASCEND. Trea
             content:
               "Continue exactly from where your previous response stopped. Do not repeat anything already written. Finish the answer and end with a complete sentence.",
           },
-        ] as any,
+        ],
       });
 
     const remainingReply =
@@ -898,10 +959,12 @@ export async function extractPermanentMemory(
       model:
         GROQ_MODEL,
 
+      ...getGroqReasoningOptions(),
+
       temperature: 0,
 
       max_completion_tokens:
-        120,
+        320,
 
       messages: [
         {
@@ -990,10 +1053,12 @@ export async function generateMission(
       model:
         GROQ_MODEL,
 
+      ...getGroqReasoningOptions(),
+
       temperature: 0,
 
       max_completion_tokens:
-        220,
+        520,
 
       messages: [
         {
@@ -1065,14 +1130,11 @@ ${userMessage}
 
 export async function persistAtlasResponse({
   clerkId,
-  profile,
   userMessage,
   reply,
   fact,
 }: {
   clerkId: string;
-
-  profile: any;
 
   userMessage: string;
 
@@ -1080,14 +1142,19 @@ export async function persistAtlasResponse({
 
   fact: string;
 }) {
-  const writes: Promise<unknown>[] = [
-    saveUserMessage(clerkId, userMessage, profile),
-    saveAtlasReply(clerkId, reply, profile),
-  ];
+  const factWrite =
+    fact && fact.toUpperCase() !== "NONE"
+      ? saveFact(clerkId, fact).catch((error) => {
+          console.error("Save Atlas Permanent Fact Error:", error);
+          return null;
+        })
+      : Promise.resolve(null);
 
-  if (fact && fact.toUpperCase() !== "NONE") {
-    writes.push(saveFact(clerkId, fact));
-  }
-
-  await Promise.all(writes);
+  // Preserve turn order in history. Parallel inserts can receive timestamps
+  // close enough to make a user message and its reply appear out of sequence.
+  await saveUserMessage(clerkId, userMessage);
+  await Promise.all([
+    saveAtlasReply(clerkId, reply),
+    factWrite,
+  ]);
 }

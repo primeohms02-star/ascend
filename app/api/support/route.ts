@@ -4,7 +4,10 @@ import { auth } from "@clerk/nextjs/server";
 
 import Groq from "groq-sdk";
 
-import { GROQ_MODEL } from "@/lib/groq/config";
+import {
+  getGroqReasoningOptions,
+  GROQ_MODEL,
+} from "@/lib/groq/config";
 
 import {
   classifySupportRequest,
@@ -225,10 +228,12 @@ export async function POST(
             model:
               GROQ_MODEL,
 
+            ...getGroqReasoningOptions(),
+
             temperature: 0.2,
 
             max_completion_tokens:
-              500,
+              900,
 
             messages: [
               {

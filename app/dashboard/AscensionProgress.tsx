@@ -36,7 +36,12 @@ export default function AscensionProgress({
   );
 
   return (
-    <section className="relative overflow-hidden rounded-2xl border border-blue-400/20 bg-gradient-to-br from-blue-400/[0.08] via-slate-900/80 to-slate-950 p-5 shadow-lg shadow-blue-950/15">
+    <section className="relative overflow-hidden rounded-2xl border border-blue-400/20 bg-gradient-to-br from-blue-400/[0.08] via-slate-900/80 to-slate-950 p-5 shadow-xl shadow-blue-950/20">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -bottom-20 -left-20 h-52 w-52 rounded-full bg-blue-500/10 blur-3xl"
+      />
+
       <div className="relative">
         {/* Header */}
 
@@ -80,7 +85,7 @@ export default function AscensionProgress({
 
           <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-800">
             <div
-              className="h-full rounded-full bg-gradient-to-r from-blue-500 to-cyan-300 transition-[width] duration-500"
+              className="h-full rounded-full bg-gradient-to-r from-blue-500 to-cyan-300 transition-all duration-700"
               style={{
                 width: `${ascension.progressPercent}%`,
               }}

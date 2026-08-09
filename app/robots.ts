@@ -2,27 +2,23 @@ import type {
   MetadataRoute,
 } from "next";
 
-export default function robots(): MetadataRoute.Robots {
-  const siteUrl =
-    "https://ascendai.space";
+import { SITE_URL } from "@/lib/seo";
 
+export default function robots(): MetadataRoute.Robots {
   return {
     rules: [
       {
         userAgent: "*",
 
-        allow: [
-          "/",
-          "/support",
-          "/opportunities",
-        ],
+        allow: "/",
 
         disallow: [
           "/api/",
           "/dashboard",
           "/onboarding",
           "/compass",
-          "/atlas",
+          "/atlas$",
+          "/atlas/",
           "/mission-control",
           "/music",
           "/support/admin",
@@ -36,8 +32,8 @@ export default function robots(): MetadataRoute.Robots {
     ],
 
     sitemap:
-      `${siteUrl}/sitemap.xml`,
+      `${SITE_URL}/sitemap.xml`,
 
-    host: siteUrl,
+    host: SITE_URL,
   };
 }

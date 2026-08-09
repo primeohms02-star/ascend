@@ -3,8 +3,12 @@ import AppShell from "./AppShell";
 export default function AppRouteLoading({ label = "Loading" }: { label?: string }) {
   return (
     <AppShell>
-      <main className="min-h-screen bg-gradient-to-br from-[#020617] via-[#08111f] to-[#0f172a]">
-        <div className="mx-auto max-w-6xl px-5 py-7 sm:px-6 sm:py-9">
+      <main
+        aria-busy="true"
+        aria-live="polite"
+        className="min-h-screen bg-gradient-to-br from-[#020617] via-[#08111f] to-[#0f172a]"
+      >
+        <div className="mx-auto max-w-6xl animate-pulse px-5 py-7 sm:px-6 sm:py-9">
           <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-cyan-300">
             {label}
           </p>

@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 
 import {
   ChartNoAxesCombined,
@@ -115,22 +115,12 @@ function NavigationLink({
   pathname: string;
   onNavigate?: () => void;
 }) {
-  const router = useRouter();
   const active = item.isActive(pathname);
   const Icon = item.icon;
-
-  const warmRoute = () => {
-    if (item.href.startsWith("/")) {
-      router.prefetch(item.href);
-    }
-  };
 
   return (
     <Link
       href={item.href}
-      prefetch
-      onPointerEnter={warmRoute}
-      onTouchStart={warmRoute}
       onClick={onNavigate}
       aria-current={active ? "page" : undefined}
       className={`group flex min-h-11 items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-colors duration-150 ${
@@ -147,12 +137,34 @@ function NavigationLink({
 
 export default function AppNavigation() {
   const pathname = usePathname();
-  const router = useRouter();
   const [moreOpen, setMoreOpen] = useState(false);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const moreButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    setMoreOpen(false);
-  }, [pathname]);
+    if (!moreOpen) {
+      return;
+    }
+
+    const previousOverflow = document.body.style.overflow;
+    const moreButton = moreButtonRef.current;
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setMoreOpen(false);
+      }
+    }
+
+    document.body.style.overflow = "hidden";
+    document.addEventListener("keydown", handleKeyDown);
+    closeButtonRef.current?.focus();
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", handleKeyDown);
+      moreButton?.focus();
+    };
+  }, [moreOpen]);
 
   const moreIsActive =
     moreOpen ||
@@ -166,7 +178,6 @@ export default function AppNavigation() {
         <div className="flex h-20 items-center border-b border-white/[0.07] px-5">
           <Link
             href="/dashboard"
-            prefetch
             className="flex items-center gap-3"
             aria-label="ASCEND dashboard"
           >
@@ -228,16 +239,23 @@ export default function AppNavigation() {
       {moreOpen && (
         <div className="fixed inset-0 z-50 bg-black/65 lg:hidden" onClick={() => setMoreOpen(false)}>
           <div
+            id="ascend-more-navigation"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="ascend-more-navigation-title"
             className="absolute inset-x-3 bottom-[calc(5.6rem+env(safe-area-inset-bottom))] overflow-hidden rounded-[26px] border border-cyan-300/10 bg-gradient-to-b from-[#0B1422] to-[#070C14] p-3 shadow-[0_24px_70px_rgba(0,0,0,0.58)]"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-white/15" aria-hidden="true" />
             <div className="flex items-center justify-between px-2 pb-2">
               <div>
-                <p className="text-sm font-semibold text-white">More of ASCEND</p>
+                <p id="ascend-more-navigation-title" className="text-sm font-semibold text-white">
+                  More of ASCEND
+                </p>
                 <p className="mt-0.5 text-xs text-slate-500">Direction, action and the rest of your journey.</p>
               </div>
               <button
+                ref={closeButtonRef}
                 type="button"
                 onClick={() => setMoreOpen(false)}
                 aria-label="Close more navigation"
@@ -284,9 +302,6 @@ export default function AppNavigation() {
               <Link
                 key={item.label}
                 href={item.href}
-                prefetch
-                onPointerEnter={() => router.prefetch(item.href)}
-                onTouchStart={() => router.prefetch(item.href)}
                 aria-current={active ? "page" : undefined}
                 className={`relative flex min-h-[58px] flex-col items-center justify-center gap-1 rounded-[17px] text-[10px] font-semibold transition-colors duration-150 ${
                   active
@@ -307,9 +322,12 @@ export default function AppNavigation() {
           })}
 
           <button
+            ref={moreButtonRef}
             type="button"
             onClick={() => setMoreOpen((current) => !current)}
             aria-expanded={moreOpen}
+            aria-controls="ascend-more-navigation"
+            aria-haspopup="dialog"
             className={`relative flex min-h-[58px] flex-col items-center justify-center gap-1 rounded-[17px] text-[10px] font-semibold transition-colors duration-150 ${
               moreIsActive
                 ? "bg-cyan-400/[0.09] text-cyan-200"
@@ -322,7 +340,11 @@ export default function AppNavigation() {
                 className="absolute top-1.5 h-0.5 w-5 rounded-full bg-cyan-300/80"
               />
             )}
-            <Menu size={19} strokeWidth={moreIsActive ? 2 : 1.75} aria-hidden="true" />
+            {moreOpen ? (
+              <X size={19} strokeWidth={2} aria-hidden="true" />
+            ) : (
+              <Menu size={19} strokeWidth={moreIsActive ? 2 : 1.75} aria-hidden="true" />
+            )}
             <span>More</span>
           </button>
         </div>

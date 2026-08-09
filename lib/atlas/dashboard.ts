@@ -69,7 +69,14 @@ export async function getProgressSnapshot(clerkId: string) {
   ]);
 
   const ascension = calculateAscension(Number(progressRecord?.ascension_score ?? 0));
-  const completeTimeline = buildTimeline(atlasMemories as any);
+  const timelineMemories = atlasMemories.filter(
+    (
+      memory
+    ): memory is typeof memory & {
+      created_at: string;
+    } => typeof memory.created_at === "string"
+  );
+  const completeTimeline = buildTimeline(timelineMemories);
   const currentStreak = Number(momentum?.current_streak ?? 0);
 
   return {
@@ -95,13 +102,12 @@ export async function getAtlasDashboard(clerkId: string) {
    * conversation/knowledge/strategy context here made every dashboard visit
    * perform many database reads that the page never renders.
    */
-  const [storedProfile, currentMission, progressRecord, momentum, atlasMemories] =
+  const [storedProfile, currentMission, progressRecord, momentum] =
     await Promise.all([
       getProfile(clerkId),
       getActiveMission(clerkId),
       getProgress(clerkId),
       getMomentum(clerkId),
-      loadAtlasMemories(clerkId),
     ]);
 
   const profile = storedProfile ?? fallbackProfile(clerkId);
@@ -144,9 +150,6 @@ export async function getAtlasDashboard(clerkId: string) {
       href: "/onboarding",
     };
   }
-
-  const completeTimeline = buildTimeline(atlasMemories as any);
-  const timelinePreview = completeTimeline.slice(0, 3);
 
   const journey = profile.journey ?? "Purpose Discovery";
   const northStar = profile.north_star ?? "";
@@ -206,8 +209,6 @@ export async function getAtlasDashboard(clerkId: string) {
 
     profile,
     recommendations: [recommendedNext],
-    timeline: timelinePreview,
-    timelineTotal: completeTimeline.length,
     completedMissionCount: Number(momentum?.completed_missions ?? 0),
   };
 }

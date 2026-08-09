@@ -1,20 +1,12 @@
-import type {
-  Metadata,
-} from "next";
-
 import PublicPageShell from "@/app/components/PublicPageShell";
+import { createPublicPageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata = createPublicPageMetadata({
   title: "About",
-
   description:
     "Learn why ASCEND exists and how it helps people discover purpose, define direction and continually ascend toward their highest potential.",
-
-  alternates: {
-    canonical:
-      "https://ascendai.space/about",
-  },
-};
+  path: "/about",
+});
 
 const principles = [
   {
@@ -92,6 +84,29 @@ export default function AboutPage() {
             opportunities, action and growth.
           </p>
         </article>
+      </section>
+
+      <section
+        id="leadership"
+        aria-label="ASCEND company information"
+        className="mt-6 scroll-mt-28 rounded-3xl border border-white/10 bg-white/[0.025] p-6 sm:p-8"
+      >
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
+          Founded in June 2026
+        </p>
+
+        <p className="mt-3 max-w-4xl text-sm leading-7 text-slate-400 sm:text-base">
+          ASCEND was founded to build a calmer, more intentional relationship
+          between human potential and technology—one centred on direction,
+          meaningful action and evidence of growth.
+        </p>
+
+        <p className="mt-6 border-t border-white/[0.08] pt-5 text-sm leading-7 text-slate-400">
+          <span className="font-semibold text-white">
+            Chukwudumebi Orakwue
+          </span>{" "}
+          — Founder &amp; CEO at ASCEND
+        </p>
       </section>
 
       <section className="mt-20">

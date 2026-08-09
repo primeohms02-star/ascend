@@ -1,9 +1,13 @@
 import { groq } from "./client";
-import { GROQ_MODEL } from "./config";
+import {
+  getGroqReasoningOptions,
+  GROQ_MODEL,
+} from "./config";
 
 export async function askGroq(prompt: string) {
   const completion = await groq.chat.completions.create({
     model: GROQ_MODEL,
+    ...getGroqReasoningOptions(),
     messages: [
       {
         role: "user",

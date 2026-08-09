@@ -16,6 +16,14 @@ import {
 } from "@/lib/atlas/vision";
 
 function shouldExtractPermanentMemory(message: string) {
+  if (
+    /\b(?:password|passcode|security answer|secret key|api[- ]?key|one[- ]time (?:password|code)|otp|pin|cvv|credit card|debit card|bank account|bvn|nin|social security number)\b/i.test(
+      message
+    )
+  ) {
+    return false;
+  }
+
   return /\b(?:my (?:long[- ]term )?(?:goal|goals|values|preference|preferences|career|ambition|ambitions)|i (?:prefer|value|work as|study|have experience in|am skilled in)|i['’]m (?:a|an)|i am (?:a|an)|i want to become|i plan to become)\b/i.test(
     message
   );
@@ -54,7 +62,10 @@ export async function POST(request: NextRequest) {
       typeof body.context === "string" ? body.context.trim().slice(0, 2200) : "";
 
     const factPromise = shouldExtractPermanentMemory(cleanMessage)
-      ? extractPermanentMemory(cleanMessage)
+      ? extractPermanentMemory(cleanMessage).catch((error) => {
+          console.error("Atlas Permanent Memory Extraction Error:", error);
+          return "NONE";
+        })
       : Promise.resolve("NONE");
 
     let visualContext = "";
@@ -95,7 +106,6 @@ export async function POST(request: NextRequest) {
 
     await persistAtlasResponse({
       clerkId: userId,
-      profile: atlasResult.profile,
       userMessage: cleanMessage,
       reply: atlasResult.reply,
       fact,

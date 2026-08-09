@@ -46,6 +46,14 @@ const allowedImageTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
 const maxSourceImageBytes = 12 * 1024 * 1024;
 const maxEncodedImageLength = 3_700_000;
 
+function isSafeAtlasReturnPath(value: string) {
+  return (
+    value.startsWith("/") &&
+    !value.startsWith("//") &&
+    !value.startsWith("/atlas")
+  );
+}
+
 function readFileAsDataUrl(file: File) {
   return new Promise<string>((resolve, reject) => {
     const reader = new FileReader();
@@ -261,14 +269,14 @@ export default function AtlasPage() {
       setSurfaceContext((storedSurface || contextualSurface || "").slice(0, 2200));
     }
 
-    if (storedReturnTo.startsWith("/") && !storedReturnTo.startsWith("/atlas")) {
+    if (isSafeAtlasReturnPath(storedReturnTo)) {
       setReturnTo(storedReturnTo);
     }
   }, []);
 
   function handleBack() {
     if (returnTo) {
-      router.back();
+      router.replace(returnTo);
       return;
     }
 
@@ -451,6 +459,7 @@ export default function AtlasPage() {
 
       setAttachment(null);
       setAttachmentError("");
+      setSurfaceContext("");
     } catch (error) {
       console.error("Atlas Conversation Error:", error);
 
