@@ -14,28 +14,59 @@ type PublicPageShellProps = {
 
 const navigation = [
   {
-    label: "About",
-    href: "/about",
+    label:
+      "About",
+
+    href:
+      "/about",
   },
+
   {
-    label: "Features",
-    href: "/features",
+    label:
+      "Founder",
+
+    href:
+      "/founder",
   },
+
   {
-    label: "How It Works",
-    href: "/how-it-works",
+    label:
+      "Features",
+
+    href:
+      "/features",
   },
+
   {
-    label: "Atlas",
-    href: "/atlas-overview",
+    label:
+      "How It Works",
+
+    href:
+      "/how-it-works",
   },
+
   {
-    label: "FAQ",
-    href: "/faq",
+    label:
+      "Atlas",
+
+    href:
+      "/atlas-overview",
   },
+
   {
-    label: "Roadmap",
-    href: "/roadmap",
+    label:
+      "FAQ",
+
+    href:
+      "/faq",
+  },
+
+  {
+    label:
+      "Roadmap",
+
+    href:
+      "/roadmap",
   },
 ];
 
@@ -51,7 +82,6 @@ export default function PublicPageShell({
         aria-hidden="true"
         className="pointer-events-none absolute inset-0"
       >
-
         <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.018)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.018)_1px,transparent_1px)] bg-[size:72px_72px] [mask-image:radial-gradient(circle_at_top,black,transparent_75%)]" />
       </div>
 
@@ -80,13 +110,21 @@ export default function PublicPageShell({
             className="hidden items-center gap-7 lg:flex"
           >
             {navigation.map(
-              (item) => (
+              (
+                item
+              ) => (
                 <Link
-                  key={item.href}
-                  href={item.href}
+                  key={
+                    item.href
+                  }
+                  href={
+                    item.href
+                  }
                   className="text-sm font-medium text-slate-400 transition hover:text-white"
                 >
-                  {item.label}
+                  {
+                    item.label
+                  }
                 </Link>
               )
             )}
@@ -107,7 +145,10 @@ export default function PublicPageShell({
             href="/"
             className="inline-flex min-h-11 items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-5 py-2.5 text-sm font-medium text-slate-300 transition hover:border-cyan-400/40 hover:bg-white/[0.08] hover:text-white focus:outline-none focus:ring-2 focus:ring-cyan-400/50"
           >
-            <span aria-hidden="true">←</span>
+            <span aria-hidden="true">
+              ←
+            </span>
+
             Back to Home
           </Link>
         </div>
@@ -139,6 +180,13 @@ export default function PublicPageShell({
           </p>
 
           <div className="flex flex-wrap gap-5">
+            <Link
+              href="/founder"
+              className="transition hover:text-white"
+            >
+              Founder
+            </Link>
+
             <Link
               href="/privacy"
               className="transition hover:text-white"

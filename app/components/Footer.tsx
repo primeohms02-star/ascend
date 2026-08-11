@@ -5,27 +5,40 @@ import {
   ArrowUpRight,
 } from "lucide-react";
 
+import {
+  ASCEND_INSTAGRAM_URL,
+  ASCEND_LINKEDIN_URL,
+  ASCEND_TIKTOK_URL,
+  ASCEND_X_URL,
+  ASCEND_YOUTUBE_URL,
+} from "@/lib/seo";
+
 const productLinks = [
   {
     label: "Compass",
     href: "/compass",
   },
+
   {
     label: "Atlas",
     href: "/atlas-overview",
   },
+
   {
     label: "Missions",
     href: "/dashboard#mission",
   },
+
   {
     label: "Opportunities",
     href: "/opportunities",
   },
+
   {
     label: "Momentum",
     href: "/dashboard#momentum",
   },
+
   {
     label: "ASCEND Music",
     href: "/#ascend-music",
@@ -37,36 +50,95 @@ const exploreLinks = [
     label: "About ASCEND",
     href: "/about",
   },
+
+  {
+    label: "Founder",
+    href: "/founder",
+  },
+
   {
     label: "Features",
     href: "/features",
   },
+
   {
     label: "How It Works",
     href: "/how-it-works",
   },
+
   {
     label: "FAQ",
     href: "/faq",
   },
+
   {
     label: "Roadmap",
     href: "/roadmap",
   },
+
   {
     label: "Contact",
     href: "/contact",
   },
 ];
 
+const socialLinks = [
+  {
+    label:
+      "LinkedIn",
+
+    href:
+      ASCEND_LINKEDIN_URL,
+  },
+
+  {
+    label:
+      "X",
+
+    href:
+      ASCEND_X_URL,
+  },
+
+  {
+    label:
+      "Instagram",
+
+    href:
+      ASCEND_INSTAGRAM_URL,
+  },
+
+  {
+    label:
+      "TikTok",
+
+    href:
+      ASCEND_TIKTOK_URL,
+  },
+
+  {
+    label:
+      "YouTube",
+
+    href:
+      ASCEND_YOUTUBE_URL,
+  },
+];
+
 const trustLinks = [
   {
-    label: "Privacy Policy",
-    href: "/privacy",
+    label:
+      "Privacy Policy",
+
+    href:
+      "/privacy",
   },
+
   {
-    label: "Terms of Service",
-    href: "/terms",
+    label:
+      "Terms of Service",
+
+    href:
+      "/terms",
   },
 ];
 
@@ -76,7 +148,6 @@ export default function Footer() {
       id="contact"
       className="relative overflow-hidden border-t border-white/[0.08] bg-[#030509] px-6 pb-10 pt-20"
     >
-
       <div className="relative mx-auto max-w-7xl">
         <div className="grid gap-14 md:grid-cols-2 lg:grid-cols-[1.5fr_1fr_1fr_1fr]">
           <div>
@@ -121,13 +192,23 @@ export default function Footer() {
 
             <ul className="mt-6 space-y-4">
               {productLinks.map(
-                (item) => (
-                  <li key={item.label}>
+                (
+                  item
+                ) => (
+                  <li
+                    key={
+                      item.label
+                    }
+                  >
                     <Link
-                      href={item.href}
+                      href={
+                        item.href
+                      }
                       className="text-sm text-slate-400 transition hover:text-blue-300"
                     >
-                      {item.label}
+                      {
+                        item.label
+                      }
                     </Link>
                   </li>
                 )
@@ -142,13 +223,23 @@ export default function Footer() {
 
             <ul className="mt-6 space-y-4">
               {exploreLinks.map(
-                (item) => (
-                  <li key={item.label}>
+                (
+                  item
+                ) => (
+                  <li
+                    key={
+                      item.label
+                    }
+                  >
                     <Link
-                      href={item.href}
+                      href={
+                        item.href
+                      }
                       className="text-sm text-slate-400 transition hover:text-blue-300"
                     >
-                      {item.label}
+                      {
+                        item.label
+                      }
                     </Link>
                   </li>
                 )
@@ -175,30 +266,54 @@ export default function Footer() {
                 </Link>
               </li>
 
-              <li>
-                <a
-                  href="https://x.com/Ascendai_space"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 text-sm text-slate-400 transition hover:text-white"
-                >
-                  Follow on X
+              {socialLinks.map(
+                (
+                  item
+                ) => (
+                  <li
+                    key={
+                      item.label
+                    }
+                  >
+                    <a
+                      href={
+                        item.href
+                      }
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 text-sm text-slate-400 transition hover:text-white"
+                    >
+                      {
+                        item.label
+                      }
 
-                  <ArrowUpRight
-                    size={14}
-                    aria-hidden="true"
-                  />
-                </a>
-              </li>
+                      <ArrowUpRight
+                        size={14}
+                        aria-hidden="true"
+                      />
+                    </a>
+                  </li>
+                )
+              )}
 
               {trustLinks.map(
-                (item) => (
-                  <li key={item.label}>
+                (
+                  item
+                ) => (
+                  <li
+                    key={
+                      item.label
+                    }
+                  >
                     <Link
-                      href={item.href}
+                      href={
+                        item.href
+                      }
                       className="text-sm text-slate-400 transition hover:text-blue-300"
                     >
-                      {item.label}
+                      {
+                        item.label
+                      }
                     </Link>
                   </li>
                 )
@@ -220,8 +335,8 @@ export default function Footer() {
           </p>
 
           <p>
-            Every meaningful journey begins with
-            direction.
+            Every meaningful journey begins
+            with direction.
           </p>
         </div>
       </div>

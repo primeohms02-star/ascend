@@ -1,31 +1,52 @@
-import PublicPageShell from "@/app/components/PublicPageShell";
-import { createPublicPageMetadata } from "@/lib/seo";
+import Link from "next/link";
 
-export const metadata = createPublicPageMetadata({
-  title: "About",
-  description:
-    "Learn why ASCEND exists and how it helps people discover purpose, define direction and continually ascend toward their highest potential.",
-  path: "/about",
-});
+import PublicPageShell from "@/app/components/PublicPageShell";
+
+import {
+  createPublicPageMetadata,
+} from "@/lib/seo";
+
+export const metadata =
+  createPublicPageMetadata({
+    title:
+      "About",
+
+    description:
+      "Learn why ASCEND exists, who founded it and how it helps people discover purpose, define direction and continually ascend toward their highest potential.",
+
+    path:
+      "/about",
+  });
 
 const principles = [
   {
-    title: "Purpose before productivity",
+    title:
+      "Purpose before productivity",
+
     description:
       "ASCEND begins with who you are and the future you want to build—not an endless list of disconnected tasks.",
   },
+
   {
-    title: "Direction before action",
+    title:
+      "Direction before action",
+
     description:
       "Every mission should connect to a meaningful North Star and move your life in a deliberate direction.",
   },
+
   {
-    title: "Transformation before engagement",
+    title:
+      "Transformation before engagement",
+
     description:
       "Success is measured by meaningful progress, stronger judgment and evidence of growth—not time spent inside the platform.",
   },
+
   {
-    title: "Guidance without control",
+    title:
+      "Guidance without control",
+
     description:
       "Atlas helps you think clearly and act strategically while preserving your independence and personal judgment.",
   },
@@ -56,7 +77,8 @@ export default function AboutPage() {
           </p>
 
           <h2 className="mt-5 text-3xl font-bold tracking-tight text-white">
-            Help every person discover their purpose and define their direction.
+            Help every person discover their
+            purpose and define their direction.
           </h2>
 
           <p className="mt-6 text-base leading-8 text-slate-400">
@@ -73,7 +95,8 @@ export default function AboutPage() {
           </p>
 
           <h2 className="mt-5 text-3xl font-bold tracking-tight text-white">
-            An Operating System for Human Potential.
+            An Operating System for Human
+            Potential.
           </h2>
 
           <p className="mt-6 text-base leading-8 text-slate-400">
@@ -96,17 +119,28 @@ export default function AboutPage() {
         </p>
 
         <p className="mt-3 max-w-4xl text-sm leading-7 text-slate-400 sm:text-base">
-          ASCEND was founded to build a calmer, more intentional relationship
-          between human potential and technology—one centred on direction,
-          meaningful action and evidence of growth.
+          ASCEND was founded to build a calmer,
+          more intentional relationship between
+          human potential and technology—one
+          centred on direction, meaningful action
+          and evidence of growth.
         </p>
 
-        <p className="mt-6 border-t border-white/[0.08] pt-5 text-sm leading-7 text-slate-400">
-          <span className="font-semibold text-white">
-            Chukwudumebi Orakwue
-          </span>{" "}
-          — Founder &amp; CEO at ASCEND
-        </p>
+        <div className="mt-6 border-t border-white/[0.08] pt-5">
+          <p className="text-sm leading-7 text-slate-400">
+            <span className="font-semibold text-white">
+              Chukwudumebi Orakwue
+            </span>{" "}
+            — Founder &amp; CEO of ASCEND
+          </p>
+
+          <Link
+            href="/founder"
+            className="mt-4 inline-flex min-h-11 items-center rounded-xl border border-cyan-400/20 bg-cyan-400/[0.07] px-5 py-2.5 text-sm font-semibold text-cyan-300 transition hover:border-cyan-400/40 hover:bg-cyan-400/[0.11] hover:text-cyan-200"
+          >
+            View Founder Profile →
+          </Link>
+        </div>
       </section>
 
       <section className="mt-20">
@@ -116,19 +150,25 @@ export default function AboutPage() {
           </p>
 
           <h2 className="mt-5 text-3xl font-bold tracking-tight text-white sm:text-4xl">
-            Every meaningful life follows a hierarchy.
+            Every meaningful life follows a
+            hierarchy.
           </h2>
         </div>
 
         <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {journey.map(
-            (item, index) => (
+            (
+              item,
+              index
+            ) => (
               <div
                 key={item}
                 className="relative rounded-2xl border border-white/10 bg-slate-950/60 p-6"
               >
                 <p className="text-xs font-semibold text-cyan-300">
-                  {String(index + 1).padStart(
+                  {String(
+                    index + 1
+                  ).padStart(
                     2,
                     "0"
                   )}
@@ -150,23 +190,32 @@ export default function AboutPage() {
           </p>
 
           <h2 className="mt-5 text-3xl font-bold tracking-tight text-white sm:text-4xl">
-            What we build must remain worthy of the people who trust it.
+            What we build must remain worthy
+            of the people who trust it.
           </h2>
         </div>
 
         <div className="mt-10 grid gap-5 md:grid-cols-2">
           {principles.map(
-            (principle) => (
+            (
+              principle
+            ) => (
               <article
-                key={principle.title}
+                key={
+                  principle.title
+                }
                 className="rounded-2xl border border-white/10 bg-white/[0.03] p-7"
               >
                 <h3 className="text-xl font-semibold text-white">
-                  {principle.title}
+                  {
+                    principle.title
+                  }
                 </h3>
 
                 <p className="mt-4 leading-7 text-slate-400">
-                  {principle.description}
+                  {
+                    principle.description
+                  }
                 </p>
               </article>
             )

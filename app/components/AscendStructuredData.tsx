@@ -1,47 +1,99 @@
-import { SITE_URL } from "@/lib/seo";
+import {
+  ASCEND_CONTACT_EMAIL,
+  ASCEND_INSTAGRAM_URL,
+  ASCEND_LINKEDIN_URL,
+  ASCEND_TIKTOK_URL,
+  ASCEND_X_URL,
+  ASCEND_YOUTUBE_URL,
+  FOUNDER_ID,
+  FOUNDER_LINKEDIN_URL,
+  FOUNDER_NAME,
+  FOUNDER_URL,
+  LOGO_PATH,
+  ORGANIZATION_ID,
+  SITE_URL,
+  SOFTWARE_ID,
+  WEBSITE_ID,
+} from "@/lib/seo";
 
 const structuredData = {
-  "@context": "https://schema.org",
+  "@context":
+    "https://schema.org",
 
   "@graph": [
     {
-      "@type": "Organization",
-      "@id": `${SITE_URL}/#organization`,
+      "@type":
+        "Organization",
 
-      name: "ASCEND",
-      alternateName: "ASCEND AI",
+      "@id":
+        ORGANIZATION_ID,
 
-      url: SITE_URL,
-      foundingDate: "2026-06",
-      email: "ascendaispace@gmail.com",
+      name:
+        "ASCEND",
+
+      alternateName:
+        "ASCEND AI",
+
+      url:
+        SITE_URL,
+
+      foundingDate:
+        "2026-06",
+
+      email:
+        ASCEND_CONTACT_EMAIL,
 
       logo: {
-        "@type": "ImageObject",
-        "@id": `${SITE_URL}/#logo`,
-        url: `${SITE_URL}/ascend-navbar-logo.png`,
-        contentUrl: `${SITE_URL}/ascend-navbar-logo.png`,
-        width: 256,
-        height: 256,
-        caption: "ASCEND",
+        "@type":
+          "ImageObject",
+
+        "@id":
+          `${SITE_URL}/#logo`,
+
+        url:
+          `${SITE_URL}${LOGO_PATH}`,
+
+        contentUrl:
+          `${SITE_URL}${LOGO_PATH}`,
+
+        width:
+          256,
+
+        height:
+          256,
+
+        caption:
+          "ASCEND",
       },
 
       image: {
-        "@id": `${SITE_URL}/#logo`,
+        "@id":
+          `${SITE_URL}/#logo`,
       },
 
       description:
-        "ASCEND is an operating system for human potential that turns identity, goals and challenges into direction, strategic action and evidence of growth.",
+        "ASCEND is an operating system for human potential that connects purpose, direction, strategic intelligence, meaningful action, opportunity discovery and evidence of growth.",
 
       founder: {
-        "@id": `${SITE_URL}/#founder`,
+        "@id":
+          FOUNDER_ID,
       },
 
       contactPoint: {
-        "@type": "ContactPoint",
-        contactType: "customer support",
-        url: `${SITE_URL}/contact`,
-        email: "ascendaispace@gmail.com",
-        availableLanguage: "English",
+        "@type":
+          "ContactPoint",
+
+        contactType:
+          "customer support",
+
+        url:
+          `${SITE_URL}/contact`,
+
+        email:
+          ASCEND_CONTACT_EMAIL,
+
+        availableLanguage:
+          "English",
       },
 
       knowsAbout: [
@@ -51,64 +103,111 @@ const structuredData = {
         "Career direction",
         "Opportunity discovery",
         "Goal setting",
+        "Human potential",
+        "Personal growth",
+        "Artificial intelligence",
       ],
 
       sameAs: [
-        "https://x.com/Ascendai_space",
+        ASCEND_LINKEDIN_URL,
+        ASCEND_X_URL,
+        ASCEND_INSTAGRAM_URL,
+        ASCEND_TIKTOK_URL,
+        ASCEND_YOUTUBE_URL,
       ],
     },
 
     {
-      "@type": "Person",
-      "@id": `${SITE_URL}/#founder`,
+      "@type":
+        "Person",
 
-      name: "Chukwudumebi Orakwue",
+      "@id":
+        FOUNDER_ID,
 
-      url: `${SITE_URL}/about#leadership`,
+      name:
+        FOUNDER_NAME,
 
-      jobTitle: "Founder & CEO",
+      givenName:
+        "Chukwudumebi",
 
-      worksFor: {
-        "@id": `${SITE_URL}/#organization`,
-      },
+      familyName:
+        "Orakwue",
 
-      sameAs: [
-        "https://www.linkedin.com/in/chukwudumebi-orakwue-198230419/",
-      ],
-    },
+      url:
+        FOUNDER_URL,
 
-    {
-      "@type": "WebSite",
-      "@id": `${SITE_URL}/#website`,
-
-      name: "ASCEND",
-      alternateName: "ASCEND AI",
-
-      url: SITE_URL,
+      jobTitle:
+        "Founder & Chief Executive Officer",
 
       description:
-        "ASCEND is an operating system for human potential that helps people turn uncertainty into direction, action and meaningful growth.",
+        "Chukwudumebi Orakwue is the Founder and Chief Executive Officer of ASCEND, an operating system for human potential.",
 
-      publisher: {
-        "@id": `${SITE_URL}/#organization`,
+      worksFor: {
+        "@id":
+          ORGANIZATION_ID,
       },
 
-      inLanguage: "en",
+      sameAs: [
+        FOUNDER_LINKEDIN_URL,
+      ],
 
-      potentialAction: {
-        "@type": "RegisterAction",
-        name: "Create an ASCEND account",
-        target: `${SITE_URL}/sign-up`,
+      mainEntityOfPage: {
+        "@id":
+          `${FOUNDER_URL}#profile-page`,
       },
     },
 
     {
-      "@type": "WebApplication",
-      "@id": `${SITE_URL}/#software`,
+      "@type":
+        "WebSite",
 
-      name: "ASCEND",
+      "@id":
+        WEBSITE_ID,
 
-      url: SITE_URL,
+      name:
+        "ASCEND",
+
+      alternateName:
+        "ascendai.space",
+
+      url:
+        SITE_URL,
+
+      description:
+        "ASCEND is an operating system for human potential that helps people turn uncertainty into direction, strategic action and meaningful growth.",
+
+      publisher: {
+        "@id":
+          ORGANIZATION_ID,
+      },
+
+      inLanguage:
+        "en",
+
+      potentialAction: {
+        "@type":
+          "RegisterAction",
+
+        name:
+          "Create an ASCEND account",
+
+        target:
+          `${SITE_URL}/sign-up`,
+      },
+    },
+
+    {
+      "@type":
+        "WebApplication",
+
+      "@id":
+        SOFTWARE_ID,
+
+      name:
+        "ASCEND",
+
+      url:
+        SITE_URL,
 
       applicationCategory:
         "LifestyleApplication",
@@ -116,7 +215,8 @@ const structuredData = {
       applicationSubCategory:
         "Personal Development and Strategic Guidance",
 
-      operatingSystem: "Web",
+      operatingSystem:
+        "Web",
 
       browserRequirements:
         "Requires a modern web browser and internet connection.",
@@ -127,25 +227,36 @@ const structuredData = {
       featureList: [
         "Purpose and identity discovery",
         "North Star direction setting",
-        "Strategic daily missions",
-        "Atlas decision intelligence",
+        "Strategic missions",
+        "Atlas strategic intelligence",
         "Personalized opportunity discovery",
+        "Atlas Decision support",
         "Progress and momentum tracking",
         "Reflection and long-term memory",
+        "ASCEND Music",
         "Support AI",
       ],
 
       publisher: {
-        "@id": `${SITE_URL}/#organization`,
+        "@id":
+          ORGANIZATION_ID,
       },
 
-      image: `${SITE_URL}/ascend-opengraph.png`,
+      provider: {
+        "@id":
+          ORGANIZATION_ID,
+      },
+
+      image:
+        `${SITE_URL}/ascend-opengraph.png`,
 
       isPartOf: {
-        "@id": `${SITE_URL}/#website`,
+        "@id":
+          WEBSITE_ID,
       },
 
-      inLanguage: "en",
+      inLanguage:
+        "en",
     },
   ],
 };
@@ -155,9 +266,13 @@ export default function AscendStructuredData() {
     <script
       type="application/ld+json"
       dangerouslySetInnerHTML={{
-        __html: JSON.stringify(
-          structuredData
-        ).replace(/</g, "\\u003c"),
+        __html:
+          JSON.stringify(
+            structuredData
+          ).replace(
+            /</g,
+            "\\u003c"
+          ),
       }}
     />
   );
