@@ -1,70 +1,53 @@
-import {
-  revalidateTag,
-  unstable_cache,
-} from "next/cache";
+import { revalidateTag, unstable_cache } from "next/cache";
 
-import {
-  buildOpportunityProfile,
-} from "./build-profile";
+import { buildOpportunityProfile } from "./build-profile";
 
-import {
-  discoverOpportunities,
-} from "./engine";
+import { discoverOpportunities } from "./engine";
 
-import {
-  recordImpression,
-} from "./impressions";
+import { recordImpression } from "./impressions";
 
-import {
-  rotateOpportunities,
-} from "./rotation";
+import { rotateOpportunities } from "./rotation";
 
-import type {
-  OpportunityProfile,
-} from "./profile";
+import type { OpportunityProfile } from "./profile";
 
-import type {
-  RankedOpportunity,
-} from "./types";
+import type { RankedOpportunity } from "./types";
 
 const DEFAULT_PAGE_SIZE = 10;
 const MAX_PAGE_SIZE = 25;
 
-const SNAPSHOT_VERSION = "v14";
+const SNAPSHOT_VERSION = "v15";
 
-const SNAPSHOT_DURATION_SECONDS =
-  900;
+const SNAPSHOT_WINDOW_SECONDS = 900;
 
-const SNAPSHOT_DURATION_MS =
-  SNAPSHOT_DURATION_SECONDS *
-  1000;
+const SNAPSHOT_WINDOW_MS = SNAPSHOT_WINDOW_SECONDS * 1000;
+
+const SNAPSHOT_RETENTION_SECONDS = 86_400;
+
+const SNAPSHOT_RETENTION_MS = SNAPSHOT_RETENTION_SECONDS * 1000;
+
+const SNAPSHOT_RETENTION_WINDOWS = Math.ceil(
+  SNAPSHOT_RETENTION_SECONDS / SNAPSHOT_WINDOW_SECONDS,
+);
 
 type OpportunitySnapshot = {
-  opportunities:
-    RankedOpportunity[];
+  opportunities: RankedOpportunity[];
 
-  profile:
-    OpportunityProfile;
+  profile: OpportunityProfile;
 };
 
 type MemorySnapshot = {
-  snapshot:
-    OpportunitySnapshot;
+  snapshot: OpportunitySnapshot;
 
   expiresAt: number;
 };
 
-const memorySnapshots =
-  new Map<
-    string,
-    MemorySnapshot
-  >();
+type SnapshotOpportunity = RankedOpportunity & {
+  snapshotId?: string;
+};
 
-const snapshotRequests =
-  new Map<
-    string,
-    Promise<OpportunitySnapshot>
-  >();
+const memorySnapshots = new Map<string, MemorySnapshot>();
+
+const snapshotRequests = new Map<string, Promise<OpportunitySnapshot>>();
 
 export type OpportunityPageOptions = {
   page?: number;
@@ -77,11 +60,9 @@ export type OpportunityPageOptions = {
 };
 
 export type OpportunityPageResult = {
-  opportunities:
-    RankedOpportunity[];
+  opportunities: RankedOpportunity[];
 
-  profile:
-    OpportunityProfile;
+  profile: OpportunityProfile;
 
   total: number;
 
@@ -94,56 +75,72 @@ export type OpportunityPageResult = {
   hasNextPage: boolean;
 
   hasPreviousPage: boolean;
+
+  snapshotId: string;
 };
 
-function normalize(
-  value?: string
-): string {
-  return (
-    value
-      ?.trim()
-      .toLowerCase() ?? ""
-  );
+function normalize(value?: string): string {
+  return value?.trim().toLowerCase() ?? "";
 }
 
-function getSnapshotKey(
-  clerkId: string
-): string {
-  return `${SNAPSHOT_VERSION}:${clerkId}`;
+function getCurrentSnapshotId(): string {
+  return String(Math.floor(Date.now() / SNAPSHOT_WINDOW_MS));
 }
 
-function getSnapshotTag(
-  clerkId: string
-): string {
+function normalizeSnapshotId(value?: string): string | null {
+  if (!value) {
+    return null;
+  }
+
+  const parsed = Number.parseInt(value.trim(), 10);
+
+  const current = Number.parseInt(getCurrentSnapshotId(), 10);
+
+  if (
+    !Number.isSafeInteger(parsed) ||
+    String(parsed) !== value.trim() ||
+    parsed > current + 1 ||
+    current - parsed > SNAPSHOT_RETENTION_WINDOWS
+  ) {
+    return null;
+  }
+
+  return String(parsed);
+}
+
+function getSnapshotKey(clerkId: string, snapshotId: string): string {
+  return `${SNAPSHOT_VERSION}:${clerkId}:${snapshotId}`;
+}
+
+function getSnapshotTag(clerkId: string): string {
   return `atlas-opportunities-${clerkId}`;
 }
 
-export function invalidateOpportunitySnapshot(
-  clerkId: string
-) {
-  const snapshotKey =
-    getSnapshotKey(
-      clerkId
-    );
+function pruneExpiredMemorySnapshots() {
+  const now = Date.now();
 
-  memorySnapshots.delete(
-    snapshotKey
-  );
-
-  revalidateTag(
-    getSnapshotTag(
-      clerkId
-    ),
-    {
-      expire: 0,
+  for (const [key, memorySnapshot] of memorySnapshots) {
+    if (memorySnapshot.expiresAt <= now) {
+      memorySnapshots.delete(key);
     }
-  );
+  }
 }
 
-function buildSearchableText(
-  opportunity:
-    RankedOpportunity
-): string {
+export function invalidateOpportunitySnapshot(clerkId: string) {
+  const snapshotPrefix = `${SNAPSHOT_VERSION}:${clerkId}:`;
+
+  for (const key of memorySnapshots.keys()) {
+    if (key.startsWith(snapshotPrefix)) {
+      memorySnapshots.delete(key);
+    }
+  }
+
+  revalidateTag(getSnapshotTag(clerkId), {
+    expire: 0,
+  });
+}
+
+function buildSearchableText(opportunity: RankedOpportunity): string {
   return [
     opportunity.title,
     opportunity.company,
@@ -151,392 +148,248 @@ function buildSearchableText(
     opportunity.category,
     opportunity.location,
     opportunity.source,
-    ...(
-      opportunity.tags ?? []
-    ),
+    ...(opportunity.tags ?? []),
   ]
     .filter(Boolean)
     .join(" ")
     .toLowerCase();
 }
 
-function isNigeriaOpportunity(
-  opportunity:
-    RankedOpportunity
-): boolean {
-  const searchable =
-    buildSearchableText(
-      opportunity
-    );
+function isNigeriaOpportunity(opportunity: RankedOpportunity): boolean {
+  const searchable = buildSearchableText(opportunity);
 
-  return (
-    searchable.includes(
-      "nigeria"
-    ) ||
-    searchable.includes(
-      "nigerian"
-    )
-  );
+  return searchable.includes("nigeria") || searchable.includes("nigerian");
 }
 
-function isAfricaOpportunity(
-  opportunity:
-    RankedOpportunity
-): boolean {
-  const searchable =
-    buildSearchableText(
-      opportunity
-    );
+function isAfricaOpportunity(opportunity: RankedOpportunity): boolean {
+  const searchable = buildSearchableText(opportunity);
 
-  const source =
-    normalize(
-      opportunity.source
-    );
+  const source = normalize(opportunity.source);
 
   return (
-    isNigeriaOpportunity(
-      opportunity
-    ) ||
-    source ===
-      "opportunitydesk" ||
-    source ===
-      "opportunityforafrica" ||
-    source ===
-      "opportunitiesforafricans" ||
-    source ===
-      "musicinafrica" ||
-    source ===
-      "trybeafrica" ||
-    source ===
-      "fatefoundation" ||
-    source ===
-      "nigeriafinance" ||
-    source ===
-      "africanfashionfoundation" ||
-    searchable.includes(
-      "africa"
-    ) ||
-    searchable.includes(
-      "african"
-    )
+    isNigeriaOpportunity(opportunity) ||
+    source === "opportunitydesk" ||
+    source === "opportunityforafrica" ||
+    source === "opportunitiesforafricans" ||
+    source === "musicinafrica" ||
+    source === "trybeafrica" ||
+    source === "fatefoundation" ||
+    source === "nigeriafinance" ||
+    source === "africanfashionfoundation" ||
+    searchable.includes("africa") ||
+    searchable.includes("african")
   );
 }
 
 function matchesSearch(
-  opportunity:
-    RankedOpportunity,
-  search?: string
+  opportunity: RankedOpportunity,
+  search?: string,
 ): boolean {
-  const query =
-    normalize(search);
+  const query = normalize(search);
 
   if (!query) {
     return true;
   }
 
-  return buildSearchableText(
-    opportunity
-  ).includes(query);
+  return buildSearchableText(opportunity).includes(query);
 }
 
 function matchesFilter(
-  opportunity:
-    RankedOpportunity,
-  filter?: string
+  opportunity: RankedOpportunity,
+  filter?: string,
 ): boolean {
-  const selectedFilter =
-    normalize(filter);
+  const selectedFilter = normalize(filter);
 
-  if (
-    !selectedFilter ||
-    selectedFilter === "all"
-  ) {
+  if (!selectedFilter || selectedFilter === "all") {
     return true;
   }
 
-  if (
-    selectedFilter ===
-    "remote"
-  ) {
-    return (
-      opportunity.remote === true
-    );
+  if (selectedFilter === "remote") {
+    return opportunity.remote === true;
   }
 
-  if (
-    selectedFilter ===
-    "nigeria"
-  ) {
-    return isNigeriaOpportunity(
-      opportunity
-    );
+  if (selectedFilter === "nigeria") {
+    return isNigeriaOpportunity(opportunity);
   }
 
-  if (
-    selectedFilter ===
-    "africa"
-  ) {
-    return isAfricaOpportunity(
-      opportunity
-    );
+  if (selectedFilter === "africa") {
+    return isAfricaOpportunity(opportunity);
   }
 
-  const category =
-    normalize(
-      opportunity.category
-    );
+  const category = normalize(opportunity.category);
 
-  const tags = (
-    opportunity.tags ?? []
-  ).map(normalize);
+  const tags = (opportunity.tags ?? []).map(normalize);
 
-  return (
-    category ===
-      selectedFilter ||
-    tags.includes(
-      selectedFilter
-    )
-  );
+  return category === selectedFilter || tags.includes(selectedFilter);
 }
 
 function orderForPagination(
-  opportunities:
-    RankedOpportunity[],
-  pageSize: number
+  opportunities: RankedOpportunity[],
+  pageSize: number,
 ): RankedOpportunity[] {
-  let remaining = [
-    ...opportunities,
-  ];
+  let remaining = [...opportunities];
 
-  const ordered:
-    RankedOpportunity[] = [];
+  const ordered: RankedOpportunity[] = [];
 
-  while (
-    remaining.length > 0
-  ) {
-    const batchSize =
-      Math.min(
-        pageSize,
-        remaining.length
-      );
+  while (remaining.length > 0) {
+    const batchSize = Math.min(pageSize, remaining.length);
 
-    const batch =
-      rotateOpportunities(
-        remaining,
-        batchSize
-      );
+    const batch = rotateOpportunities(remaining, batchSize);
 
-    if (
-      batch.length === 0
-    ) {
+    if (batch.length === 0) {
       break;
     }
 
-    ordered.push(
-      ...batch
+    ordered.push(...batch);
+
+    const selectedKeys = new Set(
+      batch.map((opportunity) => `${opportunity.source}:${opportunity.id}`),
     );
 
-    const selectedKeys =
-      new Set(
-        batch.map(
-          (opportunity) =>
-            `${opportunity.source}:${opportunity.id}`
-        )
-      );
-
-    remaining =
-      remaining.filter(
-        (opportunity) =>
-          !selectedKeys.has(
-            `${opportunity.source}:${opportunity.id}`
-          )
-      );
+    remaining = remaining.filter(
+      (opportunity) =>
+        !selectedKeys.has(`${opportunity.source}:${opportunity.id}`),
+    );
   }
 
   return ordered;
 }
 
 async function createOpportunitySnapshot(
-  clerkId: string
+  clerkId: string,
+  snapshotId: string,
 ): Promise<OpportunitySnapshot> {
-  const loadPersistentSnapshot =
-    unstable_cache(
-      async () => {
-        const opportunityProfile =
-          await buildOpportunityProfile({
-            clerkId,
-          });
-
-        const ranked =
-          await discoverOpportunities(
-            opportunityProfile
-          );
-
-        console.log(
-          "Created opportunity snapshot:",
-          ranked.length
-        );
-
-        return {
-          opportunities:
-            ranked,
-
-          profile:
-            opportunityProfile,
-        };
-      },
-      [
-        "atlas-opportunity-snapshot",
-        SNAPSHOT_VERSION,
+  const loadPersistentSnapshot = unstable_cache(
+    async () => {
+      const opportunityProfile = await buildOpportunityProfile({
         clerkId,
-      ],
-      {
-        revalidate:
-          SNAPSHOT_DURATION_SECONDS,
+      });
 
-        tags: [
-          getSnapshotTag(
-            clerkId
-          ),
-        ],
-      }
-    );
+      const ranked = await discoverOpportunities(opportunityProfile);
+
+      console.log("Created opportunity snapshot:", snapshotId, ranked.length);
+
+      return {
+        opportunities: ranked,
+
+        profile: opportunityProfile,
+      };
+    },
+    ["atlas-opportunity-snapshot", SNAPSHOT_VERSION, clerkId, snapshotId],
+    {
+      revalidate: SNAPSHOT_RETENTION_SECONDS,
+
+      tags: [getSnapshotTag(clerkId)],
+    },
+  );
 
   return loadPersistentSnapshot();
 }
 
 async function loadOpportunitySnapshot(
-  clerkId: string
+  clerkId: string,
+  requestedSnapshotId?: string,
 ): Promise<OpportunitySnapshot> {
-  const snapshotKey =
-    getSnapshotKey(
-      clerkId
-    );
+  pruneExpiredMemorySnapshots();
 
-  const existingSnapshot =
-    memorySnapshots.get(
-      snapshotKey
-    );
+  const snapshotId =
+    normalizeSnapshotId(requestedSnapshotId) ?? getCurrentSnapshotId();
 
-  if (
-    existingSnapshot &&
-    existingSnapshot.expiresAt >
-      Date.now()
-  ) {
+  const snapshotKey = getSnapshotKey(clerkId, snapshotId);
+
+  const existingSnapshot = memorySnapshots.get(snapshotKey);
+
+  if (existingSnapshot && existingSnapshot.expiresAt > Date.now()) {
     console.log(
       "Using memory opportunity snapshot:",
-      existingSnapshot
-        .snapshot
-        .opportunities
-        .length
+      snapshotId,
+      existingSnapshot.snapshot.opportunities.length,
     );
 
-    return (
-      existingSnapshot.snapshot
-    );
+    return existingSnapshot.snapshot;
   }
 
-  const existingRequest =
-    snapshotRequests.get(
-      snapshotKey
-    );
+  const existingRequest = snapshotRequests.get(snapshotKey);
 
   if (existingRequest) {
-    console.log(
-      "Joining existing opportunity snapshot request"
-    );
+    console.log("Joining existing opportunity snapshot request:", snapshotId);
 
     return existingRequest;
   }
 
-  const snapshotRequest =
-    createOpportunitySnapshot(
-      clerkId
-    )
-      .then(
-        (snapshot) => {
-          memorySnapshots.set(
-            snapshotKey,
-            {
-              snapshot,
+  const snapshotRequest = createOpportunitySnapshot(clerkId, snapshotId)
+    .then((snapshot) => {
+      memorySnapshots.set(snapshotKey, {
+        snapshot,
 
-              expiresAt:
-                Date.now() +
-                SNAPSHOT_DURATION_MS,
-            }
-          );
-
-          return snapshot;
-        }
-      )
-      .finally(() => {
-        snapshotRequests.delete(
-          snapshotKey
-        );
+        expiresAt: Date.now() + SNAPSHOT_RETENTION_MS,
       });
 
-  snapshotRequests.set(
-    snapshotKey,
-    snapshotRequest
-  );
+      return snapshot;
+    })
+    .finally(() => {
+      snapshotRequests.delete(snapshotKey);
+    });
+
+  snapshotRequests.set(snapshotKey, snapshotRequest);
 
   return snapshotRequest;
 }
 
 async function recordDisplayedOpportunities(
   clerkId: string,
-  opportunities:
-    RankedOpportunity[]
+  opportunities: RankedOpportunity[],
 ) {
   await Promise.allSettled(
-    opportunities.map(
-      (opportunity) =>
-        recordImpression(
-          clerkId,
-          opportunity.id
-        )
-    )
+    opportunities.map((opportunity) =>
+      recordImpression(clerkId, opportunity.id),
+    ),
   );
 }
 
 function recordDisplayedInBackground(
   clerkId: string,
-  opportunities:
-    RankedOpportunity[]
+  opportunities: RankedOpportunity[],
 ) {
-  void recordDisplayedOpportunities(
-    clerkId,
-    opportunities
-  ).catch((error) => {
-    console.error(
-      "Opportunity impression tracking failed:",
-      error
-    );
+  void recordDisplayedOpportunities(clerkId, opportunities).catch((error) => {
+    console.error("Opportunity impression tracking failed:", error);
   });
 }
 
-export async function getPersonalizedOpportunities(
-  profile: {
-    clerkId: string;
-  }
-): Promise<
-  RankedOpportunity[]
-> {
-  const snapshot =
-    await loadOpportunitySnapshot(
-      profile.clerkId
-    );
+function findOpportunityInSnapshot(
+  snapshot: OpportunitySnapshot,
+  id: string,
+  source: string,
+): RankedOpportunity | null {
+  const opportunityId = id.trim();
 
-  const recommendations =
-    rotateOpportunities(
-      snapshot.opportunities,
-      DEFAULT_PAGE_SIZE
-    );
+  const opportunitySource = normalize(source);
 
-  recordDisplayedInBackground(
-    profile.clerkId,
-    recommendations
+  return (
+    snapshot.opportunities.find(
+      (opportunity) =>
+        opportunity.id === opportunityId &&
+        normalize(opportunity.source) === opportunitySource,
+    ) ?? null
   );
+}
+
+export async function getPersonalizedOpportunities(profile: {
+  clerkId: string;
+}): Promise<RankedOpportunity[]> {
+  const snapshotId = getCurrentSnapshotId();
+
+  const snapshot = await loadOpportunitySnapshot(profile.clerkId, snapshotId);
+
+  const recommendations = rotateOpportunities(
+    snapshot.opportunities,
+    DEFAULT_PAGE_SIZE,
+  ).map((opportunity) => ({
+    ...opportunity,
+    snapshotId,
+  }));
+
+  recordDisplayedInBackground(profile.clerkId, recommendations);
 
   return recommendations;
 }
@@ -544,120 +397,81 @@ export async function getPersonalizedOpportunities(
 export async function getPersonalizedOpportunityById(
   clerkId: string,
   id: string,
-  source: string
+  source: string,
+  requestedSnapshotId?: string,
 ): Promise<RankedOpportunity | null> {
-  const snapshot =
-    await loadOpportunitySnapshot(
-      clerkId
-    );
+  const currentSnapshotId = getCurrentSnapshotId();
 
-  const opportunityId =
-    id.trim();
+  const selectedSnapshotId = normalizeSnapshotId(requestedSnapshotId);
 
-  const opportunitySource =
-    normalize(source);
+  const snapshotIds = selectedSnapshotId
+    ? [
+        selectedSnapshotId,
+        ...(selectedSnapshotId === currentSnapshotId
+          ? []
+          : [currentSnapshotId]),
+      ]
+    : [currentSnapshotId, String(Number.parseInt(currentSnapshotId, 10) - 1)];
 
-  return (
-    snapshot.opportunities.find(
-      (opportunity) =>
-        opportunity.id ===
-          opportunityId &&
-        normalize(
-          opportunity.source
-        ) ===
-          opportunitySource
-    ) ?? null
-  );
+  for (const snapshotId of snapshotIds) {
+    const snapshot = await loadOpportunitySnapshot(clerkId, snapshotId);
+
+    const opportunity = findOpportunityInSnapshot(snapshot, id, source);
+
+    if (opportunity) {
+      return opportunity;
+    }
+  }
+
+  return null;
 }
 
 export async function getPersonalizedOpportunityPage(
   profile: {
     clerkId: string;
   },
-  options:
-    OpportunityPageOptions = {}
+  options: OpportunityPageOptions = {},
 ): Promise<OpportunityPageResult> {
-  const requestedPage =
-    Math.max(
-      1,
-      Math.floor(
-        options.page ?? 1
-      )
-    );
+  const requestedPage = Math.max(1, Math.floor(options.page ?? 1));
 
-  const pageSize =
-    Math.min(
-      MAX_PAGE_SIZE,
-      Math.max(
-        1,
-        Math.floor(
-          options.limit ??
-            DEFAULT_PAGE_SIZE
-        )
-      )
-    );
-
-  const snapshot =
-    await loadOpportunitySnapshot(
-      profile.clerkId
-    );
-
-  const filtered =
-    snapshot.opportunities.filter(
-      (opportunity) =>
-        matchesSearch(
-          opportunity,
-          options.search
-        ) &&
-        matchesFilter(
-          opportunity,
-          options.filter
-        )
-    );
-
-  const ordered =
-    orderForPagination(
-      filtered,
-      pageSize
-    );
-
-  const total =
-    ordered.length;
-
-  const totalPages =
-    Math.max(
-      1,
-      Math.ceil(
-        total / pageSize
-      )
-    );
-
-  const page =
-    Math.min(
-      requestedPage,
-      totalPages
-    );
-
-  const start =
-    (page - 1) *
-    pageSize;
-
-  const opportunities =
-    ordered.slice(
-      start,
-      start + pageSize
-    );
-
-  recordDisplayedInBackground(
-    profile.clerkId,
-    opportunities
+  const pageSize = Math.min(
+    MAX_PAGE_SIZE,
+    Math.max(1, Math.floor(options.limit ?? DEFAULT_PAGE_SIZE)),
   );
+
+  const snapshotId = getCurrentSnapshotId();
+
+  const snapshot = await loadOpportunitySnapshot(profile.clerkId, snapshotId);
+
+  const filtered = snapshot.opportunities.filter(
+    (opportunity) =>
+      matchesSearch(opportunity, options.search) &&
+      matchesFilter(opportunity, options.filter),
+  );
+
+  const ordered = orderForPagination(filtered, pageSize);
+
+  const total = ordered.length;
+
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+
+  const page = Math.min(requestedPage, totalPages);
+
+  const start = (page - 1) * pageSize;
+
+  const opportunities: SnapshotOpportunity[] = ordered
+    .slice(start, start + pageSize)
+    .map((opportunity) => ({
+      ...opportunity,
+      snapshotId,
+    }));
+
+  recordDisplayedInBackground(profile.clerkId, opportunities);
 
   return {
     opportunities,
 
-    profile:
-      snapshot.profile,
+    profile: snapshot.profile,
 
     total,
 
@@ -667,10 +481,10 @@ export async function getPersonalizedOpportunityPage(
 
     totalPages,
 
-    hasNextPage:
-      page < totalPages,
+    hasNextPage: page < totalPages,
 
-    hasPreviousPage:
-      page > 1,
+    hasPreviousPage: page > 1,
+
+    snapshotId,
   };
 }

@@ -7,9 +7,30 @@ import { getPersonalizedOpportunityById } from "@/lib/atlas/opportunities/servic
 
 export const dynamic = "force-dynamic";
 
+const SNAPSHOT_SEPARATOR = "~ascend-snapshot~";
+
 type RouteContext = {
   params: Promise<{ id: string }>;
 };
+
+function parseOpportunityRouteId(value: string) {
+  const routeId = value.trim();
+  const separatorIndex = routeId.lastIndexOf(SNAPSHOT_SEPARATOR);
+
+  if (separatorIndex <= 0) {
+    return {
+      opportunityId: routeId,
+      snapshotId: "",
+    };
+  }
+
+  return {
+    opportunityId: routeId.slice(0, separatorIndex).trim(),
+    snapshotId: routeId
+      .slice(separatorIndex + SNAPSHOT_SEPARATOR.length)
+      .trim(),
+  };
+}
 
 export async function GET(request: NextRequest, context: RouteContext) {
   try {
@@ -20,13 +41,13 @@ export async function GET(request: NextRequest, context: RouteContext) {
     }
 
     const { id } = await context.params;
-    const opportunityId = id.trim();
+    const { opportunityId, snapshotId } = parseOpportunityRouteId(id);
     const source = request.nextUrl.searchParams.get("source")?.trim() ?? "";
 
     if (!opportunityId || !source) {
       return NextResponse.json(
         { error: "Opportunity ID and source are required." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -34,21 +55,24 @@ export async function GET(request: NextRequest, context: RouteContext) {
       (await getPersonalizedOpportunityById(
         userId,
         opportunityId,
-        source
-      )) ??
-      (await getOpportunityById(
-        opportunityId,
-        source
-      ));
+        source,
+        snapshotId,
+      )) ?? (await getOpportunityById(opportunityId, source));
 
     if (!opportunity) {
       return NextResponse.json(
-        { error: "The opportunity could not be found from its original ASCEND source." },
-        { status: 404 }
+        {
+          error:
+            "The opportunity could not be found from its original ASCEND source.",
+        },
+        { status: 404 },
       );
     }
 
-    const decision = await buildPersonalizedOpportunityDecision(userId, opportunity);
+    const decision = await buildPersonalizedOpportunityDecision(
+      userId,
+      opportunity,
+    );
 
     return NextResponse.json(decision, {
       headers: { "Cache-Control": "private, no-store, max-age=0" },
@@ -58,7 +82,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
 
     return NextResponse.json(
       { error: "Atlas could not evaluate this opportunity right now." },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
