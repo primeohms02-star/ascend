@@ -10,14 +10,6 @@ function clamp(value: number): number {
   return Math.max(0, Math.min(100, Math.round(value)));
 }
 
-function decisionLevel(score: number): string {
-  if (score >= 85) return "Highly Aligned";
-  if (score >= 72) return "Strong Fit";
-  if (score >= 58) return "Worth Considering";
-  if (score >= 42) return "Consider Carefully";
-  return "Low Alignment";
-}
-
 function unique(items: string[]): string[] {
   return [...new Set(items.filter(Boolean))];
 }
@@ -58,10 +50,6 @@ export async function buildPersonalizedOpportunityDecision(
   const structuralInsight = generateAtlasInsight(opportunity);
   const matchScore = clamp(rankedOpportunity.score ?? 50);
   const qualityScore = clamp(structuralInsight.score);
-
-  // ASCEND Decision should answer “is this credible?” and “is this aligned to me?”.
-  // Personal alignment gets the larger share while structural quality still matters.
-  const combinedScore = clamp(matchScore * 0.65 + qualityScore * 0.35);
 
   const opportunityTags = (opportunity.tags ?? []).map((value) => value.toLowerCase());
   const matchedSkills = profile.skills.filter((skill) =>
@@ -113,22 +101,14 @@ export async function buildPersonalizedOpportunityDecision(
 
   const insight: AtlasInsight = {
     ...structuralInsight,
-    score: combinedScore,
-    level: decisionLevel(combinedScore),
     strengths: personalizedStrengths,
     considerations: personalizedConsiderations,
-    nextStep:
-      combinedScore >= 72
-        ? "Verify the original posting, confirm the requirements, and prepare a focused application if the opportunity still fits your judgment."
-        : combinedScore >= 50
-          ? "Research the strongest uncertainties before deciding whether the opportunity deserves your time."
-          : "Do not rush into this opportunity. Compare it with options that align more closely with your direction and capabilities.",
   };
 
   const status = await getOpportunityStatus(userId, opportunity.id);
 
   return {
-    opportunity: { ...rankedOpportunity, ...opportunity, score: combinedScore },
+    opportunity: { ...rankedOpportunity, ...opportunity },
     insight,
     matchScore,
     qualityScore,
