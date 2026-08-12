@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useClerk } from "@clerk/nextjs";
 
 import {
   ChartNoAxesCombined,
@@ -12,6 +13,7 @@ import {
   Globe2,
   Home,
   Library,
+  LogOut,
   Menu,
   Music2,
   Orbit,
@@ -137,6 +139,7 @@ function NavigationLink({
 
 export default function AppNavigation() {
   const pathname = usePathname();
+  const { signOut } = useClerk();
   const [moreOpen, setMoreOpen] = useState(false);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const moreButtonRef = useRef<HTMLButtonElement>(null);
@@ -285,6 +288,18 @@ export default function AppNavigation() {
                 onNavigate={() => setMoreOpen(false)}
               />
             </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                setMoreOpen(false);
+                void signOut({ redirectUrl: "/" });
+              }}
+              className="mt-2 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-rose-300/15 bg-rose-400/[0.07] px-3.5 py-2.5 text-sm font-semibold text-rose-300 transition-colors duration-150 hover:bg-rose-400/[0.11]"
+            >
+              <LogOut size={18} strokeWidth={1.8} aria-hidden="true" />
+              <span>Sign Out</span>
+            </button>
           </div>
         </div>
       )}
