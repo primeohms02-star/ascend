@@ -541,6 +541,35 @@ export async function getPersonalizedOpportunities(
   return recommendations;
 }
 
+export async function getPersonalizedOpportunityById(
+  clerkId: string,
+  id: string,
+  source: string
+): Promise<RankedOpportunity | null> {
+  const snapshot =
+    await loadOpportunitySnapshot(
+      clerkId
+    );
+
+  const opportunityId =
+    id.trim();
+
+  const opportunitySource =
+    normalize(source);
+
+  return (
+    snapshot.opportunities.find(
+      (opportunity) =>
+        opportunity.id ===
+          opportunityId &&
+        normalize(
+          opportunity.source
+        ) ===
+          opportunitySource
+    ) ?? null
+  );
+}
+
 export async function getPersonalizedOpportunityPage(
   profile: {
     clerkId: string;

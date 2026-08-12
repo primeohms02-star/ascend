@@ -3,6 +3,7 @@ import { auth } from "@clerk/nextjs/server";
 
 import { getOpportunityById } from "@/lib/atlas/opportunities/connector";
 import { buildPersonalizedOpportunityDecision } from "@/lib/atlas/opportunities/personalized-decision";
+import { getPersonalizedOpportunityById } from "@/lib/atlas/opportunities/service";
 
 export const dynamic = "force-dynamic";
 
@@ -29,7 +30,16 @@ export async function GET(request: NextRequest, context: RouteContext) {
       );
     }
 
-    const opportunity = await getOpportunityById(opportunityId, source);
+    const opportunity =
+      (await getPersonalizedOpportunityById(
+        userId,
+        opportunityId,
+        source
+      )) ??
+      (await getOpportunityById(
+        opportunityId,
+        source
+      ));
 
     if (!opportunity) {
       return NextResponse.json(
