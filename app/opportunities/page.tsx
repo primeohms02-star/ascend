@@ -6,11 +6,13 @@ import { useSearchParams } from "next/navigation";
 import OpportunityHeader from "./components/OpportunityHeader";
 import OpportunityFilters from "./components/OpportunityFilters";
 import OpportunityLibrary from "./components/OpportunityLibrary";
+import OpportunityLocationSearch from "./components/OpportunityLocationSearch";
 import OpportunitySearch from "./components/OpportunitySearch";
 
 import OpportunityFeed from "@/app/components/OpportunityFeed";
 import AppShell from "@/app/components/navigation/AppShell";
 import PreviousPageButton from "@/app/components/navigation/PreviousPageButton";
+import type { OpportunityLocationSelection } from "@/lib/atlas/opportunities/location";
 
 function BackArrowIcon() {
   return (
@@ -80,6 +82,27 @@ function parseInitialPage(value: string | null): number {
     : 1;
 }
 
+function parseInitialLocation(
+  searchParams: ReturnType<typeof useSearchParams>,
+): OpportunityLocationSelection {
+  const requestedMode = searchParams.get("locationMode");
+  const mode =
+    requestedMode === "all" ||
+    requestedMode === "manual" ||
+    requestedMode === "current" ||
+    requestedMode === "profile"
+      ? requestedMode
+      : "profile";
+
+  return {
+    mode,
+    query: searchParams.get("location") ?? "",
+    city: searchParams.get("city") ?? "",
+    region: searchParams.get("region") ?? "",
+    country: searchParams.get("country") ?? "",
+  };
+}
+
 function OpportunitiesContent() {
   const searchParams = useSearchParams();
 
@@ -90,6 +113,12 @@ function OpportunitiesContent() {
   const [filter, setFilter] = useState(
     () => searchParams.get("filter") ?? "All"
   );
+
+  const [location, setLocation] = useState<OpportunityLocationSelection>(
+    () => parseInitialLocation(searchParams),
+  );
+
+  const [savedLocation, setSavedLocation] = useState("");
 
   const [initialPage] = useState(
     () => parseInitialPage(searchParams.get("page"))
@@ -127,6 +156,14 @@ function OpportunitiesContent() {
             value={search}
             onChange={setSearch}
           />
+
+          <div className="mt-5 border-t border-white/10 pt-5">
+            <OpportunityLocationSearch
+              value={location}
+              savedLocation={savedLocation}
+              onChange={setLocation}
+            />
+          </div>
 
           <div className="mt-5 border-t border-white/10 pt-5">
             <OpportunityFilters
@@ -169,6 +206,8 @@ function OpportunitiesContent() {
             <OpportunityFeed
               search={search}
               filter={filter}
+              location={location}
+              onProfileLocation={setSavedLocation}
               initialPage={initialPage}
             />
           </section>

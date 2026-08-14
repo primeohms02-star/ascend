@@ -8,6 +8,16 @@ import { recordImpression } from "./impressions";
 
 import { rotateOpportunities } from "./rotation";
 
+import {
+  getOpportunityLocationPriority,
+  resolveOpportunityLocation,
+} from "./location";
+
+import type {
+  OpportunityLocationSelection,
+  ResolvedOpportunityLocation,
+} from "./location";
+
 import type { OpportunityProfile } from "./profile";
 
 import type { RankedOpportunity } from "./types";
@@ -57,6 +67,8 @@ export type OpportunityPageOptions = {
   search?: string;
 
   filter?: string;
+
+  location?: OpportunityLocationSelection;
 };
 
 export type OpportunityPageResult = {
@@ -77,6 +89,8 @@ export type OpportunityPageResult = {
   hasPreviousPage: boolean;
 
   snapshotId: string;
+
+  location: ResolvedOpportunityLocation;
 };
 
 function normalize(value?: string): string {
@@ -253,6 +267,35 @@ function orderForPagination(
   }
 
   return ordered;
+}
+
+function orderForLocationPagination(
+  opportunities: RankedOpportunity[],
+  pageSize: number,
+  location: ResolvedOpportunityLocation,
+  filter?: string,
+): RankedOpportunity[] {
+  if (!location.active || normalize(filter) === "remote") {
+    return orderForPagination(opportunities, pageSize);
+  }
+
+  const buckets = new Map<number, RankedOpportunity[]>([
+    [3, []],
+    [2, []],
+    [1, []],
+  ]);
+
+  for (const opportunity of opportunities) {
+    const priority = getOpportunityLocationPriority(opportunity, location);
+
+    if (priority > 0) {
+      buckets.get(priority)?.push(opportunity);
+    }
+  }
+
+  return [3, 2, 1].flatMap((priority) =>
+    orderForPagination(buckets.get(priority) ?? [], pageSize),
+  );
 }
 
 async function createOpportunitySnapshot(
@@ -443,13 +486,23 @@ export async function getPersonalizedOpportunityPage(
 
   const snapshot = await loadOpportunitySnapshot(profile.clerkId, snapshotId);
 
-  const filtered = snapshot.opportunities.filter(
+  const filteredByCriteria = snapshot.opportunities.filter(
     (opportunity) =>
       matchesSearch(opportunity, options.search) &&
       matchesFilter(opportunity, options.filter),
   );
 
-  const ordered = orderForPagination(filtered, pageSize);
+  const location = resolveOpportunityLocation(
+    options.location ?? { mode: "profile" },
+    snapshot.profile,
+  );
+
+  const ordered = orderForLocationPagination(
+    filteredByCriteria,
+    pageSize,
+    location,
+    options.filter,
+  );
 
   const total = ordered.length;
 
@@ -486,5 +539,7 @@ export async function getPersonalizedOpportunityPage(
     hasPreviousPage: page > 1,
 
     snapshotId,
+
+    location,
   };
 }

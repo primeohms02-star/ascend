@@ -9,6 +9,7 @@ import {
   getPersonalizedOpportunityPage,
 } from "@/lib/atlas/opportunities/service";
 import { getOpportunityStatuses } from "@/lib/atlas/opportunities/memory";
+import type { OpportunityLocationMode } from "@/lib/atlas/opportunities/location";
 
 export const dynamic = "force-dynamic";
 
@@ -33,6 +34,29 @@ function parsePositiveInteger(
   }
 
   return parsed;
+}
+
+function readTextParameter(
+  searchParams: URLSearchParams,
+  name: string,
+  maxLength = 120,
+): string {
+  return (searchParams.get(name) ?? "").trim().slice(0, maxLength);
+}
+
+function readLocationMode(searchParams: URLSearchParams): OpportunityLocationMode {
+  const value = readTextParameter(searchParams, "locationMode", 20);
+
+  if (
+    value === "all" ||
+    value === "manual" ||
+    value === "current" ||
+    value === "profile"
+  ) {
+    return value;
+  }
+
+  return "profile";
 }
 
 export async function GET(
@@ -77,6 +101,14 @@ export async function GET(
         .get("filter")
         ?.trim() ?? "All";
 
+    const location = {
+      mode: readLocationMode(searchParams),
+      query: readTextParameter(searchParams, "location"),
+      city: readTextParameter(searchParams, "city"),
+      region: readTextParameter(searchParams, "region"),
+      country: readTextParameter(searchParams, "country"),
+    };
+
     const result =
       await getPersonalizedOpportunityPage(
         {
@@ -87,6 +119,7 @@ export async function GET(
           limit,
           search,
           filter,
+          location,
         }
       );
 

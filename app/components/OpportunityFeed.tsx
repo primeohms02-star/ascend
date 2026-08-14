@@ -20,10 +20,16 @@ import type {
   RankedOpportunity,
 } from "@/lib/atlas/opportunities/types";
 import type { OpportunityStatus } from "@/lib/atlas/opportunities/memory";
+import type {
+  OpportunityLocationSelection,
+  ResolvedOpportunityLocation,
+} from "@/lib/atlas/opportunities/location";
 
 type Props = {
   search: string;
   filter: string;
+  location: OpportunityLocationSelection;
+  onProfileLocation?: (location: string) => void;
   initialPage?: number;
 };
 
@@ -40,6 +46,7 @@ type OpportunityPageResponse = {
   totalPages: number;
   hasNextPage: boolean;
   hasPreviousPage: boolean;
+  location: ResolvedOpportunityLocation;
   opportunityStatuses: Record<string, OpportunityStatus>;
 };
 
@@ -53,14 +60,54 @@ function normalizePage(value: number | undefined): number {
     : 1;
 }
 
+function locationKey(location: OpportunityLocationSelection): string {
+  return [
+    location.mode ?? "profile",
+    location.query ?? "",
+    location.city ?? "",
+    location.region ?? "",
+    location.country ?? "",
+  ].join("|");
+}
+
+function addLocationParameters(
+  params: URLSearchParams,
+  location: OpportunityLocationSelection,
+) {
+  const mode = location.mode ?? "profile";
+
+  if (mode !== "profile") {
+    params.set("locationMode", mode);
+  }
+
+  if (mode !== "manual" && mode !== "current") {
+    return;
+  }
+
+  const values = {
+    location: location.query,
+    city: location.city,
+    region: location.region,
+    country: location.country,
+  };
+
+  for (const [name, value] of Object.entries(values)) {
+    if (value?.trim()) {
+      params.set(name, value.trim());
+    }
+  }
+}
+
 function buildReturnPath({
   page,
   filter,
   search,
+  location,
 }: {
   page: number;
   filter: string;
   search: string;
+  location: OpportunityLocationSelection;
 }): string {
   const params = new URLSearchParams({
     page: String(page),
@@ -73,6 +120,8 @@ function buildReturnPath({
   if (search) {
     params.set("search", search);
   }
+
+  addLocationParameters(params, location);
 
   return `/opportunities?${params.toString()}`;
 }
@@ -170,6 +219,8 @@ function ArrowRightIcon() {
 export default function OpportunityFeed({
   search,
   filter,
+  location,
+  onProfileLocation,
   initialPage,
 }: Props) {
   const feedTopRef =
@@ -241,9 +292,17 @@ export default function OpportunityFeed({
     setReloadKey,
   ] = useState(0);
 
+  const [
+    resolvedLocation,
+    setResolvedLocation,
+  ] = useState<ResolvedOpportunityLocation | null>(null);
+
+  const currentLocationKey = locationKey(location);
+
   const previousCriteriaRef = useRef({
     search,
     filter,
+    location: currentLocationKey,
   });
 
   const restoredScrollRef =
@@ -260,7 +319,8 @@ export default function OpportunityFeed({
 
     if (
       previous.search !== search ||
-      previous.filter !== filter
+      previous.filter !== filter ||
+      previous.location !== currentLocationKey
     ) {
       setPage(1);
     }
@@ -268,8 +328,9 @@ export default function OpportunityFeed({
     previousCriteriaRef.current = {
       search,
       filter,
+      location: currentLocationKey,
     };
-  }, [search, filter]);
+  }, [search, filter, currentLocationKey]);
 
   /*
    * Avoid making a request after
@@ -307,6 +368,7 @@ export default function OpportunityFeed({
         filter,
         search:
           debouncedSearch,
+        location,
       });
 
     const currentPath =
@@ -325,6 +387,8 @@ export default function OpportunityFeed({
     page,
     filter,
     debouncedSearch,
+    location,
+    currentLocationKey,
   ]);
 
   useEffect(() => {
@@ -353,6 +417,8 @@ export default function OpportunityFeed({
             debouncedSearch
           );
         }
+
+        addLocationParameters(params, location);
 
         const response =
           await fetch(
@@ -405,6 +471,10 @@ export default function OpportunityFeed({
         setProfile(
           result.profile
         );
+
+        setResolvedLocation(result.location);
+
+        onProfileLocation?.(result.profile.location ?? "");
 
         setOpportunityStatuses(
           result.opportunityStatuses ?? {}
@@ -463,7 +533,10 @@ export default function OpportunityFeed({
     page,
     filter,
     debouncedSearch,
+    location,
+    currentLocationKey,
     reloadKey,
+    onProfileLocation,
   ]);
 
   /*
@@ -638,7 +711,7 @@ export default function OpportunityFeed({
         <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-400">
           Try changing your search
           or selecting a different
-          filter.
+          filter or location.
         </p>
       </div>
     );
@@ -695,6 +768,7 @@ export default function OpportunityFeed({
       filter,
       search:
         debouncedSearch,
+      location,
     });
 
   return (
@@ -721,9 +795,12 @@ export default function OpportunityFeed({
 
         <div className="flex items-center gap-3">
           {(debouncedSearch ||
-            filter !== "All") && (
+            filter !== "All" ||
+            resolvedLocation?.active) && (
             <span className="text-xs text-cyan-300">
-              Results are filtered
+              {resolvedLocation?.active
+                ? `Near ${resolvedLocation.label}`
+                : "Results are filtered"}
             </span>
           )}
 
