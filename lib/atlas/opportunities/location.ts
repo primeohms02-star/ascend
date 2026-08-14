@@ -2,9 +2,7 @@ import type { OpportunityProfile } from "./profile";
 import type { RankedOpportunity } from "./types";
 
 import {
-  getAfricanCountry,
   getNigerianState,
-  inferAfricanCountry,
   inferNigerianState,
 } from "./geography";
 
@@ -161,22 +159,6 @@ export function getOpportunityLocationPriority(
     return 0;
   }
 
-  if (location.city && includesLocation(searchable, location.city)) {
-    return 3;
-  }
-
-  if (location.region && includesLocation(searchable, location.region)) {
-    return 2;
-  }
-
-  if (location.country && includesLocation(searchable, location.country)) {
-    return 1;
-  }
-
-  if (location.query && includesLocation(searchable, location.query)) {
-    return 3;
-  }
-
   const requestedLocation = [
     location.city,
     location.region,
@@ -189,15 +171,16 @@ export function getOpportunityLocationPriority(
   const requestedState = inferNigerianState(requestedLocation);
   const opportunityState = getNigerianState(opportunity);
 
-  if (requestedState && requestedState === opportunityState) {
-    return 3;
+  if (requestedState) {
+    return requestedState === opportunityState ? 3 : 0;
   }
 
-  const requestedCountry = inferAfricanCountry(requestedLocation);
-  const opportunityCountry = getAfricanCountry(opportunity);
+  if (location.city) {
+    return includesLocation(searchable, location.city) ? 3 : 0;
+  }
 
-  if (requestedCountry && requestedCountry === opportunityCountry) {
-    return 2;
+  if (location.region) {
+    return includesLocation(searchable, location.region) ? 2 : 0;
   }
 
   const queryParts = unique(
@@ -207,10 +190,14 @@ export function getOpportunityLocationPriority(
       .filter(Boolean),
   );
 
-  for (let index = 0; index < queryParts.length; index += 1) {
-    if (includesLocation(searchable, queryParts[index])) {
-      return Math.max(1, 3 - index);
-    }
+  const primaryQuery = queryParts[0];
+
+  if (primaryQuery) {
+    return includesLocation(searchable, primaryQuery) ? 3 : 0;
+  }
+
+  if (location.country) {
+    return includesLocation(searchable, location.country) ? 1 : 0;
   }
 
   return 0;
