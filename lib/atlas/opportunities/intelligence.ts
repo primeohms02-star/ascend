@@ -6,6 +6,11 @@ import {
 import { OpportunityProfile } from "./profile";
 import { supabaseServer } from "@/lib/supabase-server";
 
+import {
+  isAfricanOpportunity,
+  isNigerianOpportunity,
+} from "./geography";
+
 function getGeographicScore(
   opportunity: Opportunity
 ): number {
@@ -20,26 +25,16 @@ function getGeographicScore(
     .join(" ")
     .toLowerCase();
 
-  const source =
-    opportunity.source.toLowerCase();
-
   // Nigeria receives the highest priority.
 
-  if (
-    searchable.includes("nigeria") ||
-    searchable.includes("nigerian")
-  ) {
+  if (isNigerianOpportunity(opportunity)) {
     return 20;
   }
 
   // Africa-focused sources and explicitly
   // African opportunities rank next.
 
-  if (
-    source === "opportunityforafrica" ||
-    searchable.includes("africa") ||
-    searchable.includes("african")
-  ) {
+  if (isAfricanOpportunity(opportunity)) {
     return 14;
   }
 

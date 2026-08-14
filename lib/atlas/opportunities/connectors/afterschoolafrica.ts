@@ -1,5 +1,5 @@
-import { Opportunity } from "../types";
-import { OpportunityConnector } from "./types";
+import type { Opportunity } from "../types";
+import type { OpportunityConnector } from "./types";
 
 const API_URL =
   "https://www.afterschoolafrica.com/wp-json/wp/v2/posts";
@@ -366,7 +366,9 @@ async function fetchPage(
     {
       headers: REQUEST_HEADERS,
       redirect: "follow",
-      cache: "no-store",
+      next: {
+        revalidate: 21600,
+      },
     }
   );
 

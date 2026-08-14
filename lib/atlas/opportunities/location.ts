@@ -1,6 +1,13 @@
 import type { OpportunityProfile } from "./profile";
 import type { RankedOpportunity } from "./types";
 
+import {
+  getAfricanCountry,
+  getNigerianState,
+  inferAfricanCountry,
+  inferNigerianState,
+} from "./geography";
+
 export type OpportunityLocationMode =
   | "all"
   | "profile"
@@ -168,6 +175,29 @@ export function getOpportunityLocationPriority(
 
   if (location.query && includesLocation(searchable, location.query)) {
     return 3;
+  }
+
+  const requestedLocation = [
+    location.city,
+    location.region,
+    location.country,
+    location.query,
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  const requestedState = inferNigerianState(requestedLocation);
+  const opportunityState = getNigerianState(opportunity);
+
+  if (requestedState && requestedState === opportunityState) {
+    return 3;
+  }
+
+  const requestedCountry = inferAfricanCountry(requestedLocation);
+  const opportunityCountry = getAfricanCountry(opportunity);
+
+  if (requestedCountry && requestedCountry === opportunityCountry) {
+    return 2;
   }
 
   const queryParts = unique(

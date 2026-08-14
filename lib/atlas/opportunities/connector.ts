@@ -7,6 +7,10 @@ import {
 } from "./normalize";
 
 import {
+  enrichOpportunityGeography,
+} from "./geography";
+
+import {
   deduplicateOpportunities,
 } from "./deduplicate";
 
@@ -70,10 +74,16 @@ import {
   AfricanFashionFoundationConnector,
 } from "./connectors/africanfashionfoundation";
 
+import {
+  AfterSchoolAfricaConnector,
+} from "./connectors/afterschoolafrica";
+
 const CONNECTOR_TIMEOUT = 20000;
 
 const HOT_NIGERIAN_JOBS_TIMEOUT =
   30000;
+
+const MYJOBMAG_TIMEOUT = 35000;
 
 const MAX_CONCURRENT_CONNECTORS =
   3;
@@ -127,6 +137,16 @@ function enrichIndustryTags(
     ...opportunity,
     tags: Array.from(tags.values()),
   };
+}
+
+function prepareOpportunity(
+  opportunity: Opportunity
+): Opportunity {
+  return enrichIndustryTags(
+    enrichOpportunityGeography(
+      normalizeOpportunity(opportunity)
+    )
+  );
 }
 
 const RemoteOKConnector: OpportunityConnector =
@@ -199,6 +219,9 @@ const connectors = {
 
   africanfashionfoundation:
     AfricanFashionFoundationConnector,
+
+  afterschoolafrica:
+    AfterSchoolAfricaConnector,
 };
 
 type ConnectorName =
@@ -248,6 +271,8 @@ async function fetchConnector(
       name ===
       "hotnigerianjobs"
         ? HOT_NIGERIAN_JOBS_TIMEOUT
+        : name === "myjobmag"
+          ? MYJOBMAG_TIMEOUT
         : CONNECTOR_TIMEOUT;
 
     const opportunities =
@@ -339,10 +364,7 @@ export async function fetchAllSources(): Promise<
   const normalized =
     results
       .flat()
-      .map(
-        normalizeOpportunity
-      )
-      .map(enrichIndustryTags);
+      .map(prepareOpportunity);
 
   return deduplicateOpportunities(
     normalized
@@ -377,6 +399,8 @@ export async function getOpportunityById(
       normalizedSource ===
       "hotnigerianjobs"
         ? HOT_NIGERIAN_JOBS_TIMEOUT
+        : normalizedSource === "myjobmag"
+          ? MYJOBMAG_TIMEOUT
         : CONNECTOR_TIMEOUT;
 
     const opportunity = await withTimeout(
@@ -388,7 +412,7 @@ export async function getOpportunityById(
     );
 
     return opportunity
-      ? enrichIndustryTags(opportunity)
+      ? prepareOpportunity(opportunity)
       : null;
   } catch (error) {
     console.error(

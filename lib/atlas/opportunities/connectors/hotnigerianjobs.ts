@@ -1,5 +1,6 @@
-import { Opportunity } from "../types";
-import { OpportunityConnector } from "./types";
+import type { Opportunity } from "../types";
+import type { OpportunityConnector } from "./types";
+import { inferNigerianState } from "../geography";
 
 const HOT_NIGERIAN_JOBS_FEED =
   "https://www.hotnigerianjobs.com/feed/";
@@ -192,17 +193,45 @@ function extractCompany(
 }
 
 function extractLocation(
+  title: string,
   description: string
 ): string {
-  const location =
-    /(?:position|role|job)\s+is\s+located\s+in\s+(.+?)(?:\.\s|\.?$|\s+Salary:|\s+Interested candidates)/i.exec(
-      description
-    )?.[1];
+  const patterns = [
+    /(?:job\s+location|work\s+location|location|duty\s+station)\s*[:\-]\s*([^.;]{2,120})/i,
+    /(?:position|role|job)\s+is\s+located\s+in\s+([^.;]{2,120})/i,
+    /(?:located|based)\s+in\s+([^.;]{2,120})/i,
+  ];
 
-  return (
-    location?.trim() ||
-    "Nigeria"
+  for (const pattern of patterns) {
+    const candidate = pattern
+      .exec(description)?.[1]
+      ?.split(
+        /\s+(?:job description|responsibilities|requirements|salary|deadline|application|interested candidates)\b/i
+      )[0]
+      ?.trim();
+
+    if (!candidate) {
+      continue;
+    }
+
+    const state = inferNigerianState(candidate);
+
+    if (state) {
+      return `${state}, Nigeria`;
+    }
+
+    if (candidate.length <= 80) {
+      return candidate;
+    }
+  }
+
+  const inferredState = inferNigerianState(
+    `${title} ${description}`
   );
+
+  return inferredState
+    ? `${inferredState}, Nigeria`
+    : "Nigeria";
 }
 
 function extractSalary(
@@ -341,6 +370,7 @@ function mapFeedItem(
 
     location:
       extractLocation(
+        title,
         description
       ),
 

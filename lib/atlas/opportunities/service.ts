@@ -9,6 +9,11 @@ import { recordImpression } from "./impressions";
 import { rotateOpportunities } from "./rotation";
 
 import {
+  isAfricanOpportunity,
+  isNigerianOpportunity,
+} from "./geography";
+
+import {
   getOpportunityLocationPriority,
   resolveOpportunityLocation,
 } from "./location";
@@ -25,7 +30,7 @@ import type { RankedOpportunity } from "./types";
 const DEFAULT_PAGE_SIZE = 10;
 const MAX_PAGE_SIZE = 25;
 
-const SNAPSHOT_VERSION = "v15";
+const SNAPSHOT_VERSION = "v16";
 
 const SNAPSHOT_WINDOW_SECONDS = 900;
 
@@ -169,32 +174,6 @@ function buildSearchableText(opportunity: RankedOpportunity): string {
     .toLowerCase();
 }
 
-function isNigeriaOpportunity(opportunity: RankedOpportunity): boolean {
-  const searchable = buildSearchableText(opportunity);
-
-  return searchable.includes("nigeria") || searchable.includes("nigerian");
-}
-
-function isAfricaOpportunity(opportunity: RankedOpportunity): boolean {
-  const searchable = buildSearchableText(opportunity);
-
-  const source = normalize(opportunity.source);
-
-  return (
-    isNigeriaOpportunity(opportunity) ||
-    source === "opportunitydesk" ||
-    source === "opportunityforafrica" ||
-    source === "opportunitiesforafricans" ||
-    source === "musicinafrica" ||
-    source === "trybeafrica" ||
-    source === "fatefoundation" ||
-    source === "nigeriafinance" ||
-    source === "africanfashionfoundation" ||
-    searchable.includes("africa") ||
-    searchable.includes("african")
-  );
-}
-
 function matchesSearch(
   opportunity: RankedOpportunity,
   search?: string,
@@ -223,11 +202,11 @@ function matchesFilter(
   }
 
   if (selectedFilter === "nigeria") {
-    return isNigeriaOpportunity(opportunity);
+    return isNigerianOpportunity(opportunity);
   }
 
   if (selectedFilter === "africa") {
-    return isAfricaOpportunity(opportunity);
+    return isAfricanOpportunity(opportunity);
   }
 
   const category = normalize(opportunity.category);
