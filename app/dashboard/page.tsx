@@ -14,6 +14,7 @@ import {
 
 import AppShell from "@/app/components/navigation/AppShell";
 import { getAtlasDashboard } from "@/lib/atlas/dashboard";
+import { loadOnboardingContext } from "@/lib/atlas/onboardingContext";
 
 import DailyBriefingCard from "@/app/dashboard/DailyBriefingCard";
 import CompassCard from "@/app/dashboard/CompassCard";
@@ -51,6 +52,12 @@ export default async function DashboardPage() {
 
   if (!userId) {
     redirect("/sign-in");
+  }
+
+  const onboardingContext = await loadOnboardingContext(userId);
+
+  if (!onboardingContext) {
+    redirect("/onboarding");
   }
 
   const dashboard = await getAtlasDashboard(userId);

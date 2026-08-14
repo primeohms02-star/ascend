@@ -10,18 +10,19 @@ export default async function AuthContinuePage() {
     redirect("/sign-in");
   }
 
+  let hasCompletedOnboarding = false;
+
   try {
     const onboardingContext = await loadOnboardingContext(userId);
-
-    redirect(onboardingContext ? "/dashboard" : "/onboarding");
+    hasCompletedOnboarding = Boolean(onboardingContext);
   } catch (error) {
     console.error("Post-auth destination check failed:", error);
-
-    /*
-     * Authentication has already succeeded. If the onboarding lookup is
-     * temporarily unavailable, keep the account usable instead of trapping
-     * the user in the authentication flow.
-     */
-    redirect("/dashboard");
   }
+
+  /*
+   * redirect() throws a framework navigation signal, so it must remain
+   * outside the try/catch. A failed lookup defaults to onboarding to ensure
+   * a new account never reaches the dashboard without its ASCEND context.
+   */
+  redirect(hasCompletedOnboarding ? "/dashboard" : "/onboarding");
 }
