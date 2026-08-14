@@ -56,7 +56,7 @@ function readLocationMode(searchParams: URLSearchParams): OpportunityLocationMod
     return value;
   }
 
-  return "profile";
+  return "all";
 }
 
 export async function GET(

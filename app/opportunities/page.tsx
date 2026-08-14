@@ -92,7 +92,7 @@ function parseInitialLocation(
     requestedMode === "current" ||
     requestedMode === "profile"
       ? requestedMode
-      : "profile";
+      : "all";
 
   return {
     mode,

@@ -62,7 +62,7 @@ function normalizePage(value: number | undefined): number {
 
 function locationKey(location: OpportunityLocationSelection): string {
   return [
-    location.mode ?? "profile",
+    location.mode ?? "all",
     location.query ?? "",
     location.city ?? "",
     location.region ?? "",
@@ -74,7 +74,7 @@ function addLocationParameters(
   params: URLSearchParams,
   location: OpportunityLocationSelection,
 ) {
-  const mode = location.mode ?? "profile";
+  const mode = location.mode ?? "all";
 
   if (mode !== "profile") {
     params.set("locationMode", mode);

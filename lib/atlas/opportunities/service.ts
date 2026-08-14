@@ -472,7 +472,7 @@ export async function getPersonalizedOpportunityPage(
   );
 
   const location = resolveOpportunityLocation(
-    options.location ?? { mode: "profile" },
+    options.location ?? { mode: "all" },
     snapshot.profile,
   );
 

@@ -95,7 +95,7 @@ export function resolveOpportunityLocation(
   selection: OpportunityLocationSelection,
   profile: OpportunityProfile,
 ): ResolvedOpportunityLocation {
-  const mode = selection.mode ?? "profile";
+  const mode = selection.mode ?? "all";
 
   if (mode === "all") {
     return {
