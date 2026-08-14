@@ -112,6 +112,17 @@ function createId(value: string): string {
   return `myjobmag-${Math.abs(hash)}`;
 }
 
+function extractCompanyFromTitle(title: string): string {
+  const separator = " at ";
+  const separatorIndex = title.toLowerCase().lastIndexOf(separator);
+
+  if (separatorIndex < 0) {
+    return "";
+  }
+
+  return title.slice(separatorIndex + separator.length).trim();
+}
+
 function detectCategory(text: string): string {
   const value = text.toLowerCase();
 
@@ -151,7 +162,6 @@ function detectCategory(text: string): string {
 function buildTags(
   text: string,
   category: string,
-  feedCategory: string,
   country: string,
   region?: string,
 ): string[] {
@@ -160,10 +170,6 @@ function buildTags(
 
   if (region) {
     tags.add(region);
-  }
-
-  if (feedCategory) {
-    tags.add(feedCategory);
   }
 
   const possibleTags: Array<[string, string]> = [
@@ -237,14 +243,18 @@ function mapFeedItem(block: string, country: string): Opportunity | null {
     return null;
   }
 
-  const company = cleanText(
-    getXmlValue(block, [
-      "company",
-      "companyname",
-      "company_name",
-      "employer",
-    ]),
-  );
+  /*
+   * MyJobMag's category feed currently returns company and industry values
+   * from unrelated records. The listing title, description, location and URL
+   * remain aligned. Every current feed title includes the employer after the
+   * final " at ", so derive it from that trusted field and reject a record if
+   * the employer cannot be established without guessing.
+   */
+  const company = extractCompanyFromTitle(title);
+
+  if (!company) {
+    return null;
+  }
   const description = cleanText(
     getXmlValue(block, [
       "description",
@@ -275,24 +285,14 @@ function mapFeedItem(block: string, country: string): Opportunity | null {
     return null;
   }
 
-  const feedCategory = cleanText(
-    getXmlValue(block, ["industry", "category", "jobcategory", "job_category"]),
-  );
-  const searchable = [
-    title,
-    company,
-    description,
-    location,
-    feedCategory,
-    country,
-  ].join(" ");
+  const searchable = [title, company, description, location, country].join(" ");
   const category = detectCategory(searchable);
   const normalized = searchable.toLowerCase();
 
   return {
     id: createId(url),
     title,
-    company: company || "MyJobMag Employer",
+    company,
     description,
     category,
     source: "myjobmag",
@@ -304,7 +304,7 @@ function mapFeedItem(block: string, country: string): Opportunity | null {
     salary: salary || undefined,
     deadline: deadline || undefined,
     url,
-    tags: buildTags(searchable, category, feedCategory, country),
+    tags: buildTags(searchable, category, country),
   };
 }
 
@@ -339,8 +339,8 @@ function mapStatePageItem(
   const logoCompany = cleanText(
     /<img[^>]+alt=["']([^"']+?)\s+logo["']/i.exec(block)?.[1],
   );
-  const titleCompany = /\s+at\s+(.+)$/i.exec(title)?.[1]?.trim();
-  const company = logoCompany || titleCompany || "MyJobMag Employer";
+  const titleCompany = extractCompanyFromTitle(title);
+  const company = titleCompany || logoCompany || "MyJobMag Employer";
   const url = new URL(relativeUrl, "https://www.myjobmag.com").toString();
   const searchable = `${title} ${company} ${description} ${statePage.state} Nigeria`;
   const category = detectCategory(searchable);
@@ -359,7 +359,7 @@ function mapStatePageItem(
       normalized.includes("work from home") ||
       normalized.includes("hybrid"),
     url,
-    tags: buildTags(searchable, category, "", "Nigeria", statePage.state),
+    tags: buildTags(searchable, category, "Nigeria", statePage.state),
   };
 }
 

@@ -37,7 +37,7 @@ const loadOpportunitySources = unstable_cache(
   async () => fetchAllSources(),
   [
     "atlas-opportunity-sources",
-    "v2",
+    "v3",
   ],
   {
     revalidate: 300,

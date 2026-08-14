@@ -30,7 +30,7 @@ import type { RankedOpportunity } from "./types";
 const DEFAULT_PAGE_SIZE = 10;
 const MAX_PAGE_SIZE = 25;
 
-const SNAPSHOT_VERSION = "v16";
+const SNAPSHOT_VERSION = "v17";
 
 const SNAPSHOT_WINDOW_SECONDS = 900;
 
