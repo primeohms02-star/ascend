@@ -3,6 +3,12 @@
 import { motion } from "framer-motion";
 import { ArrowRight, Check } from "lucide-react";
 
+import {
+  ONBOARDING_ANSWER_LIMITS,
+} from "@/lib/onboardingAnswers";
+
+import CustomAnswerInput from "./CustomAnswerInput";
+
 type Props = {
   value: string[];
 
@@ -30,11 +36,22 @@ const challenges = [
   "I struggle to stay consistent",
 ];
 
+const challengeOptions =
+  new Set(challenges);
+
 export default function StepChallenge({
   value,
   onChange,
   onNext,
 }: Props) {
+  const customChallenge =
+    value.find(
+      (challenge) =>
+        !challengeOptions.has(
+          challenge
+        )
+    ) ?? "";
+
   function toggle(
     challenge: string
   ) {
@@ -53,6 +70,27 @@ export default function StepChallenge({
       ...value,
       challenge,
     ]);
+  }
+
+  function updateCustomChallenge(
+    challenge: string
+  ) {
+    const selectedOptions =
+      value.filter(
+        (selectedChallenge) =>
+          challengeOptions.has(
+            selectedChallenge
+          )
+      );
+
+    onChange(
+      challenge.trim()
+        ? [
+            ...selectedOptions,
+            challenge,
+          ]
+        : selectedOptions
+    );
   }
 
   return (
@@ -128,6 +166,19 @@ export default function StepChallenge({
         )}
       </div>
 
+      <CustomAnswerInput
+        id="custom-challenge"
+        label="Not listed? Tell Atlas what else is holding you back."
+        placeholder="Describe another challenge Atlas should consider"
+        value={customChallenge}
+        maxLength={
+          ONBOARDING_ANSWER_LIMITS.challenge
+        }
+        onChange={
+          updateCustomChallenge
+        }
+      />
+
       <div className="mt-6 flex items-center justify-between gap-4">
         <p className="text-sm text-slate-500">
           {value.length} selected
@@ -137,7 +188,12 @@ export default function StepChallenge({
           type="button"
           onClick={onNext}
           disabled={
-            value.length === 0
+            value.length === 0 ||
+            Boolean(
+              customChallenge &&
+                customChallenge.trim()
+                  .length < 2
+            )
           }
           className="rounded-xl bg-blue-600 px-6 py-3.5 font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
         >

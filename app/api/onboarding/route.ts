@@ -26,6 +26,12 @@ import {
   invalidateOpportunitySnapshot,
 } from "@/lib/atlas/opportunities/service";
 
+import {
+  ONBOARDING_ANSWER_LIMITS,
+  cleanOnboardingAnswer,
+  cleanOnboardingChallenges,
+} from "@/lib/onboardingAnswers";
+
 type OnboardingRequest = {
   operationId?: unknown;
 
@@ -54,45 +60,6 @@ type ValidatedAnswers = {
 
 const uuidPattern =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-
-const validIdentities =
-  new Set([
-    "Student",
-    "Recent Graduate",
-    "Job Seeker",
-    "Early-Career Professional",
-    "Experienced Professional",
-    "Career Changer",
-    "Freelancer",
-    "Founder or Entrepreneur",
-    "Business Professional",
-    "Finance Professional",
-    "Fashion Professional",
-    "Creator",
-    "Researcher or Academic",
-    "Social Impact Professional",
-    "Skilled or Technical Professional",
-    "Exploring",
-  ]);
-
-const validGoals =
-  new Set([
-    "Find a Job",
-    "Find an Internship",
-    "Win a Scholarship",
-    "Join a Fellowship",
-    "Find Grants or Funding",
-    "Build a Business",
-    "Build a Finance Career",
-    "Grow in Fashion",
-    "Learn New Skills",
-    "Change Careers",
-    "Advance My Career",
-    "Grow My Freelance Career",
-    "Grow as a Creator",
-    "Build My Network",
-    "Discover My Purpose",
-  ]);
 
 function cleanSkills(
   value: unknown
@@ -149,23 +116,19 @@ function cleanSkills(
 function validateAnswers(
   body: OnboardingRequest
 ): ValidatedAnswers | null {
-  if (
-    typeof body.identity !==
-      "string" ||
-    !validIdentities.has(
-      body.identity
-    )
-  ) {
-    return null;
-  }
+  const identity =
+    cleanOnboardingAnswer(
+      body.identity,
+      ONBOARDING_ANSWER_LIMITS.identity
+    );
 
-  if (
-    typeof body.goal !==
-      "string" ||
-    !validGoals.has(
-      body.goal
-    )
-  ) {
+  const goal =
+    cleanOnboardingAnswer(
+      body.goal,
+      ONBOARDING_ANSWER_LIMITS.goal
+    );
+
+  if (!identity || !goal) {
     return null;
   }
 
@@ -178,18 +141,12 @@ function validateAnswers(
     return null;
   }
 
-  if (
-    !Array.isArray(
+  const challenges =
+    cleanOnboardingChallenges(
       body.challenges
-    ) ||
-    body.challenges.length ===
-      0 ||
-    !body.challenges.every(
-      (challenge) =>
-        typeof challenge ===
-        "string"
-    )
-  ) {
+    );
+
+  if (!challenges) {
     return null;
   }
 
@@ -206,31 +163,10 @@ function validateAnswers(
     return null;
   }
 
-  const challenges =
-    body.challenges
-      .map((challenge) =>
-        challenge
-          .trim()
-          .replace(
-            /\s+/g,
-            " "
-          )
-      )
-      .filter(Boolean)
-      .slice(0, 14);
-
-  if (
-    challenges.length === 0
-  ) {
-    return null;
-  }
-
   return {
-    identity:
-      body.identity.trim(),
+    identity,
 
-    goal:
-      body.goal.trim(),
+    goal,
 
     skills,
 

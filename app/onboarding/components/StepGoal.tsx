@@ -20,6 +20,12 @@ import {
   Wrench,
 } from "lucide-react";
 
+import {
+  ONBOARDING_ANSWER_LIMITS,
+} from "@/lib/onboardingAnswers";
+
+import CustomAnswerInput from "./CustomAnswerInput";
+
 type Props = {
   value: string;
   onSelect: (goal: string) => void;
@@ -119,11 +125,23 @@ const goals = [
   },
 ];
 
+const goalTitles = new Set(
+  goals.map((goal) =>
+    goal.title
+  )
+);
+
 export default function StepGoal({
   value,
   onSelect,
   onNext,
 }: Props) {
+  const customValue =
+    value &&
+    !goalTitles.has(value)
+      ? value
+      : "";
+
   return (
     <motion.div
       initial={{ opacity: 0, x: 40 }}
@@ -184,11 +202,24 @@ export default function StepGoal({
         })}
       </div>
 
+      <CustomAnswerInput
+        id="custom-goal"
+        label="Not listed? Write the goal that matters most to you."
+        placeholder="For example: Launch a community development initiative"
+        value={customValue}
+        maxLength={
+          ONBOARDING_ANSWER_LIMITS.goal
+        }
+        onChange={onSelect}
+      />
+
       <div className="mt-6 flex justify-end">
         <button
           type="button"
           onClick={onNext}
-          disabled={!value}
+          disabled={
+            value.trim().length < 2
+          }
           className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-3.5 font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
         >
           Continue

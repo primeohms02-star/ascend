@@ -21,6 +21,12 @@ import {
   ArrowRight,
 } from "lucide-react";
 
+import {
+  ONBOARDING_ANSWER_LIMITS,
+} from "@/lib/onboardingAnswers";
+
+import CustomAnswerInput from "./CustomAnswerInput";
+
 type Props = {
   value: string;
   onSelect: (identity: string) => void;
@@ -126,11 +132,23 @@ const options = [
   },
 ];
 
+const optionTitles = new Set(
+  options.map((option) =>
+    option.title
+  )
+);
+
 export default function StepIdentity({
   value,
   onSelect,
   onNext,
 }: Props) {
+  const customValue =
+    value &&
+    !optionTitles.has(value)
+      ? value
+      : "";
+
   return (
     <motion.div
       initial={{ opacity: 0, x: 40 }}
@@ -191,11 +209,24 @@ export default function StepIdentity({
         })}
       </div>
 
+      <CustomAnswerInput
+        id="custom-identity"
+        label="Not listed? Describe yourself in your own words."
+        placeholder="For example: Community organiser or healthcare professional"
+        value={customValue}
+        maxLength={
+          ONBOARDING_ANSWER_LIMITS.identity
+        }
+        onChange={onSelect}
+      />
+
       <div className="mt-6 flex justify-end">
         <button
           type="button"
           onClick={onNext}
-          disabled={!value}
+          disabled={
+            value.trim().length < 2
+          }
           className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-3.5 font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
         >
           Continue
