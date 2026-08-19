@@ -359,7 +359,10 @@ function selectFallbackMission(
     MissionTemplate[],
 
   path:
-    MissionPath
+    MissionPath,
+
+  blockedTitles:
+    string[]
 ): DailyMission {
   if (
     available.length > 0
@@ -453,9 +456,84 @@ function selectFallbackMission(
       },
     };
 
-  return fallbackByPath[
-    path
-  ];
+  const adaptiveCandidates:
+    DailyMission[] = [
+      fallbackByPath[path],
+
+      {
+        title:
+          `${path} Requirement Gap`,
+
+        description:
+          "Compare your current evidence with one important requirement for your immediate goal, close one specific gap today and save the result.",
+      },
+
+      {
+        title:
+          `${path} Feedback Loop`,
+
+        description:
+          "Show one piece of work or one planned next step to a relevant person, ask for focused feedback and record the improvement you will make from it.",
+      },
+
+      {
+        title:
+          `${path} Opportunity Action`,
+
+        description:
+          "Choose one real opportunity connected to your direction, identify the strongest reason it fits and complete one concrete readiness or application action.",
+      },
+
+      {
+        title:
+          `${path} Evidence Upgrade`,
+
+        description:
+          "Improve one existing project, profile, application or portfolio artifact so it provides clearer evidence of your readiness for your immediate goal.",
+      },
+    ];
+
+  const blocked =
+    new Set(
+      blockedTitles.map(
+        normalizeTitle
+      )
+    );
+
+  const distinctFallback =
+    adaptiveCandidates.find(
+      (candidate) =>
+        !blocked.has(
+          normalizeTitle(
+            candidate.title
+          )
+        )
+    );
+
+  if (distinctFallback) {
+    return distinctFallback;
+  }
+
+  let sequence =
+    blockedTitles.length + 1;
+
+  while (
+    blocked.has(
+      normalizeTitle(
+        `${path} Progress Sprint ${sequence}`
+      )
+    )
+  ) {
+    sequence += 1;
+  }
+
+  return {
+    title:
+      `${path} Progress Sprint ${sequence}`,
+
+    description:
+      "Identify the highest-priority unfinished step toward your North Star, complete one outcome that can be verified today and save the evidence before choosing the next step.",
+  };
 }
 
 const GENERIC_MISSION_PATTERNS = [
@@ -838,9 +916,10 @@ DESCRIPTION:
 
   const fallbackMission =
     selectFallbackMission(
-    available,
-    path
-  );
+      available,
+      path,
+      blockedTitles
+    );
 
   console.info(
     `Atlas Mission Source: curated-${path.toLowerCase()}-fallback`
