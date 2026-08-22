@@ -129,7 +129,7 @@ export default function MissionCard({
               </summary>
 
               <div className="border-t border-white/10 px-3.5 py-3.5">
-                <p className="text-sm leading-7 text-slate-300">
+                <p className="whitespace-pre-line text-sm leading-7 text-slate-300">
                   {description}
                 </p>
 

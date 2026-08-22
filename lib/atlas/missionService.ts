@@ -4,6 +4,10 @@ import {
   supabaseServer,
 } from "@/lib/supabase-server";
 
+import {
+  normalizeMissionContent,
+} from "@/lib/atlas/missionContent";
+
 export type MissionStatus =
   | "active"
   | "completed"
@@ -139,6 +143,61 @@ function cleanRequired(
   return cleanValue;
 }
 
+function normalizeMissionRecord(
+  record: MissionRecord
+): MissionRecord {
+  const content =
+    normalizeMissionContent(
+      record.mission,
+      record.reason
+    );
+
+  return {
+    ...record,
+
+    mission: content.title,
+
+    reason: content.description,
+  };
+}
+
+function normalizeOperationResult<
+  Result extends MissionOperationResult,
+>(result: Result): Result {
+  const candidate = result as
+    Result & {
+      completedMission?: MissionRecord;
+      previousMission?: MissionRecord | null;
+    };
+
+  return {
+    ...result,
+
+    activeMission:
+      normalizeMissionRecord(
+        result.activeMission
+      ),
+
+    ...(candidate.completedMission
+      ? {
+          completedMission:
+            normalizeMissionRecord(
+              candidate.completedMission
+            ),
+        }
+      : {}),
+
+    ...(candidate.previousMission
+      ? {
+          previousMission:
+            normalizeMissionRecord(
+              candidate.previousMission
+            ),
+        }
+      : {}),
+  } as Result;
+}
+
 export async function getMissionOperation<
   Result extends
     MissionOperationResult,
@@ -192,11 +251,11 @@ export async function getMissionOperation<
     return null;
   }
 
-  return {
+  return normalizeOperationResult({
     ...operation.result,
 
     replayed: true,
-  } as Result;
+  } as Result);
 }
 
 export async function getActiveMission(
@@ -229,9 +288,49 @@ export async function getActiveMission(
     throw error;
   }
 
-  return data as
+  const storedMission = data as
     | MissionRecord
     | null;
+
+  if (!storedMission) {
+    return null;
+  }
+
+  const normalizedMission =
+    normalizeMissionRecord(
+      storedMission
+    );
+
+  if (
+    normalizedMission.mission !==
+      storedMission.mission ||
+    normalizedMission.reason !==
+      storedMission.reason
+  ) {
+    const {
+      error: repairError,
+    } = await supabaseServer
+      .from("atlas_missions")
+      .update({
+        mission:
+          normalizedMission.mission,
+
+        reason:
+          normalizedMission.reason,
+      })
+      .eq("id", storedMission.id)
+      .eq("user_id", userId)
+      .eq("status", "active");
+
+    if (repairError) {
+      console.error(
+        "Active Mission Repair Error:",
+        repairError
+      );
+    }
+  }
+
+  return normalizedMission;
 }
 
 export async function getLatestMission(
@@ -267,9 +366,15 @@ export async function getLatestMission(
     throw error;
   }
 
-  return data as
+  const mission = data as
     | MissionRecord
     | null;
+
+  return mission
+    ? normalizeMissionRecord(
+        mission
+      )
+    : null;
 }
 
 export async function getMissionHistory(
@@ -304,8 +409,10 @@ export async function getMissionHistory(
   }
 
   return (
-    data ?? []
-  ) as MissionRecord[];
+    (data ?? []) as MissionRecord[]
+  ).map(
+    normalizeMissionRecord
+  );
 }
 
 export async function getCompletedMissionTitles(
@@ -347,7 +454,10 @@ export async function getCompletedMissionTitles(
     data ?? []
   ).map(
     (record) =>
-      record.mission
+      normalizeMissionContent(
+        record.mission,
+        null
+      ).title
   );
 }
 
@@ -377,6 +487,12 @@ export async function replaceMissionForOnboarding(
     reason: string;
   }
 ): Promise<OnboardingReplacementResult> {
+  const mission =
+    normalizeMissionContent(
+      input.mission,
+      input.reason
+    );
+
   const {
     data,
     error,
@@ -429,13 +545,13 @@ export async function replaceMissionForOnboarding(
 
       p_mission:
         cleanRequired(
-          input.mission,
+          mission.title,
           "Mission"
         ),
 
       p_reason:
         cleanRequired(
-          input.reason,
+          mission.description,
           "Mission reason"
         ),
     }
@@ -456,8 +572,10 @@ export async function replaceMissionForOnboarding(
     );
   }
 
-  return data as
-    OnboardingReplacementResult;
+  return normalizeOperationResult(
+    data as
+      OnboardingReplacementResult
+  );
 }
 
 export async function completeMissionLifecycle(
@@ -475,6 +593,12 @@ export async function completeMissionLifecycle(
     xpReward: number;
   }
 ): Promise<CompletionResult> {
+  const nextMission =
+    normalizeMissionContent(
+      input.nextMission,
+      input.nextReason
+    );
+
   const {
     data,
     error,
@@ -497,13 +621,13 @@ export async function completeMissionLifecycle(
 
       p_next_mission:
         cleanRequired(
-          input.nextMission,
+          nextMission.title,
           "Next mission"
         ),
 
       p_next_reason:
         cleanRequired(
-          input.nextReason,
+          nextMission.description,
           "Next mission reason"
         ),
 
@@ -532,6 +656,8 @@ export async function completeMissionLifecycle(
     );
   }
 
-  return data as
-    CompletionResult;
+  return normalizeOperationResult(
+    data as
+      CompletionResult
+  );
 }

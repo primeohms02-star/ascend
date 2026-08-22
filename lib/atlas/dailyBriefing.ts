@@ -2,6 +2,10 @@ import {
   getGreeting,
 } from "../utils/greeting";
 
+import {
+  summarizeMissionDetail,
+} from "./missionContent";
+
 export type DailyBriefing = {
   greeting: string;
   summary: string;
@@ -79,11 +83,6 @@ export function buildDailyBriefing(
         )}...`
       : cleanNorthStar;
 
-  const cleanMissionReason =
-    brain.missionReason
-      .trim()
-      .replace(/\s+/g, " ");
-
   return {
     greeting:
       `${getGreeting()}. ${message}`,
@@ -98,8 +97,9 @@ export function buildDailyBriefing(
 
     focusDetail:
       hasMission
-        ? cleanMissionReason ||
-          `Completing this mission should create visible evidence of progress toward ${northStarPreview || "your North Star"}.`
+        ? summarizeMissionDetail(
+            brain.missionReason
+          )
         : "Start or update your journey so Atlas can prepare a mission from your identity, immediate goal, skills, challenges and North Star.",
 
     oracle:

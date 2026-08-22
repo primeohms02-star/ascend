@@ -9,6 +9,9 @@ import {
   getOpportunityLibraryCounts,
   type OpportunityLibraryCategory,
 } from "@/lib/atlas/opportunities/memory";
+import {
+  hydrateOpportunityLibraryRecords,
+} from "@/lib/atlas/opportunities/library";
 
 type Props = {
   params: Promise<{
@@ -45,7 +48,7 @@ export default async function OpportunityLibraryPage({
     notFound();
   }
 
-  const [opportunities, counts] =
+  const [storedOpportunities, counts] =
     await Promise.all([
       getOpportunitiesByCategory(
         userId,
@@ -54,6 +57,12 @@ export default async function OpportunityLibraryPage({
 
       getOpportunityLibraryCounts(userId),
     ]);
+
+  const opportunities =
+    await hydrateOpportunityLibraryRecords(
+      userId,
+      storedOpportunities
+    );
 
   return (
     <AppShell>

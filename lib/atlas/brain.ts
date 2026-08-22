@@ -589,7 +589,7 @@ Use clean conversational structure:
 - simple bullet points for several actions, options, exercises, requirements or recommendations;
 - numbered steps only when sequence matters;
 - short section labels only when a longer answer genuinely needs them;
-- bold only for useful labels or key phrases.
+- plain-text section labels ending with a colon.
 
 Every bullet or numbered item must be on its own line. Never run several items together inside one paragraph.
 
@@ -597,15 +597,15 @@ For bullet lists, use the bullet character "•" followed by one item. Do not us
 
 Never create table-like text. Never create column headers such as "Block / Exercise / Sets / Reps / Why it helps".
 
-Never output Markdown heading markers such as #, ## or ###. Use a short bold heading instead when a section label is genuinely useful.
+Never output Markdown syntax. Do not use heading markers, asterisks, underscores, backticks or decorative emphasis. Use a short plain-text label ending with a colon when a section label is genuinely useful.
 
 Do not use the pipe character (|) in replies.
 
 Do not use em dashes, en dashes or spaced hyphens as visual separators between fields or ideas. Hyphenated words inside normal words are fine when grammatically necessary. Prefer a colon, full stop or a new line instead.
 
 For a schedule or day plan, use ordinary bullets exactly like this:
-• **07:00 to 07:30:** Morning reset. One concise explanation.
-• **08:00 to 09:00:** Focus block. One concise explanation.
+• 07:00 to 07:30: Morning reset. One concise explanation.
+• 08:00 to 09:00: Focus block. One concise explanation.
 
 Use "to" between schedule times instead of a dash.
 
@@ -633,11 +633,16 @@ function normalizeAtlasReplyFormatting(value: string) {
       .trim();
 
     // Never let raw Markdown heading markers or empty pseudo-headings reach
-    // the interface. Real headings are converted to bold labels that the
-    // renderer can display naturally.
+    // the interface. Real headings become ordinary labels that every client
+    // can render consistently.
     normalized = normalized
       .replace(/^\s*#{1,6}\s*$/gm, "")
-      .replace(/^\s*#{1,6}\s+(.+)$/gm, "**$1**");
+      .replace(/^\s*#{1,6}\s+(.+)$/gm, "$1:")
+      .replace(/^\s*(?:\*\*|__)([^\n*_]+)(?:\*\*|__)\s*$/gm, "$1:")
+      .replace(/\*\*([^*]+)\*\*/g, "$1")
+      .replace(/__([^_]+)__/g, "$1")
+      .replace(/~~([^~]+)~~/g, "$1")
+      .replace(/`([^`]+)`/g, "$1");
 
     // Convert numeric ranges before removing visual dash separators so
     // ordinary values such as "3-5 years" remain meaningful.
@@ -662,13 +667,20 @@ function normalizeAtlasReplyFormatting(value: string) {
 
     // If several labelled fields were crammed into one line, give each one
     // its own line before the UI parser sees it.
-    normalized = normalized.replace(
-      /;\s*(?=(?:Title|Type|Location|Sector|Core duties|Typical deliverables|Potential timeline|Key selling points|North Star|Current Mission|Mission|Primary Focus|Declared skills|Current challenges|Criterion|Question|Score|Recommendation|Next Step)\s*:)/gi,
-      "\n"
-    );
+    normalized = normalized
+      .replace(
+        /;\s*(?=(?:Title|Type|Location|Sector|Summary|Outcome|Steps?|Evidence|Why it matters|What this means|What to do|Core duties|Typical deliverables|Potential timeline|Key selling points|North Star|Current Mission|Mission|Primary Focus|Declared skills|Current challenges|Criterion|Question|Score|Recommendation|Next Step)\s*:)/gi,
+        "\n"
+      )
+      .replace(
+        /\s+(?=(?:Summary|Outcome|Steps?|Evidence|Why it matters|What this means|What to do|Recommendation|Next Step)\s*:)/gi,
+        "\n"
+      );
 
     // Inline bullet characters become real list lines.
-    normalized = normalized.replace(/\s*•\s*/g, "\n• ");
+    normalized = normalized
+      .replace(/\s*[•●▪◦‣›→]\s*/g, "\n• ")
+      .replace(/\s+(?=\d+[.)]\s+\S)/g, "\n");
 
     // Convert any last legacy multi-column row into one readable bullet
     // before the remaining visual separators are removed.
@@ -682,7 +694,7 @@ function normalizeAtlasReplyFormatting(value: string) {
 
         if (columns.length >= 3 && !/^[-*•]\s/.test(line.trim())) {
           const [label, ...details] = columns;
-          return `• **${label}:** ${details.join(". ")}`;
+          return `• ${label}: ${details.join(". ")}`;
         }
 
         return line;
@@ -697,6 +709,12 @@ function normalizeAtlasReplyFormatting(value: string) {
 
     normalized = normalized
       .split("\n")
+      .map((line) =>
+        line
+          .replace(/^\s*[-*]\s+/, "• ")
+          .replace(/(^|\s)[*_~]+(?=\S)/g, "$1")
+          .replace(/([^\s])[*_~]+(?=\s|$|[.,!?;:])/g, "$1")
+      )
       .filter((line) => {
         const clean = line.trim();
         if (!clean) {
@@ -789,7 +807,7 @@ Never describe an older mission as current.
 
 ${
   isDayPlanningRequest
-    ? `The user is asking for a fresh day plan. Use the CURRENT MISSION above only as silent live context so an old mission can never leak into the answer. Do NOT print, quote, label or restate the current mission or North Star. Do NOT add a "Current Mission" or "Mission" section. Do not reuse or continue an older day plan. Build a balanced, useful plan for today and let the live mission influence priorities only where it naturally belongs. Present the plan as clean conversational bullet points. Put each time block on its own line using: • **07:00 to 07:30:** Short activity title. One concise explanation. Never use pipes, table columns, em-dash separators or en-dash separators. Keep the plan readable and practical rather than exhaustive.`
+    ? `The user is asking for a fresh day plan. Use the CURRENT MISSION above only as silent live context so an old mission can never leak into the answer. Do NOT print, quote, label or restate the current mission or North Star. Do NOT add a "Current Mission" or "Mission" section. Do not reuse or continue an older day plan. Build a balanced, useful plan for today and let the live mission influence priorities only where it naturally belongs. Present the plan as clean conversational bullet points. Put each time block on its own line using: • 07:00 to 07:30: Short activity title. One concise explanation. Never use pipes, table columns, em-dash separators or en-dash separators. Keep the plan readable and practical rather than exhaustive.`
     : "Use the current mission above whenever the user's request depends on what they should be doing now, but do not repeat it unless doing so directly helps answer the user's question."
 }
 `;
@@ -1084,6 +1102,12 @@ Rules:
 - Respect all identity, goal, declared skill and challenge context included in the user message.
 - Never assume the user has a skill they did not declare.
 - Do not repeat the current mission.
+- The mission title must be a plain-language name of 3 to 8 words, not an instruction or paragraph.
+- Never put Markdown, asterisks, hashes, quotes, bullets or decorative symbols in the mission title.
+- Keep the reason between 60 and 140 words.
+- Organize the reason with plain-text labels when useful: Outcome:, Steps:, Evidence:, Why it matters:.
+- Put each numbered step on its own line and use no more than three steps.
+- Do not use Markdown formatting anywhere in the response.
 
 If the current mission remains appropriate, return exactly:
 

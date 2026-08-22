@@ -9,6 +9,7 @@ import type {
   OpportunityLibraryCounts,
   OpportunityMemoryRecord,
 } from "@/lib/atlas/opportunities/memory";
+import { createOpportunityRouteId } from "@/lib/atlas/opportunities/reference";
 
 type Props = {
   category: OpportunityLibraryCategory;
@@ -111,6 +112,25 @@ function ArrowIcon() {
   );
 }
 
+function ExternalLinkIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      className="h-4 w-4"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M14 5h5v5m0-5-9 9M19 14v5H5V5h5"
+      />
+    </svg>
+  );
+}
+
 function LibraryIcon() {
   return (
     <svg
@@ -159,7 +179,13 @@ export default function OpportunityLibraryView({
   const [opportunities, setOpportunities] =
     useState(initialOpportunities);
 
+  const [libraryCounts, setLibraryCounts] =
+    useState(counts);
+
   const [updatingId, setUpdatingId] =
+    useState<string | null>(null);
+
+  const [applicationOpenedId, setApplicationOpenedId] =
     useState<string | null>(null);
 
   const [error, setError] = useState("");
@@ -205,12 +231,166 @@ export default function OpportunityLibraryView({
         )
       );
 
+      setLibraryCounts((current) => ({
+        ...current,
+        applied: Math.max(0, current.applied - 1),
+        completed: current.completed + 1,
+      }));
+
       router.refresh();
     } catch (error) {
       setError(
         error instanceof Error
           ? error.message
           : "Atlas could not update this opportunity."
+      );
+    } finally {
+      setUpdatingId(null);
+    }
+  }
+
+  async function removeFromLibrary(
+    opportunityId: string
+  ) {
+    try {
+      setUpdatingId(opportunityId);
+      setError("");
+
+      const params = new URLSearchParams({
+        opportunityId,
+      });
+
+      const response = await fetch(
+        `/api/opportunities/status?${params.toString()}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.error ??
+            "Atlas could not remove this opportunity from your Library."
+        );
+      }
+
+      setOpportunities((current) =>
+        current.filter(
+          (item) =>
+            item.opportunity_id !==
+            opportunityId
+        )
+      );
+
+      setLibraryCounts((current) => ({
+        ...current,
+        [category]: Math.max(
+          0,
+          current[category] - 1
+        ),
+      }));
+
+      setApplicationOpenedId(null);
+      router.refresh();
+    } catch (error) {
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Atlas could not remove this opportunity from your Library."
+      );
+    } finally {
+      setUpdatingId(null);
+    }
+  }
+
+  function openApplication(
+    opportunity: OpportunityMemoryRecord
+  ) {
+    setError("");
+
+    const original =
+      opportunity.opportunity;
+
+    if (!original?.url) {
+      setError(
+        "The original application link is not available for this opportunity."
+      );
+      return;
+    }
+
+    window.open(
+      original.url,
+      "_blank",
+      "noopener,noreferrer"
+    );
+
+    if (category === "saved") {
+      setApplicationOpenedId(
+        opportunity.opportunity_id
+      );
+    }
+  }
+
+  async function confirmSubmitted(
+    opportunity: OpportunityMemoryRecord
+  ) {
+    if (!opportunity.opportunity) {
+      return;
+    }
+
+    try {
+      setUpdatingId(
+        opportunity.opportunity_id
+      );
+      setError("");
+
+      const response = await fetch(
+        "/api/opportunities/apply",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            opportunity:
+              opportunity.opportunity,
+            confirmedSubmitted: true,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.error ??
+            "Atlas could not record this submitted application."
+        );
+      }
+
+      setOpportunities((current) =>
+        current.filter(
+          (item) =>
+            item.opportunity_id !==
+            opportunity.opportunity_id
+        )
+      );
+
+      setLibraryCounts((current) => ({
+        ...current,
+        saved: Math.max(0, current.saved - 1),
+        applied: current.applied + 1,
+      }));
+
+      setApplicationOpenedId(null);
+      router.refresh();
+    } catch (error) {
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Atlas could not record this submitted application."
       );
     } finally {
       setUpdatingId(null);
@@ -305,7 +485,7 @@ export default function OpportunityLibraryView({
                       : "border-slate-700 bg-slate-800 text-slate-400"
                   }`}
                 >
-                  {counts[itemCategory]}
+                  {libraryCounts[itemCategory]}
                 </span>
               </div>
             </Link>
@@ -327,8 +507,20 @@ export default function OpportunityLibraryView({
       {opportunities.length > 0 ? (
         <section className="grid gap-5">
           {opportunities.map((opportunity) => {
+            const storedOpportunity =
+              opportunity.opportunity ?? {
+                id: opportunity.opportunity_id,
+                title: opportunity.title,
+                company: opportunity.company,
+                source: opportunity.source,
+                tags: [],
+              };
+
             const encodedId = encodeURIComponent(
-              opportunity.opportunity_id
+              createOpportunityRouteId(
+                storedOpportunity.id,
+                storedOpportunity.snapshotId
+              )
             );
 
             const decisionHref =
@@ -369,7 +561,59 @@ export default function OpportunityLibraryView({
                     </p>
                   </div>
 
-                  <div className="flex shrink-0 flex-col gap-3 sm:flex-row">
+                  <div className="flex shrink-0 flex-col gap-3 sm:min-w-[19rem]">
+                    <div className="grid grid-cols-2 gap-3">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          removeFromLibrary(
+                            opportunity.opportunity_id
+                          )
+                        }
+                        disabled={isUpdating}
+                        className="rounded-xl border border-rose-400/25 bg-rose-400/[0.07] px-4 py-3 text-sm font-semibold text-rose-300 transition hover:bg-rose-400/10 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {isUpdating
+                          ? "Updating..."
+                          : "Unsave"}
+                      </button>
+
+                      {storedOpportunity.url ? (
+                        <a
+                          href={storedOpportunity.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-400/25 bg-emerald-400/[0.07] px-4 py-3 text-sm font-semibold text-emerald-300 transition hover:bg-emerald-400/10"
+                        >
+                          <ExternalLinkIcon />
+                          Original
+                        </a>
+                      ) : (
+                        <button
+                          type="button"
+                          disabled
+                          title="The original link is unavailable for this older Library record."
+                          className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-700 bg-slate-800/40 px-4 py-3 text-sm font-semibold text-slate-500"
+                        >
+                          <ExternalLinkIcon />
+                          Original
+                        </button>
+                      )}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        openApplication(
+                          opportunity
+                        )
+                      }
+                      disabled={isUpdating}
+                      className="rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 px-4 py-3 text-sm font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      Apply
+                    </button>
+
                     {category === "applied" && (
                       <button
                         type="button"
@@ -395,6 +639,31 @@ export default function OpportunityLibraryView({
 
                       <ArrowIcon />
                     </Link>
+
+                    {category === "saved" &&
+                      applicationOpenedId ===
+                        opportunity.opportunity_id && (
+                        <div className="rounded-xl border border-cyan-400/15 bg-cyan-400/[0.06] p-3">
+                          <p className="text-xs leading-5 text-slate-300">
+                            Opening the application does not mark it as applied. Confirm only after you actually submit it.
+                          </p>
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              confirmSubmitted(
+                                opportunity
+                              )
+                            }
+                            disabled={isUpdating}
+                            className="mt-2 rounded-lg border border-cyan-400/25 bg-cyan-400/10 px-3 py-2 text-xs font-semibold text-cyan-200 transition hover:bg-cyan-400/15 disabled:opacity-60"
+                          >
+                            {isUpdating
+                              ? "Recording..."
+                              : "I submitted my application"}
+                          </button>
+                        </div>
+                      )}
                   </div>
                 </div>
               </article>

@@ -29,6 +29,10 @@ import {
   GROQ_MODEL,
 } from "@/lib/groq/config";
 
+import {
+  normalizeMissionContent,
+} from "@/lib/atlas/missionContent";
+
 export type DailyMission = {
   title: string;
 
@@ -182,28 +186,24 @@ function normalizeTitle(
 function parseMission(
   text: string
 ): DailyMission | null {
-  const title =
+  const rawTitle =
     text.match(
-      /TITLE:\s*(.+)/i
+      /^TITLE:[ \t]*(.*)$/im
     )?.[1]?.trim();
 
-  const description =
+  const rawDescription =
     text.match(
-      /DESCRIPTION:\s*([\s\S]*)/i
+      /^DESCRIPTION:[ \t]*([\s\S]*)$/im
     )?.[1]?.trim();
 
-  if (
-    !title ||
-    !description
-  ) {
+  if (!rawDescription) {
     return null;
   }
 
-  return {
-    title,
-
-    description,
-  };
+  return normalizeMissionContent(
+    rawTitle,
+    rawDescription
+  );
 }
 
 async function loadOnboardingContext(
@@ -850,8 +850,12 @@ RULES
 - Do not generate generic lifestyle, motivation or productivity advice.
 - Do not tell the user merely to think, stay positive or keep going.
 - Use a curated idea only when it genuinely fits the live context.
-- Keep the title concise.
-- Keep the description specific and actionable.
+- The title must be a plain-language name of 3 to 8 words, not an instruction or paragraph.
+- Never put Markdown, asterisks, hashes, quotes, bullets or decorative symbols in the title.
+- Keep the description between 60 and 140 words.
+- Organize the description with these plain-text labels when useful: Outcome:, Steps:, Evidence:, Why it matters:.
+- Put each numbered step on its own line and use no more than three steps.
+- Do not use Markdown formatting anywhere in the response.
 
 Return exactly:
 

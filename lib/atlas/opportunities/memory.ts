@@ -27,6 +27,7 @@ export type OpportunityMemoryRecord = {
   status: OpportunityStatus;
   created_at?: string;
   updated_at?: string;
+  opportunity?: Opportunity;
 };
 
 const TEXT_LIMITS = {
@@ -128,7 +129,40 @@ const CATEGORY_STATUSES: Record<
 };
 
 const OPPORTUNITY_MEMORY_COLUMNS =
-  "id,user_id,opportunity_id,source,title,company,status,created_at,updated_at";
+  "id,user_id,opportunity_id,source,title,company,status,opportunity_data,created_at,updated_at";
+
+type OpportunityMemoryRow =
+  Omit<
+    OpportunityMemoryRecord,
+    "opportunity"
+  > & {
+    opportunity_data?: Json | null;
+  };
+
+function toOpportunityMemoryRecord(
+  row: OpportunityMemoryRow
+): OpportunityMemoryRecord {
+  const {
+    opportunity_data: opportunityData,
+    ...record
+  } = row;
+
+  const opportunity =
+    cleanOpportunityForMemory(
+      opportunityData
+    ) ?? {
+      id: record.opportunity_id,
+      title: record.title,
+      company: record.company,
+      source: record.source,
+      tags: [],
+    };
+
+  return {
+    ...record,
+    opportunity,
+  };
+}
 
 export async function saveOpportunity(
   userId: string,
@@ -179,6 +213,34 @@ export async function getStoredOpportunityData(
   }
 
   return cleanOpportunityForMemory(data?.opportunity_data);
+}
+
+export async function storeOpportunitySnapshotForMemory(
+  userId: string,
+  opportunityId: string,
+  opportunity: Opportunity,
+) {
+  const storedOpportunity =
+    cleanOpportunityForMemory(
+      opportunity
+    );
+
+  if (!storedOpportunity) {
+    return {
+      error: new Error(
+        "Opportunity data could not be stored safely."
+      ),
+    };
+  }
+
+  return supabaseServer
+    .from("atlas_opportunity_memory")
+    .update({
+      opportunity_data:
+        storedOpportunity as unknown as Json,
+    })
+    .eq("user_id", userId)
+    .eq("opportunity_id", opportunityId);
 }
 
 export async function getStoredOpportunitySummary(
@@ -249,7 +311,7 @@ export async function getOpportunityStatus(
   return data?.status ? (data.status as OpportunityStatus) : null;
 }
 
-export async function removeSavedOpportunity(
+export async function removeOpportunityFromLibrary(
   userId: string,
   opportunityId: string
 ) {
@@ -257,8 +319,7 @@ export async function removeSavedOpportunity(
     .from("atlas_opportunity_memory")
     .delete()
     .eq("user_id", userId)
-    .eq("opportunity_id", opportunityId)
-    .eq("status", "saved");
+    .eq("opportunity_id", opportunityId);
 }
 
 export async function getOpportunityStatuses(
@@ -316,7 +377,11 @@ export async function getOpportunityMemory(
     return [];
   }
 
-  return (data ?? []) as OpportunityMemoryRecord[];
+  return (
+    (data ?? []) as OpportunityMemoryRow[]
+  ).map(
+    toOpportunityMemoryRecord
+  );
 }
 
 export async function getOpportunitiesByCategory(
@@ -343,7 +408,11 @@ export async function getOpportunitiesByCategory(
     return [];
   }
 
-  return (data ?? []) as OpportunityMemoryRecord[];
+  return (
+    (data ?? []) as OpportunityMemoryRow[]
+  ).map(
+    toOpportunityMemoryRecord
+  );
 }
 
 export async function getOpportunityLibraryCounts(

@@ -61,7 +61,7 @@ export default function DailyBriefingCard({
               {focus}
             </p>
 
-            <p className="mt-2 text-sm leading-6 text-slate-400">
+            <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-400">
               {focusDetail}
             </p>
           </article>

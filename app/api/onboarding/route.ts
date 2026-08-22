@@ -32,6 +32,10 @@ import {
   cleanOnboardingChallenges,
 } from "@/lib/onboardingAnswers";
 
+import {
+  normalizeMissionContent,
+} from "@/lib/atlas/missionContent";
+
 type OnboardingRequest = {
   operationId?: unknown;
 
@@ -234,51 +238,109 @@ function buildFallbackMission(
   answers: ValidatedAnswers
 ) {
   const missionByGoal:
-    Record<string, string> = {
+    Record<
+      string,
+      {
+        title: string;
+        outcome: string;
+      }
+    > = {
       "Find a Job":
-        "Identify three roles that align with your North Star, choose the strongest match, and tailor the first section of your resume to its requirements.",
+        {
+          title: "Targeted Job Application",
+          outcome: "Identify three roles aligned with your North Star, choose the strongest match and tailor the first section of your resume to its requirements.",
+        },
 
       "Find an Internship":
-        "Find three relevant internships, compare their requirements, and prepare one tailored application for the strongest match.",
+        {
+          title: "Targeted Internship Application",
+          outcome: "Find three relevant internships, compare their requirements and prepare one tailored application for the strongest match.",
+        },
 
       "Win a Scholarship":
-        "Identify three scholarships that match your background and North Star, then create a requirement checklist for the strongest opportunity.",
+        {
+          title: "Scholarship Requirement Map",
+          outcome: "Identify three scholarships that match your background and North Star, then create a requirement checklist for the strongest opportunity.",
+        },
 
       "Join a Fellowship":
-        "Find three fellowships aligned with your direction, compare their eligibility requirements, and outline your application for the strongest match.",
+        {
+          title: "Fellowship Application Outline",
+          outcome: "Find three fellowships aligned with your direction, compare their eligibility requirements and outline your application for the strongest match.",
+        },
 
       "Find Grants or Funding":
-        "Identify three relevant funding opportunities and write a one-paragraph explanation of the problem your project or venture will solve.",
+        {
+          title: "Funding Opportunity Shortlist",
+          outcome: "Identify three relevant funding opportunities and write a one-paragraph explanation of the problem your project or venture will solve.",
+        },
 
       "Build a Business":
-        "Define the specific customer problem your business will solve and speak with one potential customer to test your most important assumption.",
+        {
+          title: "Customer Assumption Test",
+          outcome: "Define the specific customer problem your business will solve and speak with one potential customer to test your most important assumption.",
+        },
 
       "Build a Finance Career":
-        "Choose one finance pathway you want to pursue, compare three relevant roles or programmes, and identify the two skills most important for your strongest match.",
+        {
+          title: "Finance Pathway Comparison",
+          outcome: "Choose one finance pathway, compare three relevant roles or programmes and identify the two skills most important for your strongest match.",
+        },
 
       "Grow in Fashion":
-        "Choose one fashion direction you want to strengthen, document your current portfolio or brand position, and identify one relevant opportunity to pursue this week.",
+        {
+          title: "Fashion Direction Upgrade",
+          outcome: "Choose one fashion direction to strengthen, document your current portfolio or brand position and identify one relevant opportunity to pursue this week.",
+        },
 
       "Learn New Skills":
-        "Identify the three most important skills required by your North Star and complete one focused learning session on the highest-priority skill.",
+        {
+          title: "Priority Skill Session",
+          outcome: "Identify the three most important skills required by your North Star and complete one focused learning session on the highest-priority skill.",
+        },
 
       "Change Careers":
-        "Choose one target role in your intended career, compare its requirements with your current experience, and identify your three most important skill gaps.",
+        {
+          title: "Career Gap Map",
+          outcome: "Choose one target role in your intended career, compare its requirements with your current experience and identify your three most important skill gaps.",
+        },
 
       "Advance My Career":
-        "Identify the next role or responsibility you want, document its key requirements, and choose one visible action that demonstrates your readiness.",
+        {
+          title: "Readiness Evidence",
+          outcome: "Identify the next role or responsibility you want, document its key requirements and complete one visible action that demonstrates your readiness.",
+        },
 
       "Grow My Freelance Career":
-        "Define one clear freelance service, identify the client problem it solves, and create a short offer you can present to one potential client.",
+        {
+          title: "Freelance Service Offer",
+          outcome: "Define one clear freelance service, identify the client problem it solves and create a short offer you can present to one potential client.",
+        },
 
       "Grow as a Creator":
-        "Choose one audience problem connected to your direction and publish one useful piece of work that demonstrates your creative value.",
+        {
+          title: "Audience Value Project",
+          outcome: "Choose one audience problem connected to your direction and publish one useful piece of work that demonstrates your creative value.",
+        },
 
       "Build My Network":
-        "Identify three people whose work aligns with your North Star and send one thoughtful, personalized message requesting a focused conversation.",
+        {
+          title: "Focused Network Outreach",
+          outcome: "Identify three people whose work aligns with your North Star and send one thoughtful, personalized message requesting a focused conversation.",
+        },
 
       "Discover My Purpose":
-        "Write down three moments when you felt useful, energized or deeply engaged, then identify the common strength or impact connecting them.",
+        {
+          title: "Purpose Pattern Review",
+          outcome: "Write down three moments when you felt useful, energized or deeply engaged, then identify the common strength or impact connecting them.",
+        },
+    };
+
+  const selected =
+    missionByGoal[answers.goal] ??
+    {
+      title: "North Star Progress Action",
+      outcome: "Choose one concrete action that moves you closer to your North Star and complete it within the next 24 hours.",
     };
 
   const skillsContext =
@@ -289,14 +351,10 @@ function buildFallbackMission(
       : "";
 
   return {
-    mission:
-      missionByGoal[
-        answers.goal
-      ] ??
-      "Choose one concrete action that moves you closer to your North Star and complete it within the next 24 hours.",
+    mission: selected.title,
 
     reason:
-      `You described yourself as ${answers.identity} and selected “${answers.goal}” as your immediate goal.${skillsContext} Your current challenge is “${answers.challenges[0]}.” This mission creates concrete evidence of progress toward your North Star: ${answers.northStar}`,
+      `Outcome: ${selected.outcome}\n\nWhy it matters: You described yourself as ${answers.identity} and selected “${answers.goal}” as your immediate goal.${skillsContext} It addresses your current challenge, “${answers.challenges[0]},” and creates concrete evidence of progress toward your North Star.`,
   };
 }
 
@@ -311,26 +369,32 @@ function parseMission(
     return null;
   }
 
-  const mission =
+  const rawMission =
     response.match(
       /MISSION:\s*([\s\S]*?)REASON:/i
     )?.[1]?.trim();
 
-  const reason =
+  const rawReason =
     response.match(
       /REASON:\s*([\s\S]*)/i
     )?.[1]?.trim();
 
-  if (!mission) {
+  if (!rawMission) {
     return null;
   }
 
+  const normalized =
+    normalizeMissionContent(
+      rawMission,
+      rawReason
+    );
+
   return {
-    mission,
+    mission:
+      normalized.title,
 
     reason:
-      reason ??
-      "This mission was selected from your onboarding profile and North Star.",
+      normalized.description,
   };
 }
 
@@ -379,7 +443,11 @@ visible evidence of progress.
 
 Do not assume the user has skills they did not declare.
 
-Return exactly MISSION: followed by the mission and REASON: followed by why.
+The MISSION value must be a plain-language title of 3 to 8 words. It must not be an instruction, paragraph, bullet or Markdown. Do not use asterisks, hashes, quotes or decorative symbols.
+
+Keep the REASON between 60 and 140 words. Organize it with plain-text labels when useful: Outcome:, Steps:, Evidence:, Why it matters:. Put each numbered step on its own line and use no more than three steps. Do not use Markdown formatting.
+
+Return exactly MISSION: followed by the concise title and REASON: followed by the organized explanation.
 `;
 }
 

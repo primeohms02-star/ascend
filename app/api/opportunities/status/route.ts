@@ -3,7 +3,7 @@ import { auth } from "@clerk/nextjs/server";
 
 import {
   getOpportunityStatus,
-  removeSavedOpportunity,
+  removeOpportunityFromLibrary,
   updateOpportunityStatus,
   type OpportunityStatus,
 } from "@/lib/atlas/opportunities/memory";
@@ -22,7 +22,7 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "A valid opportunity ID is required." }, { status: 400 });
     }
 
-    const { error } = await removeSavedOpportunity(userId, opportunityId);
+    const { error } = await removeOpportunityFromLibrary(userId, opportunityId);
 
     if (error) {
       throw error;
@@ -30,9 +30,9 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ success: true, status: null });
   } catch (error) {
-    console.error("Unsave Opportunity API Error:", error);
+    console.error("Remove Library Opportunity API Error:", error);
     return NextResponse.json(
-      { error: "Atlas could not unsave this opportunity." },
+      { error: "Atlas could not remove this opportunity from your Library." },
       { status: 500 }
     );
   }

@@ -10,6 +10,9 @@ import {
   getOpportunitiesByCategory,
   type OpportunityLibraryCategory,
 } from "@/lib/atlas/opportunities/memory";
+import {
+  hydrateOpportunityLibraryRecords,
+} from "@/lib/atlas/opportunities/library";
 
 const VALID_CATEGORIES: OpportunityLibraryCategory[] = [
   "saved",
@@ -72,10 +75,16 @@ export async function GET(
       );
     }
 
-    const opportunities =
+    const storedOpportunities =
       await getOpportunitiesByCategory(
         userId,
         category
+      );
+
+    const opportunities =
+      await hydrateOpportunityLibraryRecords(
+        userId,
+        storedOpportunities
       );
 
     return NextResponse.json({
