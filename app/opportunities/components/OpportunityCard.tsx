@@ -5,6 +5,7 @@ import ApplyOpportunityButton from "@/app/components/ApplyOpportunityButton";
 
 import type { RankedOpportunity } from "@/lib/atlas/opportunities/types";
 import type { OpportunityStatus } from "@/lib/atlas/opportunities/memory";
+import { createOpportunityRouteId } from "@/lib/atlas/opportunities/reference";
 
 type OpportunityExplanation = {
   matchScore: number;
@@ -107,7 +108,12 @@ export default function OpportunityCard({
   const scoreDegrees = matchScore * 3.6;
 
   const encodedOpportunityId =
-    encodeURIComponent(opportunity.id);
+    encodeURIComponent(
+      createOpportunityRouteId(
+        opportunity.id,
+        opportunity.snapshotId,
+      ),
+    );
 
   const decisionHref =
     `/opportunities/${encodedOpportunityId}` +

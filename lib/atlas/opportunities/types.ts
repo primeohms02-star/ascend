@@ -1,6 +1,13 @@
 export interface Opportunity {
   id: string;
 
+  /**
+   * Identifies the stable user-specific feed snapshot that supplied this
+   * opportunity. It is carried through Decision and Action Plan routes so a
+   * connector refresh cannot replace or lose the user's selected result.
+   */
+  snapshotId?: string;
+
   title: string;
 
   company: string;

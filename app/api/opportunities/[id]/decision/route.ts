@@ -1,36 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 
-import { getOpportunityById } from "@/lib/atlas/opportunities/connector";
 import { buildPersonalizedOpportunityDecision } from "@/lib/atlas/opportunities/personalized-decision";
-import { getPersonalizedOpportunityById } from "@/lib/atlas/opportunities/service";
+import { parseOpportunityRouteId } from "@/lib/atlas/opportunities/reference";
+import { resolveOpportunityForUser } from "@/lib/atlas/opportunities/service";
 
 export const dynamic = "force-dynamic";
-
-const SNAPSHOT_SEPARATOR = "~ascend-snapshot~";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
 };
-
-function parseOpportunityRouteId(value: string) {
-  const routeId = value.trim();
-  const separatorIndex = routeId.lastIndexOf(SNAPSHOT_SEPARATOR);
-
-  if (separatorIndex <= 0) {
-    return {
-      opportunityId: routeId,
-      snapshotId: "",
-    };
-  }
-
-  return {
-    opportunityId: routeId.slice(0, separatorIndex).trim(),
-    snapshotId: routeId
-      .slice(separatorIndex + SNAPSHOT_SEPARATOR.length)
-      .trim(),
-  };
-}
 
 export async function GET(request: NextRequest, context: RouteContext) {
   try {
@@ -51,13 +30,12 @@ export async function GET(request: NextRequest, context: RouteContext) {
       );
     }
 
-    const opportunity =
-      (await getPersonalizedOpportunityById(
-        userId,
-        opportunityId,
-        source,
-        snapshotId,
-      )) ?? (await getOpportunityById(opportunityId, source));
+    const opportunity = await resolveOpportunityForUser(
+      userId,
+      opportunityId,
+      source,
+      snapshotId,
+    );
 
     if (!opportunity) {
       return NextResponse.json(

@@ -8,9 +8,13 @@ import AtlasDecisionEngine from "./components/AtlasDecisionEngine";
 import OpportunityDescription from "./components/OpportunityDescription";
 import OpportunityBackButton from "./components/OpportunityBackButton";
 
-import { getOpportunityById } from "@/lib/atlas/opportunities/connector";
 import { enrichOpportunityFromOriginalSource } from "@/lib/atlas/opportunities/detail-enrichment";
 import { generateAtlasInsight } from "@/lib/atlas/opportunities/insight";
+import {
+  createOpportunityRouteId,
+  parseOpportunityRouteId,
+} from "@/lib/atlas/opportunities/reference";
+import { resolveOpportunityForUser } from "@/lib/atlas/opportunities/service";
 
 type Props = {
   params: Promise<{
@@ -38,7 +42,7 @@ export default async function OpportunityDetailsPage({
   const { id } = await params;
   const { source, returnTo } = await searchParams;
   const safeReturnTo = getSafeReturnPath(returnTo);
-  const decodedId = decodeURIComponent(id);
+  const { opportunityId, snapshotId } = parseOpportunityRouteId(id);
 
   const { userId } = await auth();
 
@@ -46,7 +50,12 @@ export default async function OpportunityDetailsPage({
     notFound();
   }
 
-  const storedOpportunity = await getOpportunityById(decodedId, source);
+  const storedOpportunity = await resolveOpportunityForUser(
+    userId,
+    opportunityId,
+    source,
+    snapshotId,
+  );
 
   if (!storedOpportunity) {
     notFound();
@@ -54,7 +63,12 @@ export default async function OpportunityDetailsPage({
 
   const opportunity = await enrichOpportunityFromOriginalSource(storedOpportunity);
   const insight = generateAtlasInsight(opportunity);
-  const encodedOpportunityId = encodeURIComponent(opportunity.id);
+  const encodedOpportunityId = encodeURIComponent(
+    createOpportunityRouteId(
+      opportunity.id,
+      opportunity.snapshotId,
+    ),
+  );
 
   const actionPlanHref =
     `/opportunities/${encodedOpportunityId}/action-plan` +

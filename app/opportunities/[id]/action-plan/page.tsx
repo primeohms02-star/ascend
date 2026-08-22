@@ -6,9 +6,13 @@ import AppShell from "@/app/components/navigation/AppShell";
 import AtlasActionPlanDashboard from "./components/AtlasActionPlanDashboard";
 
 import { generateAtlasActionPlan } from "@/lib/atlas/opportunities/action-plan";
-import { getOpportunityById } from "@/lib/atlas/opportunities/connector";
 import { generateAtlasInsight } from "@/lib/atlas/opportunities/insight";
 import { getOpportunityStatus } from "@/lib/atlas/opportunities/memory";
+import {
+  createOpportunityRouteId,
+  parseOpportunityRouteId,
+} from "@/lib/atlas/opportunities/reference";
+import { resolveOpportunityForUser } from "@/lib/atlas/opportunities/service";
 
 type Props = {
   params: Promise<{
@@ -62,8 +66,13 @@ export default async function AtlasActionPlanPage({
     notFound();
   }
 
-  const decodedId = decodeURIComponent(id);
-  const opportunity = await getOpportunityById(decodedId, source);
+  const { opportunityId, snapshotId } = parseOpportunityRouteId(id);
+  const opportunity = await resolveOpportunityForUser(
+    userId,
+    opportunityId,
+    source,
+    snapshotId,
+  );
 
   if (!opportunity) {
     notFound();
@@ -75,7 +84,12 @@ export default async function AtlasActionPlanPage({
 
   const insight = generateAtlasInsight(opportunity);
   const actionPlan = generateAtlasActionPlan(opportunity, insight);
-  const encodedOpportunityId = encodeURIComponent(opportunity.id);
+  const encodedOpportunityId = encodeURIComponent(
+    createOpportunityRouteId(
+      opportunity.id,
+      opportunity.snapshotId,
+    ),
+  );
   const safeReturnTo = getSafeReturnPath(returnTo);
 
   const decisionPageHref =

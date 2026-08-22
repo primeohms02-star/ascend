@@ -17,13 +17,18 @@ type LevelDefinition = {
 
 const ASCENSION_LEVELS: LevelDefinition[] = [
   {
-    level: 1,
+    level: 0,
     minimumScore: 0,
     title: "Explorer",
   },
   {
-    level: 2,
+    level: 1,
     minimumScore: 15,
+    title: "Explorer",
+  },
+  {
+    level: 2,
+    minimumScore: 30,
     title: "Explorer",
   },
   {

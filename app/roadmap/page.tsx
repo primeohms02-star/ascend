@@ -4,16 +4,16 @@ import { createPublicPageMetadata } from "@/lib/seo";
 export const metadata = createPublicPageMetadata({
   title: "Roadmap",
   description:
-    "Explore the ASCEND product roadmap, from the current web platform to PWA support, mobile applications and deeper strategic intelligence.",
+    "Explore the ASCEND product roadmap, from the live core platform and native app launch to deeper strategic intelligence and human-potential infrastructure.",
   path: "/roadmap",
 });
 
 const roadmap = [
   {
     status: "Available",
-    title: "ASCEND Web Platform",
+    title: "ASCEND Core Platform",
     items: [
-      "Clerk authentication and onboarding",
+      "Live web platform and secure authentication",
       "Compass and North Star creation",
       "Strategic daily missions",
       "Atlas conversations and decisions",
@@ -26,46 +26,46 @@ const roadmap = [
       "border-emerald-400/20 bg-emerald-400/[0.05] text-emerald-300",
   },
   {
-    status: "Improving",
-    title: "Intelligence and Memory",
+    status: "Launch Ready",
+    title: "Native ASCEND App",
     items: [
-      "More accurate onboarding analysis",
-      "Stronger permanent personal memory",
-      "Better mission completion evidence",
-      "Reduced observation repetition",
-      "Deeper opportunity recommendations",
-      "Improved conversation and action separation",
+      "Purpose-built React Native experience",
+      "Android and iOS application foundations",
+      "Mobile Compass and onboarding",
+      "Missions, progress and Atlas on the move",
+      "Native opportunity discovery and decisions",
+      "ASCEND Music and Support AI",
     ],
     theme:
-      "border-cyan-400/20 bg-cyan-400/[0.05] text-cyan-300",
+      "border-indigo-400/20 bg-indigo-400/[0.05] text-indigo-300",
   },
   {
     status: "Next",
-    title: "Progressive Web Application",
+    title: "Mobile Launch and Early Validation",
     items: [
-      "Installable ASCEND experience",
-      "Faster repeat loading",
-      "Mobile-first navigation improvements",
-      "Offline-friendly foundations",
+      "Play Store and App Store preparation",
+      "Early-user onboarding and feedback",
+      "Reliability and performance hardening",
       "Useful and restrained notifications",
-      "Improved application-like behavior",
+      "Launch analytics and support readiness",
+      "Fast iteration from real user behavior",
     ],
     theme:
       "border-blue-400/20 bg-blue-400/[0.05] text-blue-300",
   },
   {
-    status: "Planned",
-    title: "Native Mobile Experience",
+    status: "Improving",
+    title: "Atlas Intelligence and Opportunity Coverage",
     items: [
-      "React Native mobile application",
-      "Purpose-built mobile interactions",
-      "Native notifications",
-      "Mobile reflection and mission flow",
-      "App Store and Play Store releases",
-      "Custom ASCEND animations and brand assets",
+      "More accurate onboarding analysis",
+      "Stronger permanent personal memory",
+      "Better mission completion evidence",
+      "Deeper opportunity recommendations",
+      "Expanded Nigerian, African and global sources",
+      "Improved conversation and action separation",
     ],
     theme:
-      "border-indigo-400/20 bg-indigo-400/[0.05] text-indigo-300",
+      "border-cyan-400/20 bg-cyan-400/[0.05] text-cyan-300",
   },
   {
     status: "Future",

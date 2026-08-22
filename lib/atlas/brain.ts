@@ -219,7 +219,7 @@ export async function buildAtlasContext(
   const ascensionLevel =
     Number(
       atlas.ascension
-        ?.level ?? 1
+        ?.level ?? 0
     );
 
   /*

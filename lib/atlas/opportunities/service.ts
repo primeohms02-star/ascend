@@ -2,9 +2,16 @@ import { revalidateTag, unstable_cache } from "next/cache";
 
 import { buildOpportunityProfile } from "./build-profile";
 
+import { getOpportunityById } from "./connector";
+
 import { discoverOpportunities } from "./engine";
 
 import { recordImpression } from "./impressions";
+
+import {
+  getStoredOpportunityData,
+  getStoredOpportunitySummary,
+} from "./memory";
 
 import { rotateOpportunities } from "./rotation";
 
@@ -25,7 +32,7 @@ import type {
 
 import type { OpportunityProfile } from "./profile";
 
-import type { RankedOpportunity } from "./types";
+import type { Opportunity, RankedOpportunity } from "./types";
 
 const DEFAULT_PAGE_SIZE = 10;
 const MAX_PAGE_SIZE = 25;
@@ -54,10 +61,6 @@ type MemorySnapshot = {
   snapshot: OpportunitySnapshot;
 
   expiresAt: number;
-};
-
-type SnapshotOpportunity = RankedOpportunity & {
-  snapshotId?: string;
 };
 
 const memorySnapshots = new Map<string, MemorySnapshot>();
@@ -441,11 +444,74 @@ export async function getPersonalizedOpportunityById(
     const opportunity = findOpportunityInSnapshot(snapshot, id, source);
 
     if (opportunity) {
-      return opportunity;
+      return {
+        ...opportunity,
+        snapshotId,
+      };
     }
   }
 
   return null;
+}
+
+export async function resolveOpportunityForUser(
+  clerkId: string,
+  id: string,
+  source: string,
+  requestedSnapshotId?: string,
+): Promise<Opportunity | null> {
+  const cleanSnapshotId = requestedSnapshotId?.trim() ?? "";
+
+  if (cleanSnapshotId) {
+    const snapshotOpportunity = await getPersonalizedOpportunityById(
+      clerkId,
+      id,
+      source,
+      cleanSnapshotId,
+    );
+
+    if (snapshotOpportunity) {
+      return snapshotOpportunity;
+    }
+  }
+
+  const storedOpportunity = await getStoredOpportunityData(clerkId, id, source);
+
+  if (storedOpportunity) {
+    return {
+      ...storedOpportunity,
+      score: storedOpportunity.score ?? 0,
+    };
+  }
+
+  if (!cleanSnapshotId) {
+    const snapshotOpportunity = await getPersonalizedOpportunityById(
+      clerkId,
+      id,
+      source,
+    );
+
+    if (snapshotOpportunity) {
+      return snapshotOpportunity;
+    }
+  }
+
+  const sourceOpportunity = await getOpportunityById(id, source);
+
+  if (sourceOpportunity) {
+    return sourceOpportunity;
+  }
+
+  const storedSummary = await getStoredOpportunitySummary(clerkId, id, source);
+
+  if (!storedSummary) {
+    return null;
+  }
+
+  return {
+    ...storedSummary,
+    score: 0,
+  };
 }
 
 export async function getPersonalizedOpportunityPage(
@@ -491,7 +557,7 @@ export async function getPersonalizedOpportunityPage(
 
   const start = (page - 1) * pageSize;
 
-  const opportunities: SnapshotOpportunity[] = ordered
+  const opportunities: RankedOpportunity[] = ordered
     .slice(start, start + pageSize)
     .map((opportunity) => ({
       ...opportunity,

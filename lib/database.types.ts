@@ -370,6 +370,7 @@ ascend_support_case_messages: {
           company: string | null
           created_at: string | null
           id: string
+          opportunity_data: Json | null
           opportunity_id: string
           source: string | null
           status: string
@@ -381,6 +382,7 @@ ascend_support_case_messages: {
           company?: string | null
           created_at?: string | null
           id?: string
+          opportunity_data?: Json | null
           opportunity_id: string
           source?: string | null
           status?: string
@@ -392,6 +394,7 @@ ascend_support_case_messages: {
           company?: string | null
           created_at?: string | null
           id?: string
+          opportunity_data?: Json | null
           opportunity_id?: string
           source?: string | null
           status?: string

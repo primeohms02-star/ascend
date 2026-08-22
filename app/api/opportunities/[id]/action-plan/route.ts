@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 
-import { getOpportunityById } from "@/lib/atlas/opportunities/connector";
 import {
   buildPersonalizedOpportunityActionPlan,
   buildPersonalizedOpportunityDecision,
 } from "@/lib/atlas/opportunities/personalized-decision";
-import { getPersonalizedOpportunityById } from "@/lib/atlas/opportunities/service";
+import { parseOpportunityRouteId } from "@/lib/atlas/opportunities/reference";
+import { resolveOpportunityForUser } from "@/lib/atlas/opportunities/service";
 
 export const dynamic = "force-dynamic";
 
@@ -23,7 +23,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
     }
 
     const { id } = await context.params;
-    const opportunityId = id.trim();
+    const { opportunityId, snapshotId } = parseOpportunityRouteId(id);
     const source = request.nextUrl.searchParams.get("source")?.trim() ?? "";
 
     if (!opportunityId || !source) {
@@ -33,16 +33,12 @@ export async function GET(request: NextRequest, context: RouteContext) {
       );
     }
 
-    const opportunity =
-      (await getPersonalizedOpportunityById(
-        userId,
-        opportunityId,
-        source
-      )) ??
-      (await getOpportunityById(
-        opportunityId,
-        source
-      ));
+    const opportunity = await resolveOpportunityForUser(
+      userId,
+      opportunityId,
+      source,
+      snapshotId,
+    );
 
     if (!opportunity) {
       return NextResponse.json(

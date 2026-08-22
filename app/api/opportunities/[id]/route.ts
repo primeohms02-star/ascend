@@ -1,50 +1,57 @@
-import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import { discoverOpportunities } from "@/lib/atlas/opportunities/engine";
-import { buildOpportunityProfile } from "@/lib/atlas/opportunities/build-profile";
-import { rankOpportunities } from "@/lib/atlas/opportunities/intelligence";
+import { NextRequest, NextResponse } from "next/server";
 
-export async function GET(
-  request: Request,
-  {
-    params,
-  }: {
-    params: Promise<{ id: string }>;
-  }
-) {
-  const { id } = await params;
+import { parseOpportunityRouteId } from "@/lib/atlas/opportunities/reference";
+import { resolveOpportunityForUser } from "@/lib/atlas/opportunities/service";
 
-  // Temporary profile until Atlas Memory is connected
- const { userId } = await auth();
+export const dynamic = "force-dynamic";
 
-if (!userId) {
-  return NextResponse.json(
-    { error: "Unauthorized" },
-    { status: 401 }
-  );
-}
+type RouteContext = {
+  params: Promise<{ id: string }>;
+};
 
-const profile = await buildOpportunityProfile({
-  clerkId: userId,
-});
+export async function GET(request: NextRequest, context: RouteContext) {
+  try {
+    const { userId } = await auth();
 
-  const discovered = await discoverOpportunities(profile);
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
-  const ranked = await rankOpportunities(
-    discovered,
-    profile
-  );
+    const { id } = await context.params;
+    const { opportunityId, snapshotId } = parseOpportunityRouteId(id);
+    const source = request.nextUrl.searchParams.get("source")?.trim() ?? "";
 
-  const opportunity = ranked.find(
-    (item) => item.id === id
-  );
+    if (!opportunityId || !source) {
+      return NextResponse.json(
+        { error: "Opportunity ID and source are required." },
+        { status: 400 },
+      );
+    }
 
-  if (!opportunity) {
+    const opportunity = await resolveOpportunityForUser(
+      userId,
+      opportunityId,
+      source,
+      snapshotId,
+    );
+
+    if (!opportunity) {
+      return NextResponse.json(
+        { error: "Opportunity not found." },
+        { status: 404 },
+      );
+    }
+
+    return NextResponse.json(opportunity, {
+      headers: { "Cache-Control": "private, no-store, max-age=0" },
+    });
+  } catch (error) {
+    console.error("Opportunity detail API Error:", error);
+
     return NextResponse.json(
-      { error: "Opportunity not found" },
-      { status: 404 }
+      { error: "Atlas could not load this opportunity right now." },
+      { status: 500 },
     );
   }
-
-  return NextResponse.json(opportunity);
 }

@@ -15,6 +15,8 @@ import {
   isValidAtlasImage,
 } from "@/lib/atlas/vision";
 
+const MAX_ATLAS_MESSAGE_LENGTH = 6_000;
+
 function shouldExtractPermanentMemory(message: string) {
   if (
     /\b(?:password|passcode|security answer|secret key|api[- ]?key|one[- ]time (?:password|code)|otp|pin|cvv|credit card|debit card|bank account|bvn|nin|social security number)\b/i.test(
@@ -53,6 +55,15 @@ export async function POST(request: NextRequest) {
     if (!message && !hasImage) {
       return NextResponse.json(
         { error: "A message or image is required." },
+        { status: 400 }
+      );
+    }
+
+    if (message.length > MAX_ATLAS_MESSAGE_LENGTH) {
+      return NextResponse.json(
+        {
+          error: `Atlas messages must be ${MAX_ATLAS_MESSAGE_LENGTH.toLocaleString()} characters or fewer.`,
+        },
         { status: 400 }
       );
     }
@@ -104,12 +115,21 @@ export async function POST(request: NextRequest) {
       factPromise,
     ]);
 
-    await persistAtlasResponse({
-      clerkId: userId,
-      userMessage: cleanMessage,
-      reply: atlasResult.reply,
-      fact,
-    });
+    try {
+      await persistAtlasResponse({
+        clerkId: userId,
+        userMessage: cleanMessage,
+        reply: atlasResult.reply,
+        fact,
+      });
+    } catch (persistenceError) {
+      /*
+       * A temporary memory-store failure must not discard a response Atlas
+       * already completed successfully. Log it for operations while keeping
+       * the live conversation usable for the user.
+       */
+      console.error("Atlas Conversation Persistence Error:", persistenceError);
+    }
 
     return NextResponse.json({ reply: atlasResult.reply });
   } catch (error) {

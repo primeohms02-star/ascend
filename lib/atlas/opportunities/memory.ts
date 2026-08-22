@@ -1,4 +1,5 @@
 import { supabaseServer } from "@/lib/supabase-server";
+import type { Json } from "@/lib/database.types";
 
 import type { Opportunity } from "./types";
 
@@ -28,6 +29,85 @@ export type OpportunityMemoryRecord = {
   updated_at?: string;
 };
 
+const TEXT_LIMITS = {
+  id: 500,
+  title: 500,
+  company: 300,
+  description: 16_000,
+  summary: 4_000,
+  shortText: 500,
+  url: 2_000,
+  listItem: 1_000,
+} as const;
+
+function cleanText(value: unknown, maximumLength: number): string | undefined {
+  if (typeof value !== "string") {
+    return undefined;
+  }
+
+  const clean = value.trim().slice(0, maximumLength);
+  return clean || undefined;
+}
+
+function cleanList(value: unknown): string[] | undefined {
+  if (!Array.isArray(value)) {
+    return undefined;
+  }
+
+  const items = value
+    .filter((item): item is string => typeof item === "string")
+    .map((item) => item.trim().slice(0, TEXT_LIMITS.listItem))
+    .filter(Boolean)
+    .slice(0, 50);
+
+  return items.length > 0 ? items : undefined;
+}
+
+function cleanOpportunityForMemory(value: unknown): Opportunity | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return null;
+  }
+
+  const candidate = value as Partial<Opportunity>;
+  const id = cleanText(candidate.id, TEXT_LIMITS.id);
+  const title = cleanText(candidate.title, TEXT_LIMITS.title);
+  const company = cleanText(candidate.company, TEXT_LIMITS.company);
+  const source = cleanText(candidate.source, TEXT_LIMITS.shortText);
+
+  if (!id || !title || !company || !source) {
+    return null;
+  }
+
+  const tags = cleanList(candidate.tags) ?? [];
+  const url = cleanText(candidate.url, TEXT_LIMITS.url);
+  const safeUrl = url && /^https?:\/\//i.test(url) ? url : undefined;
+
+  return {
+    id,
+    title,
+    company,
+    source,
+    tags,
+    snapshotId: cleanText(candidate.snapshotId, TEXT_LIMITS.shortText),
+    description: cleanText(candidate.description, TEXT_LIMITS.description),
+    summary: cleanText(candidate.summary, TEXT_LIMITS.summary),
+    responsibilities: cleanList(candidate.responsibilities),
+    requirements: cleanList(candidate.requirements),
+    benefits: cleanList(candidate.benefits),
+    employmentType: cleanText(candidate.employmentType, TEXT_LIMITS.shortText),
+    category: cleanText(candidate.category, TEXT_LIMITS.shortText),
+    location: cleanText(candidate.location, TEXT_LIMITS.shortText),
+    remote: candidate.remote === true,
+    salary: cleanText(candidate.salary, TEXT_LIMITS.shortText),
+    deadline: cleanText(candidate.deadline, TEXT_LIMITS.shortText),
+    url: safeUrl,
+    score:
+      typeof candidate.score === "number" && Number.isFinite(candidate.score)
+        ? candidate.score
+        : undefined,
+  };
+}
+
 export type OpportunityLibraryCounts = {
   saved: number;
   applied: number;
@@ -47,20 +127,30 @@ const CATEGORY_STATUSES: Record<
   ],
 };
 
+const OPPORTUNITY_MEMORY_COLUMNS =
+  "id,user_id,opportunity_id,source,title,company,status,created_at,updated_at";
+
 export async function saveOpportunity(
   userId: string,
   opportunity: Opportunity,
   status: OpportunityStatus = "saved"
 ) {
+  const storedOpportunity = cleanOpportunityForMemory(opportunity);
+
+  if (!storedOpportunity) {
+    throw new Error("Opportunity data could not be stored safely.");
+  }
+
   return supabaseServer
     .from("atlas_opportunity_memory")
     .upsert(
       {
         user_id: userId,
-        opportunity_id: opportunity.id,
-        source: opportunity.source,
-        title: opportunity.title,
-        company: opportunity.company,
+        opportunity_id: storedOpportunity.id,
+        source: storedOpportunity.source,
+        title: storedOpportunity.title,
+        company: storedOpportunity.company,
+        opportunity_data: storedOpportunity as unknown as Json,
         status,
         updated_at: new Date().toISOString(),
       },
@@ -68,6 +158,60 @@ export async function saveOpportunity(
         onConflict: "user_id,opportunity_id",
       }
     );
+}
+
+export async function getStoredOpportunityData(
+  userId: string,
+  opportunityId: string,
+  source: string,
+): Promise<Opportunity | null> {
+  const { data, error } = await supabaseServer
+    .from("atlas_opportunity_memory")
+    .select("opportunity_data")
+    .eq("user_id", userId)
+    .eq("opportunity_id", opportunityId)
+    .eq("source", source)
+    .maybeSingle();
+
+  if (error) {
+    console.error("Get Stored Opportunity Data Error:", error);
+    return null;
+  }
+
+  return cleanOpportunityForMemory(data?.opportunity_data);
+}
+
+export async function getStoredOpportunitySummary(
+  userId: string,
+  opportunityId: string,
+  source: string,
+): Promise<Opportunity | null> {
+  const { data, error } = await supabaseServer
+    .from("atlas_opportunity_memory")
+    .select("opportunity_id,source,title,company")
+    .eq("user_id", userId)
+    .eq("opportunity_id", opportunityId)
+    .eq("source", source)
+    .maybeSingle();
+
+  if (error) {
+    console.error("Get Stored Opportunity Summary Error:", error);
+    return null;
+  }
+
+  if (!data?.title || !data.company || !data.source) {
+    return null;
+  }
+
+  return {
+    id: data.opportunity_id,
+    title: data.title,
+    company: data.company,
+    source: data.source,
+    tags: [],
+    description:
+      "ASCEND retained this opportunity in your Library, but the original source no longer exposes its complete details. Atlas can still help you evaluate the saved title and organisation.",
+  };
 }
 
 export async function updateOpportunityStatus(
@@ -157,7 +301,7 @@ export async function getOpportunityMemory(
 ): Promise<OpportunityMemoryRecord[]> {
   const { data, error } = await supabaseServer
     .from("atlas_opportunity_memory")
-    .select("*")
+    .select(OPPORTUNITY_MEMORY_COLUMNS)
     .eq("user_id", userId)
     .order("updated_at", {
       ascending: false,
@@ -183,7 +327,7 @@ export async function getOpportunitiesByCategory(
 
   const { data, error } = await supabaseServer
     .from("atlas_opportunity_memory")
-    .select("*")
+    .select(OPPORTUNITY_MEMORY_COLUMNS)
     .eq("user_id", userId)
     .in("status", statuses)
     .order("updated_at", {

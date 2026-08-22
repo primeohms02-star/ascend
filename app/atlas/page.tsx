@@ -195,6 +195,7 @@ function AtlasComposer({
         <input
           type="text"
           value={message}
+          maxLength={6000}
           disabled={loading}
           onChange={(event) => setMessage(event.target.value)}
           onKeyDown={(event) => {
