@@ -50,12 +50,12 @@ export default function ProductProof() {
           </div>
 
           <Image
-            src="/ascend-dashboard-homepage.jpg"
+            src="/ascend-dashboard-homepage.png"
             alt="ASCEND dashboard showing a user's Ascension level, two-day streak, daily briefing, primary mission and Cortex insight."
-            width={1348}
-            height={926}
+            width={1920}
+            height={1080}
             sizes="(max-width: 1280px) 100vw, 1280px"
-            quality={90}
+            unoptimized
             className="h-auto w-full"
           />
 
