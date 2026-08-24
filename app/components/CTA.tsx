@@ -83,6 +83,10 @@ export default function CTA() {
           progress you make.
         </p>
 
+        <p className="mt-5 text-sm font-semibold text-blue-200 sm:text-base">
+          Start with one clear next step.
+        </p>
+
         {!isLoaded ? (
           <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
             <div className="h-14 w-full max-w-60 animate-pulse rounded-2xl bg-blue-600/40 sm:w-60" />
@@ -119,7 +123,7 @@ export default function CTA() {
                     href="/sign-up"
                     className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-3.5 text-sm sm:text-base font-semibold text-white shadow-[0_0_35px_rgba(37,99,235,0.3)] transition hover:-translate-y-0.5 hover:bg-blue-500 sm:w-auto"
                   >
-                    Build Your Compass
+                    Start Your Journey
 
                     <ArrowRight
                       size={18}
