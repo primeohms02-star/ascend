@@ -55,12 +55,17 @@ type PublicPageMetadataOptions = {
   title: string;
   description: string;
   path: `/${string}`;
+  socialImagePath?: `/${string}`;
+  socialImageAlt?: string;
 };
 
 export function createPublicPageMetadata({
   title,
   description,
   path,
+  socialImagePath = SOCIAL_IMAGE_PATH,
+  socialImageAlt =
+    "ASCEND — An Operating System for Human Potential",
 }: PublicPageMetadataOptions): Metadata {
   const canonical = new URL(
     path,
@@ -88,11 +93,10 @@ export function createPublicPageMetadata({
 
       images: [
         {
-          url: SOCIAL_IMAGE_PATH,
+          url: socialImagePath,
           width: 1200,
           height: 630,
-          alt:
-            "ASCEND — An Operating System for Human Potential",
+          alt: socialImageAlt,
         },
       ],
     },
@@ -102,7 +106,7 @@ export function createPublicPageMetadata({
       title: socialTitle,
       description,
       images: [
-        SOCIAL_IMAGE_PATH,
+        socialImagePath,
       ],
       creator:
         "@Ascendai_space",

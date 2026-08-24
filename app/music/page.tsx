@@ -1,4 +1,5 @@
 import {
+  ChevronDown,
   Compass,
   Headphones,
   MapPin,
@@ -11,12 +12,23 @@ import PublicPageShell from "@/app/components/PublicPageShell";
 import { createPublicPageMetadata } from "@/lib/seo";
 
 import MusicLandingActions from "./MusicLandingActions";
+import MusicStructuredData from "./MusicStructuredData";
+import {
+  MUSIC_PAGE_DESCRIPTION,
+  MUSIC_PAGE_HEADING,
+  MUSIC_PAGE_INTRODUCTION,
+  MUSIC_PAGE_PATH,
+  MUSIC_PAGE_TITLE,
+  MUSIC_SOCIAL_IMAGE_ALT,
+  musicFaqs,
+} from "./musicSeo";
 
 export const metadata = createPublicPageMetadata({
-  title: "ASCEND Music",
-  description:
-    "ASCEND Music is a specialist pathway that helps artists, producers, songwriters, DJs and music professionals define their direction and discover relevant opportunities.",
-  path: "/music",
+  title: MUSIC_PAGE_TITLE,
+  description: MUSIC_PAGE_DESCRIPTION,
+  path: MUSIC_PAGE_PATH,
+  socialImagePath: "/music/opengraph-image",
+  socialImageAlt: MUSIC_SOCIAL_IMAGE_ALT,
 });
 
 const pathwayBenefits = [
@@ -65,27 +77,32 @@ const pathwayFlow = [
 
 export default function MusicPage() {
   return (
-    <PublicPageShell
-      eyebrow="A Specialist Pathway Inside ASCEND"
-      title="Direction for the music career you are building."
-      description="ASCEND Music gives artists and music professionals a dedicated way to describe their creative identity, clarify their direction and help Atlas find more relevant possibilities."
-    >
+    <>
+      <MusicStructuredData />
+
+      <PublicPageShell
+        eyebrow="ASCEND Music · A Specialist Pathway"
+        title={MUSIC_PAGE_HEADING}
+        description={MUSIC_PAGE_INTRODUCTION}
+      >
       <section className="-mt-6 rounded-[2rem] border border-blue-300/15 bg-gradient-to-br from-blue-500/[0.1] via-slate-950/90 to-violet-500/[0.06] p-7 text-center shadow-[0_24px_80px_rgba(0,0,0,0.28)] sm:p-10">
         <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-blue-300/20 bg-blue-400/10 text-cyan-300">
           <Sparkles size={25} aria-hidden="true" />
         </div>
 
-        <p className="mx-auto mt-6 max-w-3xl text-base leading-8 text-slate-300 sm:text-lg">
-          ASCEND Music is not a separate product. It is a
-          deeper context layer within ASCEND, built for people
-          whose goals and opportunities sit inside the music industry.
-        </p>
+          <p className="mx-auto mt-6 max-w-3xl text-base leading-8 text-slate-300 sm:text-lg">
+            ASCEND Music is a specialist pathway inside ASCEND—not
+            a separate product or a generic music directory. It gives
+            artists and music professionals a clear way to define their
+            creative identity, career stage and immediate goal.
+          </p>
 
-        <p className="mx-auto mt-4 max-w-3xl text-sm leading-7 text-slate-500">
-          Your main North Star, active mission and progress remain
-          intact. The pathway adds music-specific information that
-          strengthens Atlas conversations and opportunity discovery.
-        </p>
+          <p className="mx-auto mt-4 max-w-3xl text-sm leading-7 text-slate-500">
+            Atlas uses that context to support better decisions and
+            surface relevant music grants, showcases, residencies,
+            competitions, training and industry programmes. Your main
+            North Star, active mission and progress remain intact.
+          </p>
 
         <MusicLandingActions />
       </section>
@@ -206,6 +223,49 @@ export default function MusicPage() {
           </div>
         </div>
       </section>
-    </PublicPageShell>
+
+        <section
+          aria-labelledby="music-questions-heading"
+          className="mt-20"
+        >
+          <div className="mx-auto max-w-3xl text-center">
+            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-cyan-300">
+              Clear Answers
+            </p>
+            <h2
+              id="music-questions-heading"
+              className="mt-4 text-3xl font-black tracking-tight text-white sm:text-4xl"
+            >
+              Questions about ASCEND Music.
+            </h2>
+            <p className="mt-5 leading-7 text-slate-400">
+              Understand who the pathway serves, what it adds and how
+              it connects music-specific context to Atlas.
+            </p>
+          </div>
+
+          <div className="mx-auto mt-10 max-w-4xl space-y-3">
+            {musicFaqs.map((faq) => (
+              <details
+                key={faq.question}
+                className="group rounded-2xl border border-white/[0.09] bg-white/[0.03] px-5 py-1 open:border-blue-300/20 open:bg-blue-400/[0.045] sm:px-6"
+              >
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-5 py-5 text-left font-semibold text-white [&::-webkit-details-marker]:hidden">
+                  <span>{faq.question}</span>
+                  <ChevronDown
+                    size={19}
+                    aria-hidden="true"
+                    className="shrink-0 text-cyan-300 transition-transform group-open:rotate-180"
+                  />
+                </summary>
+                <p className="max-w-3xl pb-5 text-sm leading-7 text-slate-400 sm:text-base">
+                  {faq.answer}
+                </p>
+              </details>
+            ))}
+          </div>
+        </section>
+      </PublicPageShell>
+    </>
   );
 }
