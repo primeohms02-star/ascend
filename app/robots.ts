@@ -21,7 +21,7 @@ export default function robots(): MetadataRoute.Robots {
           "/atlas$",
           "/atlas/",
           "/mission-control",
-          "/music",
+          "/music/pathway",
           "/support/admin",
           "/support/cases/",
           "/sign-in",

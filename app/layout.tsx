@@ -30,7 +30,7 @@ export const metadata: Metadata = {
   },
 
   description:
-    "ASCEND helps you discover your purpose, define your North Star, receive strategic missions, evaluate opportunities and build meaningful momentum toward your highest potential.",
+    "ASCEND helps you decide what to do next, receive a clear mission, find opportunities aligned with your goals and build visible evidence of progress.",
 
   applicationName: "ASCEND",
 
@@ -75,7 +75,7 @@ export const metadata: Metadata = {
       "ASCEND | An Operating System for Human Potential",
 
     description:
-      "Turn uncertainty into direction. ASCEND helps you define your North Star, take strategic action, discover relevant opportunities and build evidence of meaningful growth.",
+      "Tell ASCEND what you want to achieve. Receive one clear next mission, find aligned opportunities and build visible evidence of progress.",
 
     images: [
       {
@@ -94,7 +94,7 @@ export const metadata: Metadata = {
       "ASCEND | An Operating System for Human Potential",
 
     description:
-      "Turn uncertainty into direction, strategic action and evidence of meaningful growth.",
+      "Know what to do next, find aligned opportunities and build visible evidence of progress.",
 
     images: [
       "/ascend-opengraph.png",

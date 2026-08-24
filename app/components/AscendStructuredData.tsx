@@ -72,7 +72,7 @@ const structuredData = {
       },
 
       description:
-        "ASCEND is an operating system for human potential that connects purpose, direction, strategic intelligence, meaningful action, opportunity discovery and evidence of growth.",
+        "ASCEND is an operating system for human potential that helps people define a goal, receive a clear next mission, find aligned opportunities and build evidence of progress.",
 
       founder: {
         "@id":
@@ -174,7 +174,7 @@ const structuredData = {
         SITE_URL,
 
       description:
-        "ASCEND is an operating system for human potential that helps people turn uncertainty into direction, strategic action and meaningful growth.",
+        "ASCEND helps people decide what to do next, find opportunities aligned with their goals and build visible evidence of progress.",
 
       publisher: {
         "@id":
@@ -222,7 +222,7 @@ const structuredData = {
         "Requires a modern web browser and internet connection.",
 
       description:
-        "ASCEND helps people discover their purpose, define their North Star, receive strategic missions, evaluate relevant opportunities and build meaningful momentum toward their highest potential.",
+        "ASCEND helps people define their direction, receive one clear next mission, evaluate aligned opportunities and record evidence of progress.",
 
       featureList: [
         "Purpose and identity discovery",

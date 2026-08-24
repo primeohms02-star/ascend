@@ -65,6 +65,15 @@ export default function sitemap():
 
     {
       url:
+        `${SITE_URL}/music`,
+      changeFrequency:
+        "monthly",
+      priority:
+        0.8,
+    },
+
+    {
+      url:
         `${SITE_URL}/roadmap`,
       changeFrequency:
         "monthly",

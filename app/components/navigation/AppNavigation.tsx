@@ -81,9 +81,9 @@ const discoverItems: NavigationItem[] = [
   },
   {
     label: "Music",
-    href: "/music",
+    href: "/music/pathway",
     icon: Music2,
-    isActive: (pathname) => pathname.startsWith("/music"),
+    isActive: (pathname) => pathname.startsWith("/music/pathway"),
   },
 ];
 

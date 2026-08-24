@@ -1,251 +1,103 @@
-"use client";
-
 import Link from "next/link";
-
-import {
-  useAuth,
-} from "@clerk/nextjs";
-
-import {
-  motion,
-} from "framer-motion";
 
 import {
   ArrowRight,
   AudioLines,
   Compass,
-  Headphones,
-  MapPin,
-  Music2,
   Radio,
   Sparkles,
-  Target,
 } from "lucide-react";
 
-const pathwaySignals = [
-  {
-    icon: Headphones,
-    label: "Music identity",
-    detail: "Roles, genres and career stage",
-  },
-  {
-    icon: Target,
-    label: "Music North Star",
-    detail: "A clear creative direction",
-  },
+const signals = [
   {
     icon: Compass,
-    label: "Atlas strategy",
-    detail: "Context-aware career decisions",
+    title: "Music direction",
+    detail: "Identity, goals and a Music North Star",
+  },
+  {
+    icon: Sparkles,
+    title: "Atlas context",
+    detail: "More relevant music-career guidance",
   },
   {
     icon: Radio,
-    label: "Opportunity Radar",
-    detail: "Nigeria, Africa and the world",
+    title: "Opportunity radar",
+    detail: "Nigeria, Africa and global possibilities",
   },
 ];
 
 export default function MusicSpotlight() {
-  const {
-    isLoaded,
-    userId,
-  } = useAuth();
-
-  const pathwayHref = userId
-    ? "/music"
-    : "/sign-up";
-
   return (
     <section
       id="ascend-music"
       aria-labelledby="music-heading"
-      className="relative scroll-mt-28 overflow-hidden border-t border-white/[0.06] bg-[#05060A] px-6 py-20 sm:py-24"
+      className="relative scroll-mt-28 overflow-hidden border-t border-white/[0.06] bg-[#070A10] px-6 py-16 sm:py-20"
     >
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0"
       >
-        <div className="absolute -left-40 top-20 h-[420px] w-[420px] rounded-full bg-fuchsia-600/10 blur-[150px]" />
-        <div className="absolute -right-32 bottom-0 h-[460px] w-[460px] rounded-full bg-violet-600/10 blur-[160px]" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.035)_1px,transparent_1px)] bg-[size:42px_42px] [mask-image:radial-gradient(circle_at_center,black,transparent_78%)]" />
+        <div className="absolute -right-32 top-1/2 h-[360px] w-[360px] -translate-y-1/2 rounded-full bg-violet-600/[0.08] blur-[145px]" />
+        <div className="absolute left-1/3 top-1/2 h-[320px] w-[320px] -translate-y-1/2 rounded-full bg-blue-600/[0.08] blur-[140px]" />
       </div>
 
-      <div className="relative mx-auto grid max-w-7xl items-center gap-10 lg:grid-cols-[0.92fr_1.08fr] lg:gap-20">
-        <motion.div
-          initial={{
-            opacity: 0,
-            x: -24,
-          }}
-          whileInView={{
-            opacity: 1,
-            x: 0,
-          }}
-          viewport={{
-            once: true,
-            amount: 0.3,
-          }}
-          transition={{
-            duration: 0.65,
-          }}
-        >
-          <div className="inline-flex items-center gap-2 rounded-full border border-fuchsia-300/20 bg-fuchsia-400/10 px-4 py-2 text-sm font-semibold text-fuchsia-200">
-            <Music2
-              size={16}
-              aria-hidden="true"
-            />
+      <div className="relative mx-auto max-w-6xl overflow-hidden rounded-[2rem] border border-blue-300/15 bg-gradient-to-br from-blue-500/[0.09] via-[#090E18]/95 to-violet-500/[0.06] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.32)] sm:p-8 lg:p-10">
+        <div className="grid items-center gap-9 lg:grid-cols-[0.9fr_1.1fr] lg:gap-12">
+          <div>
+            <div className="inline-flex items-center gap-2 rounded-full border border-blue-300/20 bg-blue-400/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-blue-200">
+              <AudioLines size={16} aria-hidden="true" />
+              Specialist Pathway
+            </div>
 
-            A specialist pathway inside ASCEND
-          </div>
+            <h2
+              id="music-heading"
+              className="mt-5 text-3xl font-black tracking-tight text-white sm:text-4xl"
+            >
+              ASCEND Music
+            </h2>
 
-          <h2
-            id="music-heading"
-            className="mt-5 text-3xl font-black leading-tight tracking-tight text-white sm:text-4xl lg:text-5xl"
-          >
-            Your sound deserves
-            <br />
+            <p className="mt-4 max-w-xl text-base leading-7 text-slate-300">
+              A specialist pathway for artists,
+              producers, songwriters, DJs and music
+              professionals—inside the same ASCEND system.
+            </p>
 
-            <span className="bg-gradient-to-r from-fuchsia-300 via-violet-300 to-cyan-300 bg-clip-text text-transparent">
-              more than exposure.
-            </span>
-          </h2>
-
-          <p className="mt-5 max-w-2xl text-base leading-7 sm:text-lg text-slate-300">
-            ASCEND Music helps artists, producers,
-            songwriters, DJs and music professionals
-            define where they are going—and find the
-            opportunities that can move them forward.
-          </p>
-
-          <p className="mt-5 max-w-2xl leading-7 text-slate-500">
-            Built with African talent in mind. Your
-            Music Pathway strengthens Atlas and the
-            Opportunity Engine without replacing your
-            main North Star, mission or progress.
-          </p>
-
-          <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-            {isLoaded ? (
-              <Link
-                href={pathwayHref}
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-fuchsia-500 px-6 py-3.5 font-semibold text-white shadow-[0_0_35px_rgba(217,70,239,0.22)] transition hover:-translate-y-0.5 hover:bg-fuchsia-400"
-              >
-                Build Your Music Pathway
-
-                <ArrowRight
-                  size={18}
-                  aria-hidden="true"
-                />
-              </Link>
-            ) : (
-              <div className="h-[52px] w-60 animate-pulse rounded-xl bg-fuchsia-500/30" />
-            )}
+            <p className="mt-4 max-w-xl text-sm leading-6 text-slate-500">
+              It adds music-specific context to Atlas
+              and opportunity discovery without replacing
+              your main North Star or progress.
+            </p>
 
             <Link
-              href={userId ? "/opportunities?filter=Music" : "/sign-up"}
-              className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/5 px-6 py-3.5 font-semibold text-slate-200 backdrop-blur-xl transition hover:border-fuchsia-300/25 hover:bg-white/10 hover:text-white"
+              href="/music"
+              className="mt-7 inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-3.5 font-semibold text-white shadow-[0_0_30px_rgba(37,99,235,0.24)] transition hover:-translate-y-0.5 hover:bg-blue-500"
             >
-              Explore Music Opportunities
+              Explore ASCEND Music
+              <ArrowRight size={18} aria-hidden="true" />
             </Link>
           </div>
-        </motion.div>
 
-        <motion.div
-          initial={{
-            opacity: 0,
-            y: 28,
-          }}
-          whileInView={{
-            opacity: 1,
-            y: 0,
-          }}
-          viewport={{
-            once: true,
-            amount: 0.25,
-          }}
-          transition={{
-            delay: 0.12,
-            duration: 0.7,
-          }}
-          className="relative"
-        >
-          <div className="absolute inset-10 rounded-full bg-fuchsia-500/15 blur-[90px]" />
+          <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
+            {signals.map((signal) => {
+              const Icon = signal.icon;
 
-          <div className="relative overflow-hidden rounded-3xl border border-fuchsia-300/15 bg-gradient-to-br from-fuchsia-500/[0.12] via-[#0B0A13]/95 to-cyan-500/[0.06] p-5 shadow-[0_0_100px_rgba(168,85,247,0.1)] sm:p-6">
-            <div className="flex items-center justify-between gap-4 border-b border-white/[0.08] pb-5">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-fuchsia-300/20 bg-fuchsia-400/10 text-fuchsia-200">
-                  <AudioLines
-                    size={21}
-                    aria-hidden="true"
-                  />
-                </div>
-
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-fuchsia-300">
-                    ASCEND Music
+              return (
+                <article
+                  key={signal.title}
+                  className="rounded-2xl border border-white/[0.08] bg-slate-950/45 p-5"
+                >
+                  <Icon size={20} className="text-cyan-300" aria-hidden="true" />
+                  <h3 className="mt-4 font-semibold text-white">
+                    {signal.title}
+                  </h3>
+                  <p className="mt-2 text-sm leading-6 text-slate-500">
+                    {signal.detail}
                   </p>
-                  <p className="mt-1 text-sm text-slate-400">
-                    Creative direction system
-                  </p>
-
-                  <p className="mt-2 text-xs font-medium text-fuchsia-200/80">
-                    For those interested in the music industry
-                  </p>
-                </div>
-              </div>
-
-              <Sparkles
-                size={22}
-                className="text-cyan-300"
-                aria-hidden="true"
-              />
-            </div>
-
-            <div className="mt-5 grid gap-3 sm:grid-cols-2">
-              {pathwaySignals.map((signal) => {
-                const Icon = signal.icon;
-
-                return (
-                  <div
-                    key={signal.label}
-                    className="rounded-2xl border border-white/[0.08] bg-slate-950/50 p-4"
-                  >
-                    <Icon
-                      size={20}
-                      className="text-fuchsia-300"
-                      aria-hidden="true"
-                    />
-
-                    <h3 className="mt-4 font-semibold text-white">
-                      {signal.label}
-                    </h3>
-
-                    <p className="mt-2 text-sm leading-6 text-slate-500">
-                      {signal.detail}
-                    </p>
-                  </div>
-                );
-              })}
-            </div>
-
-            <div className="mt-4 rounded-2xl border border-cyan-300/10 bg-cyan-400/[0.05] p-4">
-              <div className="flex items-start gap-3">
-                <MapPin
-                  size={20}
-                  className="mt-0.5 shrink-0 text-cyan-300"
-                  aria-hidden="true"
-                />
-
-                <p className="text-sm leading-6 text-slate-300">
-                  Discover grants, showcases,
-                  residencies, competitions, training
-                  and industry opportunities across
-                  Nigeria, Africa and the world.
-                </p>
-              </div>
-            </div>
+                </article>
+              );
+            })}
           </div>
-        </motion.div>
+        </div>
       </div>
     </section>
   );

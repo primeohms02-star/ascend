@@ -41,7 +41,7 @@ const productLinks = [
 
   {
     label: "ASCEND Music",
-    href: "/#ascend-music",
+    href: "/music",
   },
 ];
 

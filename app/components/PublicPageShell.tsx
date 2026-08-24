@@ -55,6 +55,14 @@ const navigation = [
 
   {
     label:
+      "Music",
+
+    href:
+      "/music",
+  },
+
+  {
+    label:
       "FAQ",
 
     href:

@@ -25,10 +25,10 @@ export default function HeroJourneyActions() {
         )}
 
         <a
-          href="#how-it-works"
+          href="#ascend-in-action"
           className="inline-flex items-center justify-center rounded-xl border border-white/15 bg-white/5 px-6 py-3.5 text-base font-medium text-white backdrop-blur-md transition hover:bg-white/10"
         >
-          Explore How It Works →
+          See ASCEND in Action →
         </a>
       </div>
 
@@ -41,8 +41,8 @@ export default function HeroJourneyActions() {
         </p>
       ) : (
         <p className="mt-5 text-sm text-slate-500">
-          Create your account and build your
-          Compass in minutes.
+          Built for anyone with a goal but no
+          clear next step.
         </p>
       )}
     </>
