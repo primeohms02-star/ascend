@@ -57,7 +57,7 @@ export default function AscensionProgress({
               </h2>
 
               <span className="text-sm font-semibold text-blue-300">
-                {ascension.title}
+                {ascension.title} stage
               </span>
             </div>
           </div>

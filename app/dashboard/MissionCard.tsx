@@ -8,6 +8,7 @@ type MissionCardProps = {
   missionId: string;
   available: boolean;
   northStar: string;
+  defaultWhyOpen?: boolean;
 };
 
 function TargetIcon() {
@@ -65,6 +66,7 @@ export default function MissionCard({
   missionId,
   available,
   northStar,
+  defaultWhyOpen = false,
 }: MissionCardProps) {
   return (
     <section
@@ -117,7 +119,11 @@ export default function MissionCard({
 
         {available &&
           description && (
-            <details className="group mt-3 rounded-xl border border-white/10 bg-slate-950/30">
+            <details
+              id="why-mission-matters"
+              open={defaultWhyOpen}
+              className="group mt-3 scroll-mt-8 rounded-xl border border-white/10 bg-slate-950/30"
+            >
               <summary className="cursor-pointer list-none px-3.5 py-2.5 text-sm font-medium text-slate-300 transition hover:text-white">
                 <span className="flex items-center justify-between gap-3.5">
                   Why this mission matters

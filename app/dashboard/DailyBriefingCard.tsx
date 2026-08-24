@@ -1,3 +1,6 @@
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
+
 type Props = {
   greeting: string;
   summary: string;
@@ -61,9 +64,21 @@ export default function DailyBriefingCard({
               {focus}
             </p>
 
-            <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-400">
+            <p className="mt-2 whitespace-pre-line text-sm leading-6 text-slate-400">
               {focusDetail}
             </p>
+
+            <Link
+              href="/action#why-mission-matters"
+              className="group mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-blue-300 transition hover:text-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-400/50"
+            >
+              Why this mission matters
+              <ArrowRight
+                size={15}
+                aria-hidden="true"
+                className="transition-transform group-hover:translate-x-0.5"
+              />
+            </Link>
           </article>
 
           <article className="rounded-xl border border-white/10 bg-white/[0.03] p-4">

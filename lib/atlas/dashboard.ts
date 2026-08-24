@@ -1,5 +1,7 @@
 import { calculateAscension } from "./ascension";
 import { buildDailyBriefing } from "./dailyBriefing";
+import { buildPathIdentity } from "./pathIdentity";
+import { resolveStreak } from "./streak";
 import { buildTimeline } from "./timeline";
 import { loadAtlasMemories } from "./memory";
 import { getActiveMission } from "./missionService";
@@ -7,6 +9,7 @@ import { getActiveMission } from "./missionService";
 import { getProfile } from "@/lib/supabase/profiles";
 import { getProgress } from "@/lib/supabase/atlasProgress";
 import { getMomentum } from "@/lib/supabase/atlasMomentum";
+import { getStreak } from "@/lib/supabase/atlasStreaks";
 
 import type { Recommendation } from "@/lib/engine/recommendations";
 
@@ -62,13 +65,17 @@ export async function getActionSnapshot(clerkId: string) {
 }
 
 export async function getProgressSnapshot(clerkId: string) {
-  const [progressRecord, momentum, atlasMemories] = await Promise.all([
+  const [storedProfile, progressRecord, streakRecord, atlasMemories] = await Promise.all([
+    getProfile(clerkId),
     getProgress(clerkId),
-    getMomentum(clerkId),
+    getStreak(clerkId),
     loadAtlasMemories(clerkId),
   ]);
 
+  const profile = storedProfile ?? fallbackProfile(clerkId);
   const ascension = calculateAscension(Number(progressRecord?.ascension_score ?? 0));
+  const identity = buildPathIdentity(profile.journey, profile.north_star);
+  const streak = resolveStreak(streakRecord);
   const timelineMemories = atlasMemories.filter(
     (
       memory
@@ -77,18 +84,18 @@ export async function getProgressSnapshot(clerkId: string) {
     } => typeof memory.created_at === "string"
   );
   const completeTimeline = buildTimeline(timelineMemories);
-  const currentStreak = Number(momentum?.current_streak ?? 0);
 
   return {
     ascension,
     identity: {
-      title: ascension.title,
+      ...identity,
       level: ascension.level,
     },
     progress: {
       progress: ascension.progressPercent,
-      momentum: `${currentStreak} Day Streak`,
-      message: "Keep moving toward your North Star.",
+      momentum: streak.label,
+      message: streak.message,
+      streak,
     },
     timeline: completeTimeline.slice(0, 3),
     timelineTotal: completeTimeline.length,
@@ -102,12 +109,13 @@ export async function getAtlasDashboard(clerkId: string) {
    * conversation/knowledge/strategy context here made every dashboard visit
    * perform many database reads that the page never renders.
    */
-  const [storedProfile, currentMission, progressRecord, momentum] =
+  const [storedProfile, currentMission, progressRecord, momentum, streakRecord] =
     await Promise.all([
       getProfile(clerkId),
       getActiveMission(clerkId),
       getProgress(clerkId),
       getMomentum(clerkId),
+      getStreak(clerkId),
     ]);
 
   const profile = storedProfile ?? fallbackProfile(clerkId);
@@ -153,6 +161,8 @@ export async function getAtlasDashboard(clerkId: string) {
 
   const journey = profile.journey ?? "Purpose Discovery";
   const northStar = profile.north_star ?? "";
+  const identity = buildPathIdentity(journey, northStar);
+  const streak = resolveStreak(streakRecord);
   const dailyBriefing = buildDailyBriefing({
     journey,
     northStar,
@@ -160,8 +170,6 @@ export async function getAtlasDashboard(clerkId: string) {
     missionReason: currentMission?.reason ?? "",
     progress: ascension.score,
   });
-
-  const currentStreak = Number(momentum?.current_streak ?? 0);
 
   return {
     dailyBriefing: {
@@ -185,12 +193,13 @@ export async function getAtlasDashboard(clerkId: string) {
 
     progress: {
       progress: ascension.progressPercent,
-      momentum: `${currentStreak} Day Streak`,
-      message: "Keep moving toward your North Star.",
+      momentum: streak.label,
+      message: streak.message,
+      streak,
     },
 
     identity: {
-      title: ascension.title,
+      ...identity,
       level: ascension.level,
     },
 

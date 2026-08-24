@@ -31,7 +31,11 @@ export default async function ProgressPage() {
 
           <div className="mt-6 grid gap-4 lg:grid-cols-2">
             <AscensionProgress ascension={progress.ascension} />
-            <IdentityCard title={progress.identity.title} level={progress.identity.level} />
+            <IdentityCard
+              title={progress.identity.title}
+              level={progress.identity.level}
+              description={progress.identity.description}
+            />
           </div>
 
           <div className="mt-4 grid items-start gap-4 lg:grid-cols-2">

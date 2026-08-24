@@ -1,6 +1,7 @@
 type IdentityCardProps = {
   title: string;
   level: number;
+  description: string;
 };
 
 function IdentityIcon() {
@@ -27,6 +28,7 @@ function IdentityIcon() {
 export default function IdentityCard({
   title,
   level,
+  description,
 }: IdentityCardProps) {
   return (
     <section className="relative overflow-hidden rounded-xl border border-violet-400/20 bg-gradient-to-br from-violet-400/[0.07] via-slate-900/80 to-slate-950 p-5 shadow-xl shadow-violet-950/20">
@@ -67,8 +69,7 @@ export default function IdentityCard({
         </div>
 
         <p className="mt-3 text-sm leading-6 text-slate-400">
-          Each completed mission provides evidence of the
-          person you are becoming.
+          {description}
         </p>
       </div>
     </section>

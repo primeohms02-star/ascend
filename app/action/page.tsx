@@ -36,6 +36,7 @@ export default async function ActionPage() {
               missionId={action.mission.missionId}
               available={action.mission.available}
               northStar={action.northStar}
+              defaultWhyOpen
             />
           </div>
 

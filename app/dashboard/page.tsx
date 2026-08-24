@@ -85,7 +85,9 @@ export default async function DashboardPage() {
             <div>
               <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-violet-300">Ascension</p>
               <p className="mt-1 text-lg font-bold text-white">Level {dashboard.ascension.level}</p>
-              <p className="text-xs text-slate-500">{dashboard.ascension.title}</p>
+              <p className="text-xs text-slate-500">
+                {dashboard.ascension.title} stage • {dashboard.identity.title} path
+              </p>
             </div>
             <div className="sm:border-l sm:border-white/10 sm:pl-5">
               <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">XP</p>
@@ -96,7 +98,7 @@ export default async function DashboardPage() {
               <div>
                 <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">Momentum</p>
                 <p className="mt-1 text-lg font-bold text-white">{dashboard.progress.momentum}</p>
-                <p className="text-xs text-slate-500">View your growth history</p>
+                <p className="text-xs leading-5 text-slate-500">{dashboard.progress.message}</p>
               </div>
               <ArrowRight size={17} className="mb-1 text-violet-300" aria-hidden="true" />
             </div>
