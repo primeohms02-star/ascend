@@ -9,7 +9,7 @@ const privateRoutes = [
   "/compass/:path*",
   "/atlas/:path*",
   "/mission-control/:path*",
-  "/music/:path*",
+  "/music/pathway/:path*",
   "/opportunities/:path*",
   "/support",
   "/support/admin/:path*",
