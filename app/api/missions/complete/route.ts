@@ -13,6 +13,7 @@ import {
 
 import {
   completeMissionLifecycle,
+  getActiveMission,
   getMissionOperation,
   type CompletionResult,
 } from "@/lib/atlas/missionService";
@@ -24,6 +25,7 @@ import {
 import {
   getProfile,
 } from "@/lib/supabase/profiles";
+import { consumeAtlasRateLimit } from "@/lib/atlas/rateLimit";
 
 const MISSION_XP_REWARD = 15;
 
@@ -154,6 +156,45 @@ export async function POST(
     if (existingResult) {
       return jsonResult(
         existingResult
+      );
+    }
+
+    const activeMission = await getActiveMission(userId);
+
+    if (!activeMission || activeMission.id !== missionId) {
+      return NextResponse.json(
+        {
+          error: "This mission is no longer the active mission.",
+          retryable: false,
+        },
+        { status: 409 },
+      );
+    }
+
+    const userAllowed = await consumeAtlasRateLimit({
+      userId,
+      bucket: "mission-completion",
+      windowSeconds: 600,
+      maxRequests: 6,
+    });
+    const serviceAllowed = userAllowed
+      ? await consumeAtlasRateLimit({
+          userId: "__ascend_global__",
+          bucket: "groq-requests",
+          windowSeconds: 60,
+          maxRequests: 120,
+        })
+      : false;
+
+    if (!userAllowed || !serviceAllowed) {
+      return NextResponse.json(
+        {
+          error:
+            "ASCEND has received several mission-completion requests. Wait a moment before trying again.",
+          retryable: true,
+          operationId,
+        },
+        { status: 429, headers: { "Retry-After": "60" } },
       );
     }
 

@@ -313,28 +313,31 @@ export default function AtlasActionPlanDashboard({
   );
 
   useEffect(() => {
-    try {
-      const saved = window.localStorage.getItem(storageKey);
+    const frame = window.requestAnimationFrame(() => {
+      try {
+        const saved = window.localStorage.getItem(storageKey);
 
-      if (saved) {
-        const itemIds = JSON.parse(saved);
+        if (saved) {
+          const itemIds = JSON.parse(saved);
 
-        if (Array.isArray(itemIds)) {
-          setCompletedItems(
-            new Set(
-              itemIds.filter(
-                (item): item is string =>
-                  typeof item === "string"
+          if (Array.isArray(itemIds)) {
+            setCompletedItems(
+              new Set(
+                itemIds.filter(
+                  (item): item is string => typeof item === "string"
+                )
               )
-            )
-          );
+            );
+          }
         }
+      } catch {
+        setCompletedItems(new Set());
+      } finally {
+        setHasLoaded(true);
       }
-    } catch {
-      setCompletedItems(new Set());
-    } finally {
-      setHasLoaded(true);
-    }
+    });
+
+    return () => window.cancelAnimationFrame(frame);
   }, [storageKey]);
 
   function toggleItem(itemId: string) {

@@ -53,7 +53,7 @@ export default function SavedOpportunities() {
         </p>
       ) : saved.length === 0 ? (
         <p className="text-slate-400">
-          You haven't saved any opportunities yet.
+          You haven&apos;t saved any opportunities yet.
         </p>
       ) : (
         <div className="space-y-4">

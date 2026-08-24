@@ -56,7 +56,7 @@ ${reflections}
 
   try {
     return JSON.parse(response) as CognitionResult;
-  } catch (error) {
+  } catch {
     console.error(
       "Cognition parse failed:",
       response

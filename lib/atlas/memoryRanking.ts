@@ -2,7 +2,7 @@ export type AtlasMemory = {
   memory_type: string;
   title: string | null;
   message: string;
-  metadata: any;
+  metadata: Record<string, unknown> | null;
   created_at: string;
 };
 

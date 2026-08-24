@@ -8,8 +8,7 @@ import AtlasDecisionEngine from "./components/AtlasDecisionEngine";
 import OpportunityDescription from "./components/OpportunityDescription";
 import OpportunityBackButton from "./components/OpportunityBackButton";
 
-import { enrichOpportunityFromOriginalSource } from "@/lib/atlas/opportunities/detail-enrichment";
-import { generateAtlasInsight } from "@/lib/atlas/opportunities/insight";
+import { buildPersonalizedOpportunityDecision } from "@/lib/atlas/opportunities/personalized-decision";
 import {
   createOpportunityRouteId,
   parseOpportunityRouteId,
@@ -61,8 +60,12 @@ export default async function OpportunityDetailsPage({
     notFound();
   }
 
-  const opportunity = await enrichOpportunityFromOriginalSource(storedOpportunity);
-  const insight = generateAtlasInsight(opportunity);
+  const decision = await buildPersonalizedOpportunityDecision(
+    userId,
+    storedOpportunity,
+  );
+  const opportunity = decision.opportunity;
+  const insight = decision.insight;
   const encodedOpportunityId = encodeURIComponent(
     createOpportunityRouteId(
       opportunity.id,

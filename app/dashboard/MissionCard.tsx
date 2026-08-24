@@ -165,6 +165,7 @@ export default function MissionCard({
           {available &&
           missionId ? (
             <CompleteMissionButton
+              key={missionId}
               missionId={
                 missionId
               }

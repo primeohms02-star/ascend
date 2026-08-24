@@ -17,7 +17,7 @@ export default function StepComplete() {
       </div>
 
       <p className="mb-4 text-sm uppercase tracking-[0.3em] text-blue-500">
-        You're Ready
+        You&apos;re Ready
       </p>
 
       <h1 className="text-5xl font-black text-white md:text-6xl">

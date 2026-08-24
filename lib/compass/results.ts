@@ -1,6 +1,7 @@
 import {
   supabaseServer,
 } from "@/lib/supabase-server";
+import type { Json } from "@/lib/database.types";
 
 export async function loadCompassResults(
   clerkId: string
@@ -30,7 +31,7 @@ export async function loadCompassResults(
 export async function saveCompassResults(
   clerkId: string,
   results: {
-    answers: any;
+    answers: Json;
     direction: string;
     north_star: string;
     next_step: string;

@@ -26,7 +26,7 @@ export default function StepWelcome({ onNext }: Props) {
       </h1>
 
       <p className="mx-auto mt-8 max-w-2xl text-lg leading-8 text-slate-400">
-        Let's understand who you are, what you're aiming for,
+        Let&apos;s understand who you are, what you&apos;re aiming for,
         and where you want to go.
       </p>
 

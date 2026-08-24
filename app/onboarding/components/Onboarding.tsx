@@ -4,6 +4,7 @@ import {
   useCallback,
   useState,
 } from "react";
+import { useRouter } from "next/navigation";
 
 import {
   ArrowLeft,
@@ -28,6 +29,7 @@ const TOTAL_STEPS = 8;
 const BUILDING_STEP = 7;
 
 export default function Onboarding() {
+  const router = useRouter();
   const [
     step,
     setStep,
@@ -53,8 +55,7 @@ export default function Onboarding() {
 
   function back() {
     if (step === 1) {
-      window.location.href =
-        "/";
+      router.push("/");
 
       return;
     }

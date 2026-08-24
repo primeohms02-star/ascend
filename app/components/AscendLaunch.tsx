@@ -34,61 +34,47 @@ export default function AscendLaunch() {
   useEffect(() => {
     const previousOverflow =
       document.body.style.overflow;
+    let timer: number | undefined;
+    const frame = window.requestAnimationFrame(() => {
+      let hasSeenLaunch = false;
 
-    let hasSeenLaunch = false;
+      try {
+        hasSeenLaunch = window.sessionStorage.getItem(SPLASH_STORAGE_KEY) === "true";
+      } catch {
+        hasSeenLaunch = false;
+      }
 
-    try {
-      hasSeenLaunch =
-        window.sessionStorage.getItem(
-          SPLASH_STORAGE_KEY
-        ) === "true";
-    } catch {
-      hasSeenLaunch = false;
-    }
+      if (hasSeenLaunch) {
+        setStatus("hidden");
+        return;
+      }
 
-    if (hasSeenLaunch) {
-      setStatus("hidden");
-      return;
-    }
-
-    const compactDevice =
-      window.matchMedia(
+      const compactDevice = window.matchMedia(
         "(max-width: 767px), (prefers-reduced-motion: reduce)"
       ).matches;
 
-    setIsCompactDevice(compactDevice);
+      setIsCompactDevice(compactDevice);
+      setStatus("visible");
+      document.body.style.overflow = "hidden";
 
-    setStatus("visible");
+      timer = window.setTimeout(() => {
+        try {
+          window.sessionStorage.setItem(SPLASH_STORAGE_KEY, "true");
+        } catch {
+          // Continue if browser storage is unavailable.
+        }
 
-    document.body.style.overflow =
-      "hidden";
-
-    const timer =
-      window.setTimeout(
-        () => {
-          try {
-            window.sessionStorage.setItem(
-              SPLASH_STORAGE_KEY,
-              "true"
-            );
-          } catch {
-            // Continue if browser storage is unavailable.
-          }
-
-          setStatus("hidden");
-
-          document.body.style.overflow =
-            previousOverflow;
-        },
-        shouldReduceMotion
-          ? 300
-          : compactDevice
-            ? 800
-            : 1600
-      );
+        setStatus("hidden");
+        document.body.style.overflow = previousOverflow;
+      }, shouldReduceMotion ? 300 : compactDevice ? 800 : 1600);
+    });
 
     return () => {
-      window.clearTimeout(timer);
+      window.cancelAnimationFrame(frame);
+
+      if (timer !== undefined) {
+        window.clearTimeout(timer);
+      }
 
       document.body.style.overflow =
         previousOverflow;

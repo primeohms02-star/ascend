@@ -32,7 +32,7 @@ export default function ConversationCard({
 
       <div className="mt-8 rounded-2xl border border-amber-400/20 bg-amber-400/5 p-6">
         <div className="mb-2 text-xs uppercase tracking-[0.3em] text-amber-300">
-          Today's Focus
+          Today&apos;s Focus
         </div>
 
         <p>{focus}</p>

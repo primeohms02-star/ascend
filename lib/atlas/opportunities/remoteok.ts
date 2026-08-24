@@ -2,6 +2,17 @@ import { Opportunity } from "./types";
 
 const REMOTE_OK_API = "https://remoteok.com/api";
 
+type RemoteOKJob = {
+  id?: string | number;
+  position?: string;
+  title?: string;
+  company?: string;
+  description?: string;
+  url?: string;
+  location?: string;
+  tags?: unknown[];
+};
+
 export async function fetchRemoteOK(): Promise<Opportunity[]> {
   try {
     const res = await fetch(REMOTE_OK_API, {
@@ -23,7 +34,7 @@ export async function fetchRemoteOK(): Promise<Opportunity[]> {
       return [];
     }
 
-    return data.slice(1).map((job: any): Opportunity => ({
+    return (data.slice(1) as RemoteOKJob[]).map((job): Opportunity => ({
       id: String(job.id),
 
       title: job.position || job.title || "Untitled",
@@ -42,7 +53,9 @@ export async function fetchRemoteOK(): Promise<Opportunity[]> {
 
       remote: true,
 
-      tags: Array.isArray(job.tags) ? job.tags : [],
+      tags: Array.isArray(job.tags)
+        ? job.tags.filter((tag): tag is string => typeof tag === "string")
+        : [],
 
       deadline: undefined,
 

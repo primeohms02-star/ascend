@@ -14,6 +14,7 @@ import {
   analyzeAtlasImage,
   isValidAtlasImage,
 } from "@/lib/atlas/vision";
+import { consumeAtlasRateLimit } from "@/lib/atlas/rateLimit";
 
 const MAX_ATLAS_MESSAGE_LENGTH = 6_000;
 
@@ -71,6 +72,31 @@ export async function POST(request: NextRequest) {
     const cleanMessage = message || "Please analyze this image.";
     const pageContext =
       typeof body.context === "string" ? body.context.trim().slice(0, 2200) : "";
+
+    const userAllowed = await consumeAtlasRateLimit({
+      userId,
+      bucket: "atlas-chat",
+      windowSeconds: 300,
+      maxRequests: 20,
+    });
+    const serviceAllowed = userAllowed
+      ? await consumeAtlasRateLimit({
+          userId: "__ascend_global__",
+          bucket: "groq-requests",
+          windowSeconds: 60,
+          maxRequests: 120,
+        })
+      : false;
+
+    if (!userAllowed || !serviceAllowed) {
+      return NextResponse.json(
+        {
+          error:
+            "Atlas has received several requests in a short period. Wait a moment, then continue.",
+        },
+        { status: 429, headers: { "Retry-After": "60" } },
+      );
+    }
 
     const factPromise = shouldExtractPermanentMemory(cleanMessage)
       ? extractPermanentMemory(cleanMessage).catch((error) => {

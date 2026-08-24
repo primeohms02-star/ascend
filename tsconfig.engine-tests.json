@@ -1,0 +1,20 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "CommonJS",
+    "moduleResolution": "Node",
+    "outDir": ".next/engine-tests",
+    "noEmit": false,
+    "verbatimModuleSyntax": false,
+    "incremental": false
+  },
+  "include": [
+    "tests/engine-regressions.test.ts",
+    "lib/atlas/opportunities/application-readiness.ts",
+    "lib/atlas/opportunities/deadline.ts",
+    "lib/atlas/opportunities/filter.ts",
+    "lib/atlas/opportunities/profile.ts",
+    "lib/atlas/opportunities/types.ts",
+    "lib/engine/missionSimilarity.ts"
+  ]
+}

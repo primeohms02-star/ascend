@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  useEffect,
   useRef,
   useState,
 } from "react";
@@ -53,19 +52,6 @@ export default function CompleteMissionButton({
     useRef<string | null>(
       null
     );
-
-  /*
-   * Reset local state when Atlas supplies a new
-   * authoritative active mission.
-   */
-  useEffect(() => {
-    setCompleted(false);
-    setError("");
-    setResult(null);
-
-    operationId.current =
-      null;
-  }, [missionId]);
 
   async function completeMission() {
     if (

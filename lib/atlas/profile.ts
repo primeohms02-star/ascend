@@ -12,7 +12,12 @@ export async function loadProfile(clerkId: string) {
 
 export async function updateProfileProgress(
   clerkId: string,
-  profile: any
+  profile: {
+    last_mission_date?: string | null;
+    current_streak?: number | null;
+    longest_streak?: number | null;
+    progress?: number | null;
+  }
 ) {
   const today = new Date().toISOString().split("T")[0];
 

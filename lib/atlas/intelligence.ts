@@ -5,9 +5,10 @@ import { buildAdaptiveOracle } from "./adaptiveOracle";
 import { buildPrediction } from "./predictive";
 import { buildWeeklyReview } from "./weeklyReview";
 import { buildFutureSelf } from "./futureSelf";
+import type { Reflection } from "./patterns";
 
 export function buildAtlasEngine(
-  reflections: any[],
+  reflections: Reflection[],
   streak: number,
   progress: number
 ) {

@@ -308,7 +308,11 @@ export default function SupportCasePage() {
       return;
     }
 
-    retrieveCase();
+    const timer = window.setTimeout(() => {
+      void retrieveCase();
+    }, 0);
+
+    return () => window.clearTimeout(timer);
   }, [
     isLoaded,
     userId,

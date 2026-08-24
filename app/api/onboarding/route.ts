@@ -35,6 +35,7 @@ import {
 import {
   normalizeMissionContent,
 } from "@/lib/atlas/missionContent";
+import { consumeAtlasRateLimit } from "@/lib/atlas/rateLimit";
 
 type OnboardingRequest = {
   operationId?: unknown;
@@ -543,6 +544,33 @@ export async function POST(
     if (existingResult) {
       return jsonResult(
         existingResult
+      );
+    }
+
+    const userAllowed = await consumeAtlasRateLimit({
+      userId,
+      bucket: "onboarding-mission",
+      windowSeconds: 600,
+      maxRequests: 6,
+    });
+    const serviceAllowed = userAllowed
+      ? await consumeAtlasRateLimit({
+          userId: "__ascend_global__",
+          bucket: "groq-requests",
+          windowSeconds: 60,
+          maxRequests: 120,
+        })
+      : false;
+
+    if (!userAllowed || !serviceAllowed) {
+      return NextResponse.json(
+        {
+          error:
+            "ASCEND has received several journey updates in a short period. Wait a moment before trying again.",
+          retryable: true,
+          operationId,
+        },
+        { status: 429, headers: { "Retry-After": "60" } },
       );
     }
 

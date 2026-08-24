@@ -11,7 +11,7 @@ export default function Error({
       <div className="w-full max-w-md rounded-3xl border border-slate-700 bg-slate-900/60 p-8 text-center">
 
         <h2 className="text-2xl font-bold text-white">
-          Atlas couldn't load this opportunity
+          Atlas couldn&apos;t load this opportunity
         </h2>
 
         <p className="mt-3 text-slate-400">

@@ -31,7 +31,7 @@ export default function Timeline() {
           </h2>
 
           <p className="mt-3 text-slate-400">
-            Every milestone brings you closer to becoming the person you're meant to be.
+            Every milestone brings you closer to becoming the person you&apos;re meant to be.
           </p>
 
         </div>

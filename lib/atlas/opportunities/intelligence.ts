@@ -5,6 +5,7 @@ import {
 
 import { OpportunityProfile } from "./profile";
 import { supabaseServer } from "@/lib/supabase-server";
+import { calculateOpportunityRelevance } from "./filter";
 
 import {
   isAfricanOpportunity,
@@ -102,99 +103,51 @@ export async function rankOpportunities(
 
   return opportunities
     .map((opportunity) => {
-      let score =
-        opportunity.score ?? 50;
+      const relevance = calculateOpportunityRelevance(opportunity, profile);
 
       // -------------------------
       // North Star
       // -------------------------
 
-      const careerGoal =
-        profile.careerGoal
-          ?.trim()
-          .toLowerCase() ?? "";
-
-      const opportunityText = [
-        opportunity.title,
-        opportunity.description,
-        opportunity.category,
-        ...(opportunity.tags ?? []),
-      ]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase();
-
-      const northStar =
-        careerGoal &&
-        opportunityText.includes(careerGoal)
-          ? 20
-          : 0;
-
-      score += northStar;
+      // Direction and industry terms come from the complete live onboarding
+      // context. Do not require a full goal sentence to appear verbatim in a
+      // listing; that made legitimate matches score zero.
+      const northStar = Math.min(
+        40,
+        relevance.direction + relevance.industry,
+      );
 
       // -------------------------
       // Geographic relevance
       // -------------------------
 
-      const geography =
-        getGeographicScore(opportunity);
-
-      score += geography;
+      const geography = getGeographicScore(opportunity);
 
       // -------------------------
       // Opportunity diversity
       // -------------------------
 
-      const opportunityType =
-        getOpportunityTypeScore(opportunity);
-
-      score += opportunityType;
+      const opportunityType = getOpportunityTypeScore(opportunity);
 
       // -------------------------
       // Remote preference
       // -------------------------
 
-      const remote =
-        opportunity.remote &&
-        profile.remoteOnly
-          ? 10
-          : 0;
-
-      score += remote;
+      const remote = relevance.remote;
 
       // -------------------------
       // Skills
       // -------------------------
 
-      let matchedSkills = 0;
-
-      for (
-        const tag of opportunity.tags ?? []
-      ) {
-        const matchesSkill =
-          profile.skills.some(
-            (skill) =>
-              skill.toLowerCase() ===
-              tag.toLowerCase()
-          );
-
-        if (matchesSkill) {
-          matchedSkills++;
-        }
-      }
-
-      const skills =
-        matchedSkills * 3;
-
-      score += skills;
+      const skills = relevance.skills;
 
       // -------------------------
       // Learned preferences
       // -------------------------
 
-      for (
-        const preference of preferences ?? []
-      ) {
+      let learnedPreference = 0;
+
+      for (const preference of preferences ?? []) {
         const preferenceCategory =
           preference.category
             ?.toLowerCase() ?? "";
@@ -204,7 +157,7 @@ export async function rankOpportunities(
             ?.toLowerCase() ===
           preferenceCategory
         ) {
-          score += preference.score;
+          learnedPreference += Number(preference.score ?? 0);
         }
 
         const matchesTag =
@@ -215,11 +168,13 @@ export async function rankOpportunities(
           );
 
         if (matchesTag) {
-          score += Math.floor(
-            preference.score / 2
+          learnedPreference += Math.floor(
+            Number(preference.score ?? 0) / 2,
           );
         }
       }
+
+      learnedPreference = Math.max(-10, Math.min(10, learnedPreference));
 
       // -------------------------
       // Adaptive learning
@@ -234,12 +189,8 @@ export async function rankOpportunities(
       const saved =
         seen?.saved ? 15 : 0;
 
-      score += saved;
-
       const applied =
         seen?.applied ? 25 : 0;
-
-      score += applied;
 
       let passive = 0;
 
@@ -256,12 +207,16 @@ export async function rankOpportunities(
         }
       }
 
-      score += passive;
-
       const total = Math.max(
         0,
-        Math.min(score, 100)
+        Math.min(relevance.score + learnedPreference, 100),
       );
+
+      // Geography, opportunity diversity and engagement influence ordering,
+      // not personal-fit truth. Saving an opportunity must never make Atlas
+      // claim that the user's skills or North Star suddenly align more closely.
+      const discoveryPriority =
+        total + geography + opportunityType + saved + applied + passive;
 
       return {
         ...opportunity,
@@ -270,20 +225,23 @@ export async function rankOpportunities(
 
         ranking: {
           northStar,
+          goalCategory: relevance.goalCategory,
           geography,
           opportunityType,
           skills,
           remote,
+          learnedPreference,
           saved,
           applied,
           passive,
           total,
+          discoveryPriority,
         },
       };
     })
     .sort(
       (a, b) =>
-        (b.score ?? 0) -
-        (a.score ?? 0)
+        (b.ranking.discoveryPriority ?? b.score ?? 0) -
+        (a.ranking.discoveryPriority ?? a.score ?? 0)
     );
 }

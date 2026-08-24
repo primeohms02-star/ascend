@@ -5,6 +5,7 @@ import type {
 import type {
   Opportunity,
 } from "./types";
+import { isOpportunityExpired } from "./deadline";
 
 const STOP_WORDS =
   new Set([
@@ -661,8 +662,12 @@ export function filterOpportunities(
       ? 30
       : 20;
 
+  const openOpportunities = opportunities.filter(
+    (opportunity) => !isOpportunityExpired(opportunity.deadline),
+  );
+
   const evaluated =
-    opportunities.map(
+    openOpportunities.map(
       (opportunity) => ({
         opportunity,
 
@@ -682,16 +687,11 @@ export function filterOpportunities(
     );
 
   /*
-   * Never produce a broken empty feed solely
-   * because the user's direction is still broad.
-   *
-   * If nothing crosses the relevance threshold,
-   * preserve only the fifty strongest candidates.
+   * A user with no usable direction yet may still explore a small broad pool.
+   * Once personal signals exist, however, returning unrelated records and
+   * labelling them as matched is misleading. An honest empty state is safer.
    */
-
-  if (
-    relevant.length === 0
-  ) {
+  if (relevant.length === 0 && !hasPersonalSignals) {
     return evaluated
       .sort(
         (first, second) =>
@@ -718,6 +718,10 @@ export function filterOpportunities(
             relevance.score,
         })
       );
+  }
+
+  if (relevant.length === 0) {
+    return [];
   }
 
   return relevant.map(

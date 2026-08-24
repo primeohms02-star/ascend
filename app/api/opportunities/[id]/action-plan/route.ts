@@ -55,8 +55,10 @@ export async function GET(request: NextRequest, context: RouteContext) {
         opportunity: decision.opportunity,
         decision: {
           insight: decision.insight,
+          atlasScore: decision.atlasScore,
           matchScore: decision.matchScore,
           qualityScore: decision.qualityScore,
+          readiness: decision.readiness,
           signals: decision.signals,
         },
         status: decision.status,

@@ -210,11 +210,9 @@ export async function getMissionOperation<
   const {
     data,
     error,
-  } = await (
-    supabaseServer as any
-  )
+  } = await supabaseServer
     .from(
-      "atlas_mission_operations"
+      "atlas_mission_operations" as never
     )
     .select(
       "operation_id,user_id,operation_type,result"
@@ -496,10 +494,8 @@ export async function replaceMissionForOnboarding(
   const {
     data,
     error,
-  } = await (
-    supabaseServer as any
-  ).rpc(
-    "replace_atlas_mission",
+  } = await supabaseServer.rpc(
+    "replace_atlas_mission" as never,
     {
       p_user_id:
         cleanRequired(
@@ -554,7 +550,7 @@ export async function replaceMissionForOnboarding(
           mission.description,
           "Mission reason"
         ),
-    }
+    } as never
   );
 
   if (error) {
@@ -602,10 +598,8 @@ export async function completeMissionLifecycle(
   const {
     data,
     error,
-  } = await (
-    supabaseServer as any
-  ).rpc(
-    "complete_atlas_mission",
+  } = await supabaseServer.rpc(
+    "complete_atlas_mission" as never,
     {
       p_user_id:
         cleanRequired(
@@ -638,7 +632,7 @@ export async function completeMissionLifecycle(
             input.xpReward
           )
         ),
-    }
+    } as never
   );
 
   if (error) {

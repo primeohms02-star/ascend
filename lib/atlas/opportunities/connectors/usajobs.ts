@@ -1,6 +1,18 @@
 import { Opportunity } from "../types";
 import { OpportunityConnector } from "./types";
 
+type USAJobsItem = {
+  MatchedObjectDescriptor: {
+    PositionID: string;
+    PositionTitle: string;
+    OrganizationName: string;
+    PositionURI: string;
+    PositionLocationDisplay?: string;
+    ApplicationCloseDate?: string;
+    UserArea?: { Details?: { JobSummary?: string } };
+  };
+};
+
 const USAJOBS_API =
   "https://data.usajobs.gov/api/search";
 
@@ -30,7 +42,7 @@ export const USAJobsConnector: OpportunityConnector = {
       const jobs =
         data?.SearchResult?.SearchResultItems ?? [];
 
-      return jobs.map((item: any): Opportunity => {
+      return (jobs as USAJobsItem[]).map((item): Opportunity => {
         const job = item.MatchedObjectDescriptor;
 
         return {

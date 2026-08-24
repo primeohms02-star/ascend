@@ -497,21 +497,14 @@ export default function SupportAdminPage() {
       return;
     }
 
-    setEditedStatus(
-      selectedCase.status
-    );
+    const timer = window.setTimeout(() => {
+      setEditedStatus(selectedCase.status);
+      setAssignedTo(selectedCase.assignedTo ?? "");
+      setResolution(selectedCase.resolution ?? "");
+      setSuccessMessage("");
+    }, 0);
 
-    setAssignedTo(
-      selectedCase.assignedTo ??
-        ""
-    );
-
-    setResolution(
-      selectedCase.resolution ??
-        ""
-    );
-
-    setSuccessMessage("");
+    return () => window.clearTimeout(timer);
   }, [selectedCase]);
 
   async function saveCase() {

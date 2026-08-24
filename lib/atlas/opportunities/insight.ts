@@ -1,4 +1,8 @@
 import type { Opportunity } from "./types";
+import {
+  analyzeOpportunityDeadline,
+  type OpportunityDeadlineAnalysis,
+} from "./deadline";
 
 export type AtlasInsight = {
   score: number;
@@ -8,19 +12,6 @@ export type AtlasInsight = {
   considerations: string[];
   bestFor: string[];
   nextStep: string;
-};
-
-type DeadlineStatus =
-  | "none"
-  | "invalid"
-  | "expired"
-  | "urgent"
-  | "soon"
-  | "open";
-
-type DeadlineAnalysis = {
-  status: DeadlineStatus;
-  daysRemaining?: number;
 };
 
 const GROWTH_KEYWORDS = [
@@ -99,67 +90,6 @@ function countKeywordMatches(
   return keywords.filter((keyword) =>
     text.includes(keyword)
   ).length;
-}
-
-function parseDeadline(deadline?: string): DeadlineAnalysis {
-  if (!deadline) {
-    return {
-      status: "none",
-    };
-  }
-
-  const parsedDeadline = new Date(deadline);
-
-  if (Number.isNaN(parsedDeadline.getTime())) {
-    return {
-      status: "invalid",
-    };
-  }
-
-  /*
-   * If only a date was supplied, treat the deadline as the end
-   * of that day instead of midnight at the beginning of the day.
-   */
-  const dateOnlyPattern = /^\d{4}-\d{2}-\d{2}$/;
-
-  if (dateOnlyPattern.test(deadline)) {
-    parsedDeadline.setHours(23, 59, 59, 999);
-  }
-
-  const now = new Date();
-
-  const millisecondsRemaining =
-    parsedDeadline.getTime() - now.getTime();
-
-  const daysRemaining = Math.ceil(
-    millisecondsRemaining / (1000 * 60 * 60 * 24)
-  );
-
-  if (daysRemaining < 0) {
-    return {
-      status: "expired",
-      daysRemaining,
-    };
-  }
-
-  if (daysRemaining <= 7) {
-    return {
-      status: "urgent",
-      daysRemaining,
-    };
-  }
-
-  if (daysRemaining <= 30) {
-    return {
-      status: "soon",
-      daysRemaining,
-    };
-  }
-
-  return {
-    status: "open",
-    daysRemaining,
-  };
 }
 
 function getOpportunityLabel(score: number): string {
@@ -327,7 +257,7 @@ function buildNextStep({
   opportunity,
 }: {
   score: number;
-  deadline: DeadlineAnalysis;
+  deadline: OpportunityDeadlineAnalysis;
   hasDescription: boolean;
   hasSalary: boolean;
   opportunity: Opportunity;
@@ -386,7 +316,7 @@ export function generateAtlasInsight(
     tags,
   });
 
-  const deadline = parseDeadline(opportunity.deadline);
+  const deadline = analyzeOpportunityDeadline(opportunity.deadline);
 
   /*
    * Description quality

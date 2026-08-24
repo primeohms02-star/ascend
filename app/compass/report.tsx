@@ -13,11 +13,11 @@ export default function Report({ answers }: ReportProps) {
       </p>
 
       <h1 className="mt-4 text-5xl font-bold">
-        Here's what we found.
+        Here&apos;s what we found.
       </h1>
 
       <p className="mt-6 text-lg text-slate-600">
-        Based on your answers, here's your current direction.
+        Based on your answers, here&apos;s your current direction.
       </p>
 
       <div className="mt-12 space-y-8">

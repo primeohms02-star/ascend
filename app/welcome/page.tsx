@@ -18,7 +18,7 @@ export default async function WelcomePage() {
         </p>
 
         <h1 className="mt-6 text-5xl font-bold text-slate-900">
-          We've discovered your direction.
+          We&apos;ve discovered your direction.
         </h1>
 
         <div className="my-12 h-px bg-slate-200" />

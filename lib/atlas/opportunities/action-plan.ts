@@ -1,5 +1,6 @@
 import type { Opportunity } from "./types";
 import type { AtlasInsight } from "./insight";
+import type { ApplicationReadinessAssessment } from "./application-readiness";
 
 export type ActionPriority = "High" | "Medium" | "Low";
 
@@ -51,10 +52,6 @@ const TECHNICAL_KEYWORDS = [
   "project management",
 ];
 
-function normalize(value?: string): string {
-  return value?.trim().toLowerCase() ?? "";
-}
-
 function unique(items: string[]): string[] {
   return [...new Set(items)];
 }
@@ -92,22 +89,6 @@ function createItem(
     description,
     priority,
   };
-}
-
-function getReadinessLevel(score: number): string {
-  if (score >= 85) {
-    return "Ready to Apply";
-  }
-
-  if (score >= 70) {
-    return "Nearly Ready";
-  }
-
-  if (score >= 55) {
-    return "Preparation Needed";
-  }
-
-  return "Research First";
 }
 
 function buildApplicationSteps(
@@ -389,37 +370,14 @@ function buildLearningActions(
 
 export function generateAtlasActionPlan(
   opportunity: Opportunity,
-  insight: AtlasInsight
+  insight: AtlasInsight,
+  readiness: ApplicationReadinessAssessment,
 ): AtlasActionPlan {
   const searchableText =
     createSearchableText(opportunity);
 
-  let readinessScore = insight.score;
-
-  if (opportunity.description?.trim()) {
-    readinessScore += 4;
-  }
-
-  if (opportunity.tags.length >= 3) {
-    readinessScore += 4;
-  }
-
-  if (opportunity.url) {
-    readinessScore += 2;
-  }
-
-  if (!opportunity.salary) {
-    readinessScore -= 2;
-  }
-
-  if (!opportunity.deadline) {
-    readinessScore -= 2;
-  }
-
-  readinessScore = clampScore(readinessScore);
-
-  const readinessLevel =
-    getReadinessLevel(readinessScore);
+  const readinessScore = clampScore(readiness.score);
+  const readinessLevel = readiness.level;
 
   const summary =
     readinessScore >= 70

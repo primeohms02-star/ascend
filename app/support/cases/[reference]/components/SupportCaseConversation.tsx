@@ -179,11 +179,14 @@ export default function SupportCaseConversation({
     );
 
   useEffect(() => {
-    setMessages([]);
-    setReply("");
-    setError("");
+    const timer = window.setTimeout(() => {
+      setMessages([]);
+      setReply("");
+      setError("");
+      void loadMessages();
+    }, 0);
 
-    loadMessages();
+    return () => window.clearTimeout(timer);
   }, [loadMessages]);
 
   useEffect(() => {

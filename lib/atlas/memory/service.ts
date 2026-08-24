@@ -18,6 +18,7 @@ export async function saveAtlasMemory(
 ): Promise<void> {
 
   console.log(`Saving Atlas Memory for ${userId}`);
+  void memory;
 
   // Supabase implementation comes next.
 }

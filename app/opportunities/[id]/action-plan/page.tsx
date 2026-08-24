@@ -5,9 +5,10 @@ import { auth } from "@clerk/nextjs/server";
 import AppShell from "@/app/components/navigation/AppShell";
 import AtlasActionPlanDashboard from "./components/AtlasActionPlanDashboard";
 
-import { generateAtlasActionPlan } from "@/lib/atlas/opportunities/action-plan";
-import { generateAtlasInsight } from "@/lib/atlas/opportunities/insight";
-import { getOpportunityStatus } from "@/lib/atlas/opportunities/memory";
+import {
+  buildPersonalizedOpportunityActionPlan,
+  buildPersonalizedOpportunityDecision,
+} from "@/lib/atlas/opportunities/personalized-decision";
 import {
   createOpportunityRouteId,
   parseOpportunityRouteId,
@@ -78,16 +79,17 @@ export default async function AtlasActionPlanPage({
     notFound();
   }
 
-  const [initialStatus] = await Promise.all([
-    getOpportunityStatus(userId, opportunity.id),
-  ]);
-
-  const insight = generateAtlasInsight(opportunity);
-  const actionPlan = generateAtlasActionPlan(opportunity, insight);
+  const decision = await buildPersonalizedOpportunityDecision(
+    userId,
+    opportunity,
+  );
+  const personalizedOpportunity = decision.opportunity;
+  const actionPlan = await buildPersonalizedOpportunityActionPlan(decision);
+  const initialStatus = decision.status;
   const encodedOpportunityId = encodeURIComponent(
     createOpportunityRouteId(
-      opportunity.id,
-      opportunity.snapshotId,
+      personalizedOpportunity.id,
+      personalizedOpportunity.snapshotId,
     ),
   );
   const safeReturnTo = getSafeReturnPath(returnTo);
@@ -98,7 +100,7 @@ export default async function AtlasActionPlanPage({
     `&returnTo=${encodeURIComponent(safeReturnTo)}` +
     `${filter ? `&filter=${encodeURIComponent(filter)}` : ""}`;
 
-  const progressStorageId = `${source}:${opportunity.id}`;
+  const progressStorageId = `${source}:${personalizedOpportunity.id}`;
 
   return (
     <AppShell>
@@ -117,8 +119,8 @@ export default async function AtlasActionPlanPage({
           <AtlasActionPlanDashboard
             plan={actionPlan}
             opportunityId={progressStorageId}
-            opportunityTitle={opportunity.title}
-            opportunity={opportunity}
+            opportunityTitle={personalizedOpportunity.title}
+            opportunity={personalizedOpportunity}
             initialStatus={initialStatus}
           />
         </div>

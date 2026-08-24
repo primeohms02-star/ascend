@@ -1,6 +1,7 @@
 import {
   supabaseServer,
 } from "@/lib/supabase-server";
+import type { Json } from "@/lib/database.types";
 
 export async function recordMemory(
   userId: string,
@@ -9,7 +10,7 @@ export async function recordMemory(
   message: string,
   metadata: Record<
     string,
-    any
+    Json | undefined
   > = {}
 ) {
   const cleanType =
@@ -93,17 +94,19 @@ export async function recordMemory(
         metadata,
 
         current_streak:
-          metadata.current_streak ??
+          typeof metadata.current_streak === "number" ? metadata.current_streak :
           null,
 
         longest_streak:
-          metadata.longest_streak ??
+          typeof metadata.longest_streak === "number" ? metadata.longest_streak :
           null,
 
         last_mission_date:
-          metadata.completed_at ??
-          metadata.last_mission_date ??
-          null,
+          typeof metadata.completed_at === "string"
+            ? metadata.completed_at
+            : typeof metadata.last_mission_date === "string"
+              ? metadata.last_mission_date
+              : null,
       })
       .select()
       .single();

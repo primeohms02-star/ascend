@@ -25,7 +25,7 @@ export default function FindingYourStarPage() {
         </h1>
 
         <p className="mt-4 text-lg text-slate-600">
-          We're analyzing your answers and creating your personalized roadmap.
+          We&apos;re analyzing your answers and creating your personalized roadmap.
         </p>
 
         <div className="mt-10 h-3 overflow-hidden rounded-full bg-slate-200">

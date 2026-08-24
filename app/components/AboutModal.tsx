@@ -114,7 +114,7 @@ export default function AboutModal({
 
             <div className="mt-12 rounded-2xl border border-amber-400/20 bg-amber-400/5 p-6">
               <p className="text-lg italic text-white">
-                "Help people become who they are capable of becoming."
+                &ldquo;Help people become who they are capable of becoming.&rdquo;
               </p>
             </div>
           </motion.div>

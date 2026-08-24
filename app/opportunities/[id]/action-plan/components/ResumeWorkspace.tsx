@@ -93,24 +93,28 @@ export default function ResumeWorkspace({
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    try {
-      const saved = window.localStorage.getItem(storageKey);
+    const frame = window.requestAnimationFrame(() => {
+      try {
+        const saved = window.localStorage.getItem(storageKey);
 
-      if (saved) {
-        const parsed = JSON.parse(saved) as {
-          draft?: Partial<ResumeDraft>;
-          completed?: SectionKey[];
-        };
+        if (saved) {
+          const parsed = JSON.parse(saved) as {
+            draft?: Partial<ResumeDraft>;
+            completed?: SectionKey[];
+          };
 
-        setDraft({ ...emptyDraft, ...(parsed.draft ?? {}) });
-        setCompleted(new Set(Array.isArray(parsed.completed) ? parsed.completed : []));
+          setDraft({ ...emptyDraft, ...(parsed.draft ?? {}) });
+          setCompleted(new Set(Array.isArray(parsed.completed) ? parsed.completed : []));
+        }
+      } catch {
+        setDraft(emptyDraft);
+        setCompleted(new Set());
+      } finally {
+        setLoaded(true);
       }
-    } catch {
-      setDraft(emptyDraft);
-      setCompleted(new Set());
-    } finally {
-      setLoaded(true);
-    }
+    });
+
+    return () => window.cancelAnimationFrame(frame);
   }, [storageKey]);
 
   useEffect(() => {

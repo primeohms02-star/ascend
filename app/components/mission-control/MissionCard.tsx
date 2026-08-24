@@ -10,7 +10,7 @@ export default function MissionCard({
   return (
     <div className="rounded-3xl bg-white p-8 shadow-lg">
       <h2 className="text-2xl font-semibold">
-        🎯 Today's Mission
+        🎯 Today&apos;s Mission
       </h2>
 
       <h3 className="mt-5 text-xl font-semibold text-slate-900">

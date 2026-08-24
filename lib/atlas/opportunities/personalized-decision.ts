@@ -1,9 +1,16 @@
 import { generateAtlasActionPlan } from "./action-plan";
+import {
+  assessApplicationReadiness,
+  type ApplicationReadinessAssessment,
+} from "./application-readiness";
 import { buildOpportunityProfile } from "./build-profile";
 import { enrichOpportunityFromOriginalSource } from "./detail-enrichment";
 import { generateAtlasInsight, type AtlasInsight } from "./insight";
 import { rankOpportunities } from "./intelligence";
-import { getOpportunityStatus } from "./memory";
+import {
+  getOpportunityStatus,
+  type OpportunityStatus,
+} from "./memory";
 import type { Opportunity, RankedOpportunity } from "./types";
 
 function clamp(value: number): number {
@@ -25,9 +32,11 @@ export type PersonalizedDecisionSignals = {
 export type PersonalizedOpportunityDecision = {
   opportunity: RankedOpportunity;
   insight: AtlasInsight;
+  atlasScore: number;
   matchScore: number;
   qualityScore: number;
-  status: string | null;
+  readiness: ApplicationReadinessAssessment;
+  status: OpportunityStatus | null;
   signals: PersonalizedDecisionSignals;
 };
 
@@ -99,19 +108,39 @@ export async function buildPersonalizedOpportunityDecision(
     ...structuralInsight.considerations,
   ]).slice(0, 6);
 
+  const level =
+    matchScore >= 80
+      ? "Strong Alignment"
+      : matchScore >= 65
+        ? "Promising Alignment"
+        : matchScore >= 45
+          ? "Investigate Fit"
+          : "Limited Alignment";
+
   const insight: AtlasInsight = {
     ...structuralInsight,
+    score: matchScore,
+    level,
     strengths: personalizedStrengths,
     considerations: personalizedConsiderations,
   };
 
+  const readiness = assessApplicationReadiness(
+    opportunity,
+    profile,
+    matchScore,
+    qualityScore,
+  );
+
   const status = await getOpportunityStatus(userId, opportunity.id);
 
   return {
-    opportunity: { ...rankedOpportunity, ...opportunity },
+    opportunity: { ...opportunity, ...rankedOpportunity, score: matchScore },
     insight,
+    atlasScore: matchScore,
     matchScore,
     qualityScore,
+    readiness,
     status,
     signals: {
       careerGoal: profile.careerGoal,
@@ -126,12 +155,16 @@ export async function buildPersonalizedOpportunityDecision(
 export async function buildPersonalizedOpportunityActionPlan(
   decision: PersonalizedOpportunityDecision
 ) {
-  const plan = generateAtlasActionPlan(decision.opportunity, decision.insight);
+  const plan = generateAtlasActionPlan(
+    decision.opportunity,
+    decision.insight,
+    decision.readiness,
+  );
 
   const matched = decision.signals.matchedSkills;
   const matchedNormalized = new Set(matched.map((skill) => skill.toLowerCase()));
 
-  const evidenceToVerify = plan.skillAssessment.identifiedSkills
+  const evidenceToVerify = decision.readiness.skillsToVerify
     .filter((skill) => !matchedNormalized.has(skill.toLowerCase()))
     .slice(0, 4)
     .map((skill) => `Verify that you can show credible evidence for ${skill}; ASCEND has not confirmed it from your declared skills.`);

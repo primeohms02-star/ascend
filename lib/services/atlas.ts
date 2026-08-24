@@ -13,7 +13,7 @@ export async function getAtlasDashboard() {
   const atlas = await loadAtlasContext(userId);
 
   const activeMission =
-  atlas.missions?.find((m: any) => m.status === "active") ??
+  atlas.missions?.find((mission) => mission.status === "active") ??
   atlas.missions?.[0] ??
   null;
 

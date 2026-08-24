@@ -33,6 +33,10 @@ import {
   normalizeMissionContent,
 } from "@/lib/atlas/missionContent";
 
+import {
+  isRepeatedMissionTitle,
+} from "./missionSimilarity";
+
 export type DailyMission = {
   title: string;
 
@@ -43,6 +47,7 @@ type MissionContext = {
   prompt: string;
   goal: string;
   skills: string[];
+  challenges: string[];
   northStar: string;
 };
 
@@ -268,6 +273,9 @@ ${structuredContext.north_star}
       skills:
         structuredContext.skills,
 
+      challenges:
+        structuredContext.challenges,
+
       northStar:
         structuredContext.north_star,
     };
@@ -327,6 +335,7 @@ ${structuredContext.north_star}
     prompt: legacyFact,
     goal: legacyGoal,
     skills: [],
+    challenges: [],
     northStar: "",
   };
 }
@@ -362,12 +371,24 @@ function selectFallbackMission(
     MissionPath,
 
   blockedTitles:
-    string[]
+    string[],
+
+  context:
+    MissionContext,
 ): DailyMission {
   if (
     available.length > 0
   ) {
-    return available[0];
+    const anchors = getContextAnchors(context);
+
+    return [...available].sort((first, second) => {
+      const score = (mission: MissionTemplate) => {
+        const content = `${mission.title} ${mission.description}`.toLowerCase();
+        return anchors.filter((anchor) => content.includes(anchor)).length;
+      };
+
+      return score(second) - score(first);
+    })[0];
   }
 
   const fallbackByPath:
@@ -579,6 +600,7 @@ function getContextAnchors(
     context.goal,
     context.northStar,
     ...context.skills,
+    ...context.challenges,
   ]
     .join(" ")
     .toLowerCase()
@@ -615,14 +637,26 @@ function isPersonalizedMission(
       context
     );
 
+  const matchedAnchors = new Set(
+    anchors.filter((anchor) => content.includes(anchor)),
+  );
+  const requiredAnchorCount = anchors.length >= 4 ? 2 : anchors.length > 0 ? 1 : 0;
+  const hasConcreteAction =
+    /\b(?:analy[sz]e|apply|build|compare|complete|contact|create|draft|interview|map|prepare|publish|record|research|submit|test|update|validate|write)\b/i.test(
+      content,
+    );
+  const hasEvidenceOrDeliverable =
+    /\b(?:analysis|application|case study|checklist|conversation|draft|evidence|feedback|list|map|portfolio|profile|proposal|prototype|record|report|research|resume|sample|summary|test|validation)\b/i.test(
+      content,
+    );
+  const descriptionWordCount = mission.description.split(/\s+/).filter(Boolean).length;
+
   return (
-    anchors.length === 0 ||
-    anchors.some(
-      (anchor) =>
-        content.includes(
-          anchor
-        )
-    )
+    matchedAnchors.size >= requiredAnchorCount &&
+    hasConcreteAction &&
+    hasEvidenceOrDeliverable &&
+    descriptionWordCount >= 35 &&
+    descriptionWordCount <= 180
   );
 }
 
@@ -882,16 +916,10 @@ DESCRIPTION:
     if (
       generatedMission
     ) {
-      const alreadyCompleted =
-        blockedTitles.some(
-          (title) =>
-            normalizeTitle(
-              title
-            ) ===
-            normalizeTitle(
-              generatedMission.title
-            )
-        );
+      const alreadyCompleted = isRepeatedMissionTitle(
+        generatedMission.title,
+        blockedTitles,
+      );
 
       if (
         !alreadyCompleted &&
@@ -922,7 +950,8 @@ DESCRIPTION:
     selectFallbackMission(
       available,
       path,
-      blockedTitles
+      blockedTitles,
+      missionContext,
     );
 
   console.info(

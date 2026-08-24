@@ -1,4 +1,4 @@
-type Reflection = {
+export type Reflection = {
   reflection: string;
   mood: number;
 };
