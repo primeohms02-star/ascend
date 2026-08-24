@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { normalizeAtlasListArtifacts } from "@/lib/atlas/replyFormatting";
 
 type AtlasMessageContentProps = {
   content: string;
@@ -94,7 +95,7 @@ function normalizeLine(rawLine: string) {
 }
 
 function prepareContent(content: string) {
-  return content
+  return normalizeAtlasListArtifacts(content)
     .replace(/\r\n/g, "\n")
     .split(/(```[\s\S]*?```)/g)
     .map((segment) => {

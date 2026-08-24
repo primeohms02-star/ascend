@@ -64,6 +64,8 @@ import {
   loadCompassResults,
 } from "../compass/results";
 
+import { normalizeAtlasListArtifacts } from "./replyFormatting";
+
 type AtlasConversationRole =
   | "user"
   | "assistant"
@@ -745,7 +747,7 @@ function normalizeAtlasReplyFormatting(value: string) {
 
   // Preserve genuine fenced code exactly. The conversational cleanup only
   // applies to normal prose around code blocks.
-  return value
+  return normalizeAtlasListArtifacts(value)
     .split(/(```[\s\S]*?```)/g)
     .map((segment) => (segment.startsWith("```") ? segment : normalizeTextSegment(segment)))
     .join("")

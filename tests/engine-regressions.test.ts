@@ -7,6 +7,7 @@ import { filterOpportunities } from "../lib/atlas/opportunities/filter";
 import type { OpportunityProfile } from "../lib/atlas/opportunities/profile";
 import type { Opportunity } from "../lib/atlas/opportunities/types";
 import { isRepeatedMissionTitle } from "../lib/engine/missionSimilarity";
+import { normalizeAtlasListArtifacts } from "../lib/atlas/replyFormatting";
 
 const beginnerProfile: OpportunityProfile = {
   clerkId: "test-user",
@@ -74,4 +75,16 @@ test("missions with cosmetic title changes are treated as repeated", () => {
     isRepeatedMissionTitle("Map Finance Requirements", ["Publish a Design Portfolio"]),
     false,
   );
+});
+
+test("Atlas reply artifacts become clean numbered and bullet lists", () => {
+  const result = normalizeAtlasListArtifacts(
+    "1️⃣ Complete the draft\nWhy these items matter: - **Alignment** with the North Star. - **Confidence** through evidence.",
+  );
+
+  assert.equal(
+    result,
+    "1. Complete the draft\nWhy these items matter:\n• **Alignment** with the North Star.\n• **Confidence** through evidence.",
+  );
+  assert.equal(result.includes(":."), false);
 });
