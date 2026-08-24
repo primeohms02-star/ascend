@@ -79,12 +79,12 @@ test("missions with cosmetic title changes are treated as repeated", () => {
 
 test("Atlas reply artifacts become clean numbered and bullet lists", () => {
   const result = normalizeAtlasListArtifacts(
-    "1️⃣ Complete the draft\nWhy these items matter: - **Alignment** with the North Star. - **Confidence** through evidence.",
+    "1️⃣ Draft (≈150 words).:\n- [ ] Save it.\nWhy these items matter: - **Alignment** with the North Star. - **Confidence** through evidence.\nI finished. a real win.\n“Done.”.",
   );
 
   assert.equal(
     result,
-    "1. Complete the draft\nWhy these items matter:\n• **Alignment** with the North Star.\n• **Confidence** through evidence.",
+    "1. Draft (about 150 words):\n• Save it.\nWhy these items matter:\n• **Alignment** with the North Star.\n• **Confidence** through evidence.\nI finished. A real win.\n“Done.”",
   );
   assert.equal(result.includes(":."), false);
 });

@@ -18,7 +18,7 @@ type ContentBlock =
   | { type: "label"; label: string; value: string }
   | { type: "schedule"; items: ScheduleItem[] }
   | { type: "unordered-list"; items: string[] }
-  | { type: "ordered-list"; items: string[] }
+  | { type: "ordered-list"; items: string[]; start: number }
   | { type: "code"; value: string };
 
 const DECORATIVE_LINE = /^[\s#*_~|:;—–=-]{2,}$/;
@@ -227,6 +227,7 @@ function parseContent(content: string): ContentBlock[] {
   let listItems: string[] = [];
   let scheduleItems: ScheduleItem[] = [];
   let listType: "unordered-list" | "ordered-list" | null = null;
+  let orderedListStart = 1;
   let codeLines: string[] = [];
   let inCodeBlock = false;
 
@@ -239,9 +240,14 @@ function parseContent(content: string): ContentBlock[] {
 
   function flushList() {
     if (listType && listItems.length > 0) {
-      blocks.push({ type: listType, items: listItems });
+      blocks.push(
+        listType === "ordered-list"
+          ? { type: listType, items: listItems, start: orderedListStart }
+          : { type: listType, items: listItems },
+      );
       listItems = [];
       listType = null;
+      orderedListStart = 1;
     }
   }
 
@@ -343,14 +349,17 @@ function parseContent(content: string): ContentBlock[] {
       continue;
     }
 
-    const orderedMatch = trimmed.match(/^\d+[.)]\s+(.+)$/);
+    const orderedMatch = trimmed.match(/^(\d+)[.)]\s+(.+)$/);
     if (orderedMatch) {
       flushParagraph();
       if (listType && listType !== "ordered-list") {
         flushList();
       }
+      if (listType !== "ordered-list") {
+        orderedListStart = Number.parseInt(orderedMatch[1], 10);
+      }
       listType = "ordered-list";
-      listItems.push(orderedMatch[1].trim());
+      listItems.push(orderedMatch[2].trim());
       continue;
     }
 
@@ -458,6 +467,7 @@ export default function AtlasMessageContent({
           return (
             <ol
               key={`ordered-${index}`}
+              start={block.start}
               className="list-decimal space-y-3.5 pl-6 marker:font-semibold marker:text-slate-400"
             >
               {block.items.map((item, itemIndex) => (
