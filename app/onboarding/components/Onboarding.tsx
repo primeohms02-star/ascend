@@ -2,6 +2,7 @@
 
 import {
   useCallback,
+  useEffect,
   useState,
 } from "react";
 import { useRouter } from "next/navigation";
@@ -46,6 +47,14 @@ export default function Onboarding() {
 
   const [outcome, setOutcome] =
     useState<OnboardingOutcome | null>(null);
+
+  useEffect(() => {
+    window.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: "auto",
+    });
+  }, [step]);
 
   const next =
     useCallback(() => {

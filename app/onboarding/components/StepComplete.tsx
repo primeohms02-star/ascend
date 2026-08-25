@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { ArrowRight, Compass } from "lucide-react";
 
+import { summarizeMissionDetail } from "@/lib/atlas/missionContent";
 import type { OnboardingAnswers, OnboardingOutcome } from "./types";
 
 type Props = {
@@ -12,6 +13,11 @@ type Props = {
 };
 
 export default function StepComplete({ answers, outcome }: Props) {
+  const missionPreview = summarizeMissionDetail(
+    outcome?.mission.reason,
+    145,
+  );
+
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
@@ -56,7 +62,7 @@ export default function StepComplete({ answers, outcome }: Props) {
           </h2>
           {outcome?.mission.reason ? (
             <p className="mt-2 text-sm leading-6 text-slate-400">
-              {outcome.mission.reason}
+              {missionPreview}
             </p>
           ) : null}
         </article>
