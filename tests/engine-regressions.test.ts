@@ -150,6 +150,20 @@ test("mission content removes model markup and retains an actionable outcome", (
   assert.equal(isUsableMissionTitle(mission.title), true);
 });
 
+test("mission titles remain concise labels without clipped endings", () => {
+  const mission = normalizeMissionContent(
+    "Outcome: Create a one-page value pitch tailored to a specific high-value contact and send it by email",
+    "Build a focused value pitch for one relevant contact. Save the final message as evidence before sending it.",
+  );
+
+  assert.equal(mission.title, "Create a One-page Value Pitch");
+  assert.equal(mission.title.includes("…"), false);
+  assert.equal(mission.title.split(/\s+/).length <= 6, true);
+  assert.match(mission.description, /high-value contact/i);
+  assert.match(mission.description, /Save the final message/i);
+  assert.equal(isUsableMissionTitle(mission.title), true);
+});
+
 test("mission repetition catches inflections but permits genuinely new work", () => {
   assert.equal(
     isRepeatedMissionTitle("Preparing Finance Interview Evidence", [

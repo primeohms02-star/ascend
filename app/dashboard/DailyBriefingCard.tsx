@@ -45,26 +45,26 @@ export default function DailyBriefingCard({
         </div>
 
         <div className="mt-5 grid gap-3 lg:grid-cols-[0.9fr_1.2fr_0.9fr]">
-          <article className="rounded-xl border border-white/10 bg-white/[0.035] p-4">
+          <article className="min-w-0 rounded-xl border border-white/10 bg-white/[0.035] p-4">
             <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-blue-400">
               Situation
             </p>
 
-            <p className="mt-2 text-sm leading-6 text-slate-300">
+            <p className="mt-2 break-words text-sm leading-6 text-slate-300 [overflow-wrap:anywhere]">
               {summary}
             </p>
           </article>
 
-          <article className="rounded-xl border border-blue-400/20 bg-blue-400/[0.055] p-4">
+          <article className="min-w-0 rounded-xl border border-blue-400/20 bg-blue-400/[0.055] p-4">
             <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-blue-300">
               Primary Focus
             </p>
 
-            <p className="mt-2 text-base font-semibold leading-6 text-white">
+            <p className="mt-2 break-words text-base font-semibold leading-6 text-white [overflow-wrap:anywhere]">
               {focus}
             </p>
 
-            <p className="mt-2 whitespace-pre-line text-sm leading-6 text-slate-400">
+            <p className="mt-2 whitespace-pre-line break-words text-sm leading-6 text-slate-400 [overflow-wrap:anywhere]">
               {focusDetail}
             </p>
 
@@ -81,12 +81,12 @@ export default function DailyBriefingCard({
             </Link>
           </article>
 
-          <article className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
+          <article className="min-w-0 rounded-xl border border-white/10 bg-white/[0.03] p-4">
             <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-blue-400">
               Atlas Noticed
             </p>
 
-            <p className="mt-2 text-sm leading-6 text-slate-300">
+            <p className="mt-2 break-words text-sm leading-6 text-slate-300 [overflow-wrap:anywhere]">
               {oracle}
             </p>
           </article>

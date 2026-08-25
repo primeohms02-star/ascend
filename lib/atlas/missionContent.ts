@@ -121,13 +121,15 @@ export function isUsableMissionTitle(value: string | null | undefined): boolean 
 
   return (
     clean.length >= 4 &&
-    clean.length <= 56 &&
+    clean.length <= 48 &&
     /[\p{L}]/u.test(clean) &&
     !DECORATIVE_ONLY.test(value.trim()) &&
     !/^(?:mission|title|none|null|n\/?a)$/i.test(clean) &&
     !/^(?:outcome|steps?|evidence|why it matters)\s*:/i.test(clean) &&
+    !/[,;:]/.test(clean) &&
+    !/\b(?:because|in order to|ready to|so that|tailored|targeted|which)\b/i.test(clean) &&
     words.length >= 2 &&
-    words.length <= 7
+    words.length <= 6
   );
 }
 
@@ -155,6 +157,9 @@ function deriveMissionTitle(value: string): string {
     .split(/\s+(?:tailored|targeted|designed|ready)\s+(?:to|for)\s+/i)[0]
     .split(/\s+(?:for|with)\s+(?:(?:a|an|the|your|specific)\s+)?/i)[0]
     .split(/\s+(?:so that|which|that)\s+/i)[0]
+    .split(
+      /\s+to\s+(?=(?:a|an|the|your|reach|share|send|build|create|prepare|demonstrate|show|support|advance)\b)/i,
+    )[0]
     .split(/,\s*(?:then|and then|and)\s+/i)[0]
     .replace(/^[\s:;,.\-–—]+|[\s:;,.\-–—]+$/g, "")
     .trim();
@@ -167,16 +172,20 @@ function deriveMissionTitle(value: string): string {
     candidate = "Create Evidence of Progress";
   }
 
-  const words = candidate.split(/\s+/).filter(Boolean).slice(0, 7);
+  const words = candidate.split(/\s+/).filter(Boolean).slice(0, 6);
 
   while (
     words.length > 2 &&
-    /^(?:a|an|and|at|for|from|in|of|on|the|to|with)$/i.test(words.at(-1) ?? "")
+    (titleCase(words.join(" ")).length > 48 ||
+      /^(?:a|an|and|at|for|from|in|of|on|the|to|with)$/i.test(
+        words.at(-1) ?? "",
+      ))
   ) {
     words.pop();
   }
 
-  return trimAtWord(titleCase(words.join(" ")), 56);
+  const title = titleCase(words.join(" "));
+  return title.length <= 48 ? title : "Create Evidence of Progress";
 }
 
 export function normalizeMissionTitle(
@@ -202,15 +211,24 @@ export function normalizeMissionContent(
   const rawTitleDetail =
     normalizeMissionDetail(title);
 
+  const normalizedDetail =
+    normalizeMissionDetail(detail);
+
+  const rawComparison = rawTitleDetail.toLocaleLowerCase();
+  const detailComparison = normalizedDetail.toLocaleLowerCase();
+
+  const shouldPreserveRawTitle =
+    !isUsableMissionTitle(title) &&
+    Boolean(rawTitleDetail) &&
+    (!normalizedDetail ||
+      (!detailComparison.includes(rawComparison) &&
+        !rawComparison.includes(detailComparison)));
+
   const description =
     normalizeMissionDetail(
       [
-        !isUsableMissionTitle(title) &&
-        rawTitleDetail &&
-        !normalizeMissionDetail(detail)
-          ? rawTitleDetail
-          : "",
-        detail ?? "",
+        shouldPreserveRawTitle ? rawTitleDetail : "",
+        normalizedDetail,
       ]
         .filter(Boolean)
         .join("\n\n")

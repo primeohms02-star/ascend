@@ -104,7 +104,7 @@ export default function MissionCard({
         {/* Mission content */}
 
         <div className="mt-4 rounded-xl border border-white/10 bg-white/[0.035] p-3.5">
-          <p className="text-base font-semibold leading-7 text-white">
+          <p className="break-words text-base font-semibold leading-7 text-white [overflow-wrap:anywhere]">
             {title}
           </p>
 
@@ -135,7 +135,7 @@ export default function MissionCard({
               </summary>
 
               <div className="border-t border-white/10 px-3.5 py-3.5">
-                <p className="whitespace-pre-line text-sm leading-7 text-slate-300">
+                <p className="whitespace-pre-line break-words text-sm leading-7 text-slate-300 [overflow-wrap:anywhere]">
                   {description}
                 </p>
 

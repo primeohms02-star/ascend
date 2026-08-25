@@ -102,7 +102,7 @@ export default function AtlasTimeline({
                   </time>
                 </div>
 
-                <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-400">
+                <p className="mt-1 whitespace-pre-line break-words text-xs leading-5 text-slate-400 [overflow-wrap:anywhere]">
                   {item.message}
                 </p>
               </div>

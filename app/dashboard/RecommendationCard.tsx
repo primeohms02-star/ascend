@@ -110,7 +110,7 @@ export default function RecommendationCard({
           {recommendation.title}
         </h2>
 
-        <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-400">
+        <p className="mt-2 whitespace-pre-line break-words text-sm leading-6 text-slate-400 [overflow-wrap:anywhere]">
           {recommendation.description}
         </p>
 
