@@ -13,8 +13,6 @@ import {
   getStoredOpportunitySummary,
 } from "./memory";
 
-import { rotateOpportunities } from "./rotation";
-
 import {
   isAfricanOpportunity,
   isNigerianOpportunity,
@@ -221,34 +219,16 @@ function matchesFilter(
 
 function orderForPagination(
   opportunities: RankedOpportunity[],
-  pageSize: number,
 ): RankedOpportunity[] {
-  let remaining = [...opportunities];
+  return [...opportunities].sort((a, b) => {
+    const scoreDifference = (b.score ?? 0) - (a.score ?? 0);
 
-  const ordered: RankedOpportunity[] = [];
-
-  while (remaining.length > 0) {
-    const batchSize = Math.min(pageSize, remaining.length);
-
-    const batch = rotateOpportunities(remaining, batchSize);
-
-    if (batch.length === 0) {
-      break;
+    if (scoreDifference !== 0) {
+      return scoreDifference;
     }
 
-    ordered.push(...batch);
-
-    const selectedKeys = new Set(
-      batch.map((opportunity) => `${opportunity.source}:${opportunity.id}`),
-    );
-
-    remaining = remaining.filter(
-      (opportunity) =>
-        !selectedKeys.has(`${opportunity.source}:${opportunity.id}`),
-    );
-  }
-
-  return ordered;
+    return `${a.source}:${a.id}`.localeCompare(`${b.source}:${b.id}`);
+  });
 }
 
 function orderForLocationPagination(
@@ -257,27 +237,15 @@ function orderForLocationPagination(
   location: ResolvedOpportunityLocation,
   filter?: string,
 ): RankedOpportunity[] {
-  if (!location.active || normalize(filter) === "remote") {
-    return orderForPagination(opportunities, pageSize);
-  }
+  const eligible =
+    location.active && normalize(filter) !== "remote"
+      ? opportunities.filter(
+          (opportunity) =>
+            getOpportunityLocationPriority(opportunity, location) > 0,
+        )
+      : opportunities;
 
-  const buckets = new Map<number, RankedOpportunity[]>([
-    [3, []],
-    [2, []],
-    [1, []],
-  ]);
-
-  for (const opportunity of opportunities) {
-    const priority = getOpportunityLocationPriority(opportunity, location);
-
-    if (priority > 0) {
-      buckets.get(priority)?.push(opportunity);
-    }
-  }
-
-  return [3, 2, 1].flatMap((priority) =>
-    orderForPagination(buckets.get(priority) ?? [], pageSize),
-  );
+  return orderForPagination(eligible);
 }
 
 async function createOpportunitySnapshot(
@@ -406,13 +374,12 @@ export async function getPersonalizedOpportunities(profile: {
 
   const snapshot = await loadOpportunitySnapshot(profile.clerkId, snapshotId);
 
-  const recommendations = rotateOpportunities(
-    snapshot.opportunities,
-    DEFAULT_PAGE_SIZE,
-  ).map((opportunity) => ({
-    ...opportunity,
-    snapshotId,
-  }));
+ const recommendations = orderForPagination(snapshot.opportunities)
+    .slice(0, DEFAULT_PAGE_SIZE)
+    .map((opportunity) => ({
+      ...opportunity,
+      snapshotId,
+    }));
 
   recordDisplayedInBackground(profile.clerkId, recommendations);
 
