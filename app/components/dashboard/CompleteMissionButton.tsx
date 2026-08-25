@@ -126,13 +126,6 @@ export default function CompleteMissionButton({
           data.nextMission,
       });
 
-      /*
-       * Refresh Server Component data without a full
-       * browser reload. The dashboard will receive
-       * the replacement active mission created by
-       * the same database transaction.
-       */
-      router.refresh();
     } catch (error) {
       setError(
         error instanceof Error

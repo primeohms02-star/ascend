@@ -2,6 +2,10 @@ import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 
 import { loadOnboardingContext } from "@/lib/atlas/onboardingContext";
+import { isOnboardingContextComplete } from "@/lib/atlas/onboardingCompletion";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export default async function AuthContinuePage() {
   const { userId } = await auth();
@@ -14,7 +18,7 @@ export default async function AuthContinuePage() {
 
   try {
     const onboardingContext = await loadOnboardingContext(userId);
-    hasCompletedOnboarding = Boolean(onboardingContext);
+    hasCompletedOnboarding = isOnboardingContextComplete(onboardingContext);
   } catch (error) {
     console.error("Post-auth destination check failed:", error);
   }

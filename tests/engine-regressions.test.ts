@@ -16,6 +16,7 @@ import {
   hasPersonalizedSnapshotScore,
   resolveOpportunityMatchScore,
 } from "../lib/atlas/opportunities/match-score";
+import { isOnboardingContextComplete } from "../lib/atlas/onboardingCompletion";
 
 const beginnerProfile: OpportunityProfile = {
   clerkId: "test-user",
@@ -41,6 +42,26 @@ const seniorRole: Opportunity = {
   location: "Lagos, Nigeria",
   tags: ["finance", "investment management", "CFA"],
 };
+
+test("new and partial accounts cannot bypass onboarding", () => {
+  assert.equal(isOnboardingContextComplete(null), false);
+  assert.equal(
+    isOnboardingContextComplete({
+      identity: "",
+      goal: "Find a Job",
+      north_star: "Build a meaningful career",
+    }),
+    false,
+  );
+  assert.equal(
+    isOnboardingContextComplete({
+      identity: "Recent Graduate",
+      goal: "Find a Job",
+      north_star: "Build a meaningful career",
+    }),
+    true,
+  );
+});
 
 test("senior-role experience mismatch cannot be application-ready", () => {
   const result = assessApplicationReadiness(seniorRole, beginnerProfile, 98, 95);

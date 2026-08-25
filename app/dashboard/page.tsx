@@ -15,6 +15,7 @@ import {
 import AppShell from "@/app/components/navigation/AppShell";
 import { getAtlasDashboard } from "@/lib/atlas/dashboard";
 import { loadOnboardingContext } from "@/lib/atlas/onboardingContext";
+import { isOnboardingContextComplete } from "@/lib/atlas/onboardingCompletion";
 
 import DailyBriefingCard from "@/app/dashboard/DailyBriefingCard";
 import CompassCard from "@/app/dashboard/CompassCard";
@@ -54,14 +55,13 @@ export default async function DashboardPage() {
     redirect("/sign-in");
   }
 
-  const [onboardingContext, dashboard] = await Promise.all([
-    loadOnboardingContext(userId),
-    getAtlasDashboard(userId),
-  ]);
+  const onboardingContext = await loadOnboardingContext(userId);
 
-  if (!onboardingContext) {
+  if (!isOnboardingContextComplete(onboardingContext)) {
     redirect("/onboarding");
   }
+
+  const dashboard = await getAtlasDashboard(userId);
 
   return (
     <AppShell>

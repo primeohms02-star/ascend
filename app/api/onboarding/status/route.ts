@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 
 import { loadOnboardingContext } from "@/lib/atlas/onboardingContext";
+import { isOnboardingContextComplete } from "@/lib/atlas/onboardingCompletion";
 
 export const dynamic = "force-dynamic";
 
@@ -19,7 +20,7 @@ export async function GET() {
     const onboardingContext = await loadOnboardingContext(userId);
 
     return NextResponse.json(
-      { completed: Boolean(onboardingContext) },
+      { completed: isOnboardingContextComplete(onboardingContext) },
       {
         headers: {
           "Cache-Control": "private, no-store, max-age=0",
