@@ -8,6 +8,7 @@ import type { OpportunityProfile } from "../lib/atlas/opportunities/profile";
 import type { Opportunity } from "../lib/atlas/opportunities/types";
 import { isRepeatedMissionTitle } from "../lib/engine/missionSimilarity";
 import { normalizeAtlasListArtifacts } from "../lib/atlas/replyFormatting";
+import { resolveOpportunityMatchScore } from "../lib/atlas/opportunities/match-score";
 
 const beginnerProfile: OpportunityProfile = {
   clerkId: "test-user",
@@ -87,4 +88,22 @@ test("Atlas reply artifacts become clean numbered and bullet lists", () => {
     "1. Draft (about 150 words):\n• Save it.\nWhy these items matter:\n• **Alignment** with the North Star.\n• **Confidence** through evidence.\nI finished. A real win.\n“Done.”",
   );
   assert.equal(result.includes(":."), false);
+});
+
+test("opportunity decision preserves the personalized snapshot match score", () => {
+  assert.equal(
+    resolveOpportunityMatchScore(
+      { score: 68, snapshotId: "629472" },
+      54,
+    ),
+    68,
+  );
+
+  assert.equal(
+    resolveOpportunityMatchScore(
+      { score: undefined, snapshotId: undefined },
+      54,
+    ),
+    54,
+  );
 });
