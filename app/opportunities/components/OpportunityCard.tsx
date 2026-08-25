@@ -25,7 +25,11 @@ type Props = {
     opportunityId: string,
     status?: OpportunityStatus
   ) => void;
+  prefetchDecision?: boolean;
 };
+
+const OPPORTUNITY_RETURN_NAVIGATION_KEY =
+  "ascend:opportunities:return-navigation";
 
 function clampScore(score: number): number {
   return Math.max(
@@ -100,6 +104,7 @@ export default function OpportunityCard({
   onOpenOpportunity,
   status,
   onStatusChange,
+  prefetchDecision = false,
 }: Props) {
   const matchScore = clampScore(
     insight.matchScore
@@ -128,6 +133,19 @@ export default function OpportunityCard({
 
   const missingSkills =
     insight.missingSkills ?? [];
+
+  function rememberDecisionNavigation() {
+    window.sessionStorage.setItem(
+      OPPORTUNITY_RETURN_NAVIGATION_KEY,
+      JSON.stringify({
+        returnTo,
+        destination: new URL(decisionHref, window.location.origin).pathname,
+        createdAt: Date.now(),
+      }),
+    );
+
+    onOpenOpportunity?.();
+  }
 
   return (
     <article className="group relative overflow-hidden rounded-3xl border border-slate-700/80 bg-slate-900/60 p-5 shadow-xl shadow-slate-950/10 transition duration-300 hover:-translate-y-1 hover:border-cyan-400/30 hover:shadow-cyan-950/20 sm:p-7">
@@ -312,7 +330,8 @@ export default function OpportunityCard({
           <div className="flex flex-wrap items-stretch gap-3">
             <Link
               href={decisionHref}
-              onClick={onOpenOpportunity}
+              prefetch={prefetchDecision}
+              onClick={rememberDecisionNavigation}
               className="inline-flex min-h-10 flex-1 items-center justify-center gap-2 rounded-xl border border-cyan-400/30 bg-cyan-400/10 px-4 py-2 text-center text-sm font-semibold text-cyan-200 transition hover:bg-cyan-400/15 hover:text-cyan-100"
             >
               <CompassIcon />

@@ -15,6 +15,7 @@
     "lib/atlas/opportunities/filter.ts",
     "lib/atlas/opportunities/profile.ts",
     "lib/atlas/opportunities/types.ts",
+    "lib/atlas/missionContent.ts",
     "lib/atlas/replyFormatting.ts",
     "lib/engine/missionSimilarity.ts"
   ]

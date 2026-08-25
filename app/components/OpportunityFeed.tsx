@@ -5,6 +5,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { useAuth } from "@clerk/nextjs";
 
 import OpportunityCard from "@/app/opportunities/components/OpportunityCard";
 
@@ -24,6 +25,12 @@ import type {
   OpportunityLocationSelection,
   ResolvedOpportunityLocation,
 } from "@/lib/atlas/opportunities/location";
+import {
+  DEFAULT_OPPORTUNITY_PAGE_URL,
+  readOpportunityPageCache,
+  warmDefaultOpportunityPage,
+  writeOpportunityPageCache,
+} from "@/lib/atlas/opportunities/client-page-cache";
 
 type Props = {
   search: string;
@@ -223,6 +230,7 @@ export default function OpportunityFeed({
   onProfileLocation,
   initialPage,
 }: Props) {
+  const { userId, isLoaded: authLoaded } = useAuth();
   const feedTopRef =
     useRef<HTMLDivElement>(null);
 
@@ -396,33 +404,84 @@ export default function OpportunityFeed({
       new AbortController();
 
     async function loadOpportunities() {
+      if (!authLoaded || !userId) {
+        return;
+      }
+
+      const params =
+        new URLSearchParams({
+          page: String(page),
+          limit: String(PAGE_SIZE),
+          filter,
+        });
+
+      if (debouncedSearch) {
+        params.set("search", debouncedSearch);
+      }
+
+      addLocationParameters(params, location);
+
+      const requestUrl = `/api/opportunities?${params.toString()}`;
+      let cached = readOpportunityPageCache<OpportunityPageResponse>(
+        userId,
+        requestUrl,
+      );
+      let renderedCachedResult = false;
+      let warmedOnDemand = false;
+
+      function applyResult(result: OpportunityPageResponse) {
+        setOpportunities(result.opportunities);
+        setProfile(result.profile);
+        setResolvedLocation(result.location);
+        onProfileLocation?.(result.profile.location ?? "");
+        setOpportunityStatuses(result.opportunityStatuses ?? {});
+        setTotal(result.total);
+        setPage(result.page);
+        setTotalPages(result.totalPages);
+        setHasNextPage(result.hasNextPage);
+        setHasPreviousPage(result.hasPreviousPage);
+      }
+
       try {
-        setLoading(true);
-        setError("");
+        if (!cached && requestUrl === DEFAULT_OPPORTUNITY_PAGE_URL) {
+          await warmDefaultOpportunityPage(userId);
+          warmedOnDemand = true;
 
-        const params =
-          new URLSearchParams({
-            page:
-              String(page),
+          if (controller.signal.aborted) {
+            return;
+          }
 
-            limit:
-              String(PAGE_SIZE),
-
-            filter,
-          });
-
-        if (debouncedSearch) {
-          params.set(
-            "search",
-            debouncedSearch
+          cached = readOpportunityPageCache<OpportunityPageResponse>(
+            userId,
+            requestUrl,
           );
         }
 
-        addLocationParameters(params, location);
+        if (
+          cached &&
+          Array.isArray(cached.opportunities) &&
+          cached.profile &&
+          typeof cached.profile.careerGoal === "string"
+        ) {
+          applyResult(cached);
+          renderedCachedResult = true;
+          setLoading(false);
+
+          if (
+            requestUrl === DEFAULT_OPPORTUNITY_PAGE_URL &&
+            warmedOnDemand
+          ) {
+            return;
+          }
+        } else {
+          setLoading(true);
+        }
+
+        setError("");
 
         const response =
           await fetch(
-            `/api/opportunities?${params.toString()}`,
+            requestUrl,
             {
               signal:
                 controller.signal,
@@ -464,41 +523,8 @@ export default function OpportunityFeed({
           data as
             OpportunityPageResponse;
 
-        setOpportunities(
-          result.opportunities
-        );
-
-        setProfile(
-          result.profile
-        );
-
-        setResolvedLocation(result.location);
-
-        onProfileLocation?.(result.profile.location ?? "");
-
-        setOpportunityStatuses(
-          result.opportunityStatuses ?? {}
-        );
-
-        setTotal(
-          result.total
-        );
-
-        setPage(
-          result.page
-        );
-
-        setTotalPages(
-          result.totalPages
-        );
-
-        setHasNextPage(
-          result.hasNextPage
-        );
-
-        setHasPreviousPage(
-          result.hasPreviousPage
-        );
+        applyResult(result);
+        writeOpportunityPageCache(userId, requestUrl, result);
       } catch (error) {
         if (
           error instanceof
@@ -509,17 +535,21 @@ export default function OpportunityFeed({
           return;
         }
 
-        setError(
-          error instanceof Error
-            ? error.message
-            : "Atlas could not load opportunities."
-        );
+        if (!renderedCachedResult) {
+          setError(
+            error instanceof Error
+              ? error.message
+              : "Atlas could not load opportunities."
+          );
+        }
       } finally {
         if (
           !controller.signal
             .aborted
         ) {
-          setLoading(false);
+          if (!renderedCachedResult) {
+            setLoading(false);
+          }
         }
       }
     }
@@ -537,6 +567,8 @@ export default function OpportunityFeed({
     currentLocationKey,
     reloadKey,
     onProfileLocation,
+    authLoaded,
+    userId,
   ]);
 
   /*
@@ -813,7 +845,7 @@ export default function OpportunityFeed({
 
       <div className="space-y-6">
         {opportunities.map(
-          (opportunity) => {
+          (opportunity, index) => {
             const insight =
               explainOpportunity(
                 opportunity,
@@ -831,6 +863,7 @@ export default function OpportunityFeed({
                 onOpenOpportunity={
                   rememberOpportunityPosition
                 }
+                prefetchDecision={index < 2}
                 status={opportunityStatuses[opportunity.id]}
                 onStatusChange={(opportunityId, status) => {
                   setOpportunityStatuses((current) => {

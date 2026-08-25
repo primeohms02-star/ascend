@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import type { AtlasInsight } from "@/lib/atlas/opportunities/insight";
 
 type Props = {
@@ -335,14 +337,15 @@ export default function AtlasDecisionEngine({
 
             <div className="mt-7">
               <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-                <a
+                <Link
                   href={actionPlanHref}
+                  prefetch
                   className="group inline-flex w-full items-center justify-center gap-2 rounded-xl bg-cyan-400 px-5 py-3.5 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300 focus:outline-none focus:ring-2 focus:ring-cyan-300 focus:ring-offset-2 focus:ring-offset-slate-950 sm:w-auto"
                 >
                   Build My Action Plan
 
                   <ActionArrowIcon />
-                </a>
+                </Link>
 
                 <a
                   href="#opportunity-overview"

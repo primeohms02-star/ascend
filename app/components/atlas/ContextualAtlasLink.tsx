@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 export const ATLAS_CONTEXT_SESSION_KEY = "ascend:atlas-surface-context";
 export const ATLAS_RETURN_SESSION_KEY = "ascend:atlas-return-to";
+export const ATLAS_NAVIGATION_SESSION_KEY = "ascend:atlas-return-navigation";
 
 type Props = {
   prompt: string;
@@ -30,6 +31,10 @@ export default function ContextualAtlasLink({
         context.slice(0, 2200)
       );
       window.sessionStorage.setItem(ATLAS_RETURN_SESSION_KEY, returnTo);
+      window.sessionStorage.setItem(
+        ATLAS_NAVIGATION_SESSION_KEY,
+        JSON.stringify({ returnTo, createdAt: Date.now() }),
+      );
     } catch {
       // Atlas still opens if session storage is unavailable.
     }

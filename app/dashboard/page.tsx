@@ -54,13 +54,14 @@ export default async function DashboardPage() {
     redirect("/sign-in");
   }
 
-  const onboardingContext = await loadOnboardingContext(userId);
+  const [onboardingContext, dashboard] = await Promise.all([
+    loadOnboardingContext(userId),
+    getAtlasDashboard(userId),
+  ]);
 
   if (!onboardingContext) {
     redirect("/onboarding");
   }
-
-  const dashboard = await getAtlasDashboard(userId);
 
   return (
     <AppShell>

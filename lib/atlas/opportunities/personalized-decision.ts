@@ -9,7 +9,10 @@ import { buildOpportunityProfile } from "./build-profile";
 import { enrichOpportunityFromOriginalSource } from "./detail-enrichment";
 import { generateAtlasInsight, type AtlasInsight } from "./insight";
 import { rankOpportunities } from "./intelligence";
-import { resolveOpportunityMatchScore } from "./match-score";
+import {
+  hasPersonalizedSnapshotScore,
+  resolveOpportunityMatchScore,
+} from "./match-score";
 import {
   getOpportunityStatus,
   type OpportunityStatus,
@@ -86,8 +89,10 @@ export async function buildPersonalizedOpportunityDecision(
     getOpportunityStatus(userId, baseOpportunity.id),
   ]);
 
-  const ranked = await rankOpportunities([opportunity], profile);
-  const rankedOpportunity = ranked[0] ?? ({ ...opportunity, score: opportunity.score ?? 50 } as RankedOpportunity);
+  const rankedOpportunity = hasPersonalizedSnapshotScore(baseOpportunity)
+    ? ({ ...opportunity, score: baseOpportunity.score } as RankedOpportunity)
+    : (await rankOpportunities([opportunity], profile))[0] ??
+      ({ ...opportunity, score: opportunity.score ?? 50 } as RankedOpportunity);
 
   const structuralInsight = generateAtlasInsight(opportunity);
   const matchScore = resolveOpportunityMatchScore(

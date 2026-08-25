@@ -4,18 +4,23 @@ function clampScore(value: number): number {
   return Math.max(0, Math.min(100, Math.round(value)));
 }
 
+export function hasPersonalizedSnapshotScore(
+  opportunity: Pick<Opportunity, "score" | "snapshotId">,
+): opportunity is Pick<Opportunity, "score" | "snapshotId"> & {
+  score: number;
+  snapshotId: string;
+} {
+  return Boolean(opportunity.snapshotId) &&
+    typeof opportunity.score === "number" &&
+    Number.isFinite(opportunity.score);
+}
+
 export function resolveOpportunityMatchScore(
   opportunity: Pick<Opportunity, "score" | "snapshotId">,
   recalculatedScore: number | undefined,
 ): number {
-  const snapshotScore = opportunity.score;
-
-  if (
-    opportunity.snapshotId &&
-    typeof snapshotScore === "number" &&
-    Number.isFinite(snapshotScore)
-  ) {
-    return clampScore(snapshotScore);
+  if (hasPersonalizedSnapshotScore(opportunity)) {
+    return clampScore(opportunity.score);
   }
 
   return clampScore(

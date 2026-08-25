@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useClerk } from "@clerk/nextjs";
+import { useAuth, useClerk } from "@clerk/nextjs";
 
 import {
   ChartNoAxesCombined,
@@ -21,12 +21,14 @@ import {
   Target,
   X,
 } from "lucide-react";
+import { warmDefaultOpportunityPage } from "@/lib/atlas/opportunities/client-page-cache";
 
 type NavigationItem = {
   label: string;
   href: string;
   icon: typeof Home;
   isActive: (pathname: string) => boolean;
+  prefetchFullRoute?: boolean;
 };
 
 const primaryItems: NavigationItem[] = [
@@ -34,6 +36,7 @@ const primaryItems: NavigationItem[] = [
     label: "Home",
     href: "/dashboard",
     icon: Home,
+    prefetchFullRoute: true,
     isActive: (pathname) => pathname === "/dashboard",
   },
   {
@@ -49,18 +52,21 @@ const journeyItems: NavigationItem[] = [
     label: "Direction",
     href: "/direction",
     icon: Compass,
+    prefetchFullRoute: true,
     isActive: (pathname) => pathname === "/direction" || pathname.startsWith("/compass"),
   },
   {
     label: "Action",
     href: "/action",
     icon: Target,
+    prefetchFullRoute: true,
     isActive: (pathname) => pathname === "/action",
   },
   {
     label: "Progress",
     href: "/progress",
     icon: ChartNoAxesCombined,
+    prefetchFullRoute: true,
     isActive: (pathname) => pathname === "/progress",
   },
 ];
@@ -77,6 +83,7 @@ const discoverItems: NavigationItem[] = [
     label: "Library",
     href: "/library",
     icon: Library,
+    prefetchFullRoute: true,
     isActive: (pathname) => pathname === "/library" || pathname.startsWith("/opportunities/library"),
   },
   {
@@ -123,6 +130,7 @@ function NavigationLink({
   return (
     <Link
       href={item.href}
+      prefetch={item.prefetchFullRoute ? true : undefined}
       onClick={onNavigate}
       aria-current={active ? "page" : undefined}
       className={`group flex min-h-11 items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-colors duration-150 ${
@@ -139,10 +147,27 @@ function NavigationLink({
 
 export default function AppNavigation() {
   const pathname = usePathname();
+  const { userId } = useAuth();
   const { signOut } = useClerk();
   const [moreOpen, setMoreOpen] = useState(false);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const moreButtonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!userId || pathname.startsWith("/opportunities")) {
+      return;
+    }
+
+    const timeout = window.setTimeout(() => {
+      void warmDefaultOpportunityPage(userId).catch(() => {
+        // Explore performs its normal live request if background warming fails.
+      });
+    }, 1200);
+
+    return () => {
+      window.clearTimeout(timeout);
+    };
+  }, [pathname, userId]);
 
   useEffect(() => {
     if (!moreOpen) {

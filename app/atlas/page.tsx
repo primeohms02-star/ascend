@@ -2,11 +2,13 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@clerk/nextjs";
 import { Image as ImageIcon, Paperclip, X } from "lucide-react";
 
 import AppShell from "@/app/components/navigation/AppShell";
 import {
   ATLAS_CONTEXT_SESSION_KEY,
+  ATLAS_NAVIGATION_SESSION_KEY,
   ATLAS_RETURN_SESSION_KEY,
 } from "@/app/components/atlas/ContextualAtlasLink";
 import { getGreeting } from "@/lib/utils/greeting";
@@ -45,6 +47,8 @@ const suggestions = [
 const allowedImageTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
 const maxSourceImageBytes = 12 * 1024 * 1024;
 const maxEncodedImageLength = 3_700_000;
+const ATLAS_BRIEFING_CACHE_TTL_MS = 5 * 60 * 1000;
+const ATLAS_RETURN_MAX_AGE_MS = 30 * 60 * 1000;
 
 function isSafeAtlasReturnPath(value: string) {
   return (
@@ -223,11 +227,13 @@ function AtlasComposer({
 
 export default function AtlasPage() {
   const router = useRouter();
+  const { userId } = useAuth();
 
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [surfaceContext, setSurfaceContext] = useState("");
   const [returnTo, setReturnTo] = useState("");
+  const [canReturnThroughHistory, setCanReturnThroughHistory] = useState(false);
   const [attachment, setAttachment] = useState<AtlasAttachment | null>(null);
   const [attachmentError, setAttachmentError] = useState("");
 
@@ -251,15 +257,20 @@ export default function AtlasPage() {
     const contextualSurface = params.get("context")?.trim();
     let storedSurface = "";
     let storedReturnTo = "";
+    let storedNavigation = "";
 
     try {
       storedSurface = window.sessionStorage.getItem(ATLAS_CONTEXT_SESSION_KEY)?.trim() ?? "";
       storedReturnTo = window.sessionStorage.getItem(ATLAS_RETURN_SESSION_KEY)?.trim() ?? "";
+      storedNavigation =
+        window.sessionStorage.getItem(ATLAS_NAVIGATION_SESSION_KEY)?.trim() ?? "";
       window.sessionStorage.removeItem(ATLAS_CONTEXT_SESSION_KEY);
       window.sessionStorage.removeItem(ATLAS_RETURN_SESSION_KEY);
+      window.sessionStorage.removeItem(ATLAS_NAVIGATION_SESSION_KEY);
     } catch {
       storedSurface = "";
       storedReturnTo = "";
+      storedNavigation = "";
     }
 
     if (contextualPrompt) {
@@ -272,11 +283,31 @@ export default function AtlasPage() {
 
     if (isSafeAtlasReturnPath(storedReturnTo)) {
       setReturnTo(storedReturnTo);
+
+      try {
+        const navigation = JSON.parse(storedNavigation) as {
+          returnTo?: string;
+          createdAt?: number;
+        };
+
+        setCanReturnThroughHistory(
+          navigation.returnTo === storedReturnTo &&
+            typeof navigation.createdAt === "number" &&
+            Date.now() - navigation.createdAt <= ATLAS_RETURN_MAX_AGE_MS,
+        );
+      } catch {
+        setCanReturnThroughHistory(false);
+      }
     }
   }, []);
 
   function handleBack() {
     if (returnTo) {
+      if (canReturnThroughHistory) {
+        router.back();
+        return;
+      }
+
       router.replace(returnTo);
       return;
     }
@@ -302,7 +333,33 @@ export default function AtlasPage() {
   }, [currentConversation]);
 
   useEffect(() => {
+    if (!userId) {
+      return;
+    }
+
     const controller = new AbortController();
+    const cacheKey = `ascend:atlas-briefing:v1:${userId}`;
+
+    try {
+      const stored = window.sessionStorage.getItem(cacheKey);
+
+      if (stored) {
+        const cached = JSON.parse(stored) as {
+          storedAt?: number;
+          briefing?: BriefingState;
+        };
+
+        if (
+          typeof cached.storedAt === "number" &&
+          Date.now() - cached.storedAt <= ATLAS_BRIEFING_CACHE_TTL_MS &&
+          cached.briefing
+        ) {
+          setBriefing(cached.briefing);
+        }
+      }
+    } catch {
+      // Atlas continues with the live briefing request.
+    }
 
     async function loadBriefing() {
       try {
@@ -313,7 +370,7 @@ export default function AtlasPage() {
           throw new Error(data.error ?? "Atlas could not load your briefing.");
         }
 
-        setBriefing({
+        const nextBriefing = {
           summary: data.summary ?? "Atlas has prepared today's briefing.",
           focus:
             typeof data.mission === "string"
@@ -324,7 +381,18 @@ export default function AtlasPage() {
             (data.isNew
               ? "A new mission has been prepared for today."
               : "Continue executing your current mission."),
-        });
+        };
+
+        setBriefing(nextBriefing);
+
+        try {
+          window.sessionStorage.setItem(
+            cacheKey,
+            JSON.stringify({ storedAt: Date.now(), briefing: nextBriefing }),
+          );
+        } catch {
+          // The live briefing remains available when storage is unavailable.
+        }
       } catch (error) {
         if (error instanceof DOMException && error.name === "AbortError") {
           return;
@@ -342,7 +410,7 @@ export default function AtlasPage() {
 
     loadBriefing();
     return () => controller.abort();
-  }, []);
+  }, [userId]);
 
   async function handleImageFile(file: File | null) {
     setAttachmentError("");

@@ -2,6 +2,11 @@
 
 import { useRouter } from "next/navigation";
 
+const OPPORTUNITY_RETURN_NAVIGATION_KEY =
+  "ascend:opportunities:return-navigation";
+
+const RETURN_NAVIGATION_MAX_AGE_MS = 30 * 60 * 1000;
+
 function BackArrowIcon() {
   return (
     <svg
@@ -39,12 +44,38 @@ export default function OpportunityBackButton({
         ? returnTo
         : "/opportunities?page=1";
 
-    router.replace(
-      safeReturnTo,
-      {
-        scroll: false,
-      }
+    const storedNavigation = window.sessionStorage.getItem(
+      OPPORTUNITY_RETURN_NAVIGATION_KEY,
     );
+
+    if (storedNavigation) {
+      try {
+        const navigation = JSON.parse(storedNavigation) as {
+          returnTo?: string;
+          destination?: string;
+          createdAt?: number;
+        };
+
+        const isExpectedReturn = navigation.returnTo === safeReturnTo;
+        const isExpectedDestination =
+          navigation.destination === window.location.pathname;
+        const isRecent =
+          typeof navigation.createdAt === "number" &&
+          Date.now() - navigation.createdAt <= RETURN_NAVIGATION_MAX_AGE_MS;
+
+        if (isExpectedReturn && isExpectedDestination && isRecent) {
+          window.sessionStorage.removeItem(OPPORTUNITY_RETURN_NAVIGATION_KEY);
+          router.back();
+          return;
+        }
+      } catch {
+        // Fall through to the safe ASCEND route when stored state is invalid.
+      }
+
+      window.sessionStorage.removeItem(OPPORTUNITY_RETURN_NAVIGATION_KEY);
+    }
+
+    router.replace(safeReturnTo, { scroll: false });
   }
 
   return (
