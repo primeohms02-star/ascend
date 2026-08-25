@@ -1,3 +1,5 @@
+import { unstable_cache } from "next/cache";
+
 import { generateAtlasActionPlan } from "./action-plan";
 import {
   assessApplicationReadiness,
@@ -19,6 +21,32 @@ function clamp(value: number): number {
 
 function unique(items: string[]): string[] {
   return [...new Set(items.filter(Boolean))];
+}
+
+async function enrichPublicOpportunity(
+  baseOpportunity: Opportunity
+): Promise<Opportunity> {
+  const { score, snapshotId, ...publicOpportunity } = baseOpportunity;
+
+  const loadEnrichedOpportunity = unstable_cache(
+    () => enrichOpportunityFromOriginalSource(publicOpportunity),
+    [
+      "atlas-opportunity-detail",
+      "v1",
+      baseOpportunity.source,
+      baseOpportunity.id,
+      baseOpportunity.url ?? "",
+    ],
+    { revalidate: 3600 },
+  );
+
+  const enriched = await loadEnrichedOpportunity();
+
+  return {
+    ...enriched,
+    ...(score === undefined ? {} : { score }),
+    ...(snapshotId === undefined ? {} : { snapshotId }),
+  };
 }
 
 export type PersonalizedDecisionSignals = {
@@ -44,15 +72,19 @@ export async function buildPersonalizedOpportunityDecision(
   userId: string,
   baseOpportunity: Opportunity
 ): Promise<PersonalizedOpportunityDecision> {
-  let opportunity = baseOpportunity;
+  const enrichmentPromise = enrichPublicOpportunity(baseOpportunity).catch(
+    (error) => {
+      console.error("Opportunity detail enrichment skipped:", error);
+      return baseOpportunity;
+    },
+  );
 
-  try {
-    opportunity = await enrichOpportunityFromOriginalSource(baseOpportunity);
-  } catch (error) {
-    console.error("Opportunity detail enrichment skipped:", error);
-  }
+  const [opportunity, profile, status] = await Promise.all([
+    enrichmentPromise,
+    buildOpportunityProfile({ clerkId: userId }),
+    getOpportunityStatus(userId, baseOpportunity.id),
+  ]);
 
-  const profile = await buildOpportunityProfile({ clerkId: userId });
   const ranked = await rankOpportunities([opportunity], profile);
   const rankedOpportunity = ranked[0] ?? ({ ...opportunity, score: opportunity.score ?? 50 } as RankedOpportunity);
 
@@ -131,8 +163,6 @@ export async function buildPersonalizedOpportunityDecision(
     matchScore,
     qualityScore,
   );
-
-  const status = await getOpportunityStatus(userId, opportunity.id);
 
   return {
     opportunity: { ...opportunity, ...rankedOpportunity, score: matchScore },

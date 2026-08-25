@@ -89,17 +89,19 @@ export async function rankOpportunities(
   opportunities: Opportunity[],
   profile: OpportunityProfile
 ): Promise<RankedOpportunity[]> {
-  const { data: preferences } =
-    await supabaseServer
+  const [preferencesResult, learningResult] = await Promise.all([
+    supabaseServer
       .from("atlas_preferences")
       .select("*")
-      .eq("clerk_id", profile.clerkId);
-
-  const { data: learning } =
-    await supabaseServer
+      .eq("clerk_id", profile.clerkId),
+    supabaseServer
       .from("atlas_opportunity_impressions")
       .select("*")
-      .eq("clerk_id", profile.clerkId);
+      .eq("clerk_id", profile.clerkId),
+  ]);
+
+  const preferences = preferencesResult.data;
+  const learning = learningResult.data;
 
   return opportunities
     .map((opportunity) => {

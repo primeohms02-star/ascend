@@ -164,11 +164,11 @@ export default function OpportunityCard({
             </p>
           </div>
 
-          {/* Match estimate */}
+          {/* Match score */}
 
           <div
             role="img"
-            aria-label={`Atlas match estimate: ${matchScore} out of 100`}
+            aria-label={`Atlas match score: ${matchScore} out of 100`}
             className="relative flex h-20 w-20 shrink-0 items-center justify-center rounded-full"
             style={{
               background: `conic-gradient(#22d3ee ${scoreDegrees}deg, rgba(51, 65, 85, 0.65) ${scoreDegrees}deg)`,
@@ -182,7 +182,7 @@ export default function OpportunityCard({
               </p>
 
               <p className="text-[8px] font-semibold uppercase tracking-wider text-slate-500">
-                Estimate
+                Match
               </p>
             </div>
           </div>
@@ -230,7 +230,7 @@ export default function OpportunityCard({
               <CompassIcon />
 
               <p className="text-xs font-semibold uppercase tracking-[0.18em]">
-                Atlas Match Estimate
+                Atlas Match Score
               </p>
             </div>
 
@@ -268,12 +268,13 @@ export default function OpportunityCard({
           )}
 
           <div className="mt-5 border-t border-white/10 pt-4">
-            <p className="text-xs text-slate-500">
-              Estimated readiness gain
+            <p className="text-xs font-semibold text-slate-300">
+              What this score means
             </p>
 
-            <p className="mt-1 font-semibold text-cyan-300">
-              +{insight.readinessGain}%
+            <p className="mt-1 text-xs leading-5 text-slate-500">
+              Match measures alignment with your direction and preferences.
+              Application readiness is assessed separately in your action plan.
             </p>
           </div>
         </section>

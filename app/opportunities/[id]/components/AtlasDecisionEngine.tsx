@@ -258,7 +258,7 @@ export default function AtlasDecisionEngine({
             <div className="flex flex-col items-center text-center sm:flex-row sm:text-left xl:flex-col xl:text-center">
               <div
                 role="img"
-                aria-label={`Atlas opportunity score: ${insight.score} out of 100`}
+                aria-label={`Atlas match score: ${insight.score} out of 100`}
                 className={`relative flex h-44 w-44 shrink-0 items-center justify-center rounded-full shadow-2xl ${theme.glow}`}
                 style={{
                   background: `conic-gradient(${theme.accent} ${scoreDegrees}deg, rgba(51, 65, 85, 0.55) ${scoreDegrees}deg)`,
@@ -278,7 +278,7 @@ export default function AtlasDecisionEngine({
                   </div>
 
                   <p className="mt-1 text-xs font-medium uppercase tracking-[0.2em] text-slate-500">
-                    Atlas score
+                    Match score
                   </p>
                 </div>
               </div>
@@ -287,7 +287,7 @@ export default function AtlasDecisionEngine({
                 <p
                   className={`text-sm font-semibold uppercase tracking-[0.16em] ${theme.text}`}
                 >
-                  Atlas assessment
+                  Personal alignment
                 </p>
 
                 <h2
@@ -355,9 +355,9 @@ export default function AtlasDecisionEngine({
               </div>
 
               <p className="mt-5 border-t border-white/10 pt-5 text-xs leading-5 text-slate-500">
-                This assessment evaluates the information available in
-                the opportunity. Personal alignment will become more
-                precise after your Compass profile is connected.
+                Match score measures alignment with your direction and
+                preferences. It is different from application readiness,
+                which checks whether your current evidence meets the role.
               </p>
             </div>
           </div>
