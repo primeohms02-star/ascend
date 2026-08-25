@@ -121,12 +121,13 @@ export function isUsableMissionTitle(value: string | null | undefined): boolean 
 
   return (
     clean.length >= 4 &&
-    clean.length <= 88 &&
+    clean.length <= 56 &&
     /[\p{L}]/u.test(clean) &&
     !DECORATIVE_ONLY.test(value.trim()) &&
     !/^(?:mission|title|none|null|n\/?a)$/i.test(clean) &&
+    !/^(?:outcome|steps?|evidence|why it matters)\s*:/i.test(clean) &&
     words.length >= 2 &&
-    words.length <= 12
+    words.length <= 7
   );
 }
 
@@ -145,21 +146,37 @@ function deriveMissionTitle(value: string): string {
   let candidate = outcomeMatch?.[1] ?? firstSentence;
 
   candidate = candidate
+    .replace(/^(?:outcome|deliverable|result)\s*:\s*/i, "")
     .replace(
       /^(?:spend|use|take)\s+(?:the\s+)?(?:next\s+)?(?:\d+(?:\s*(?:to|-|–|—)\s*\d+)?\s*)?(?:minutes?|hours?|days?)?\s*(?:completing|working on|to complete)?\s*/i,
       "",
     )
     .replace(/^(?:complete|create|prepare|work on)\s+(?:the\s+)?(?:following\s+)?/i, "")
+    .split(/\s+(?:tailored|targeted|designed|ready)\s+(?:to|for)\s+/i)[0]
+    .split(/\s+(?:for|with)\s+(?:(?:a|an|the|your|specific)\s+)?/i)[0]
+    .split(/\s+(?:so that|which|that)\s+/i)[0]
     .split(/,\s*(?:then|and then|and)\s+/i)[0]
     .replace(/^[\s:;,.\-–—]+|[\s:;,.\-–—]+$/g, "")
     .trim();
+
+  if (/^(?:a|an)\s+/i.test(candidate)) {
+    candidate = `Create ${candidate.toLocaleLowerCase()}`;
+  }
 
   if (!candidate || candidate.split(/\s+/).length < 2) {
     candidate = "Create Evidence of Progress";
   }
 
-  const words = candidate.split(/\s+/).filter(Boolean).slice(0, 10);
-  return trimAtWord(titleCase(words.join(" ")), 78);
+  const words = candidate.split(/\s+/).filter(Boolean).slice(0, 7);
+
+  while (
+    words.length > 2 &&
+    /^(?:a|an|and|at|for|from|in|of|on|the|to|with)$/i.test(words.at(-1) ?? "")
+  ) {
+    words.pop();
+  }
+
+  return trimAtWord(titleCase(words.join(" ")), 56);
 }
 
 export function normalizeMissionTitle(
@@ -189,7 +206,8 @@ export function normalizeMissionContent(
     normalizeMissionDetail(
       [
         !isUsableMissionTitle(title) &&
-        rawTitleDetail
+        rawTitleDetail &&
+        !normalizeMissionDetail(detail)
           ? rawTitleDetail
           : "",
         detail ?? "",

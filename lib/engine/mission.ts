@@ -884,7 +884,9 @@ RULES
 - Do not generate generic lifestyle, motivation or productivity advice.
 - Do not tell the user merely to think, stay positive or keep going.
 - Use a curated idea only when it genuinely fits the live context.
-- The title must be a plain-language name of 3 to 8 words, not an instruction or paragraph.
+- The title must be a concise, action-led plain-language name of 3 to 6 words.
+- Keep the outcome details, target audience, delivery method and explanation in the description, never in the title.
+- Never begin the title with labels such as Outcome, Mission, Task or Deliverable.
 - Never put Markdown, asterisks, hashes, quotes, bullets or decorative symbols in the title.
 - Keep the description between 60 and 140 words.
 - Organize the description with these plain-text labels when useful: Outcome:, Steps:, Evidence:, Why it matters:.
