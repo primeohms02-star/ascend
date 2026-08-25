@@ -168,6 +168,8 @@ export async function getAtlasDashboard(clerkId: string) {
     northStar,
     missionTitle: currentMission?.mission ?? "No active mission",
     missionReason: currentMission?.reason ?? "",
+    missionCreatedAt: currentMission?.created_at ?? null,
+    currentStreak: Number(streakRecord?.current_streak ?? 0),
     progress: ascension.score,
   });
 

@@ -4,7 +4,14 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { ArrowRight, Compass } from "lucide-react";
 
-export default function StepComplete() {
+import type { OnboardingAnswers, OnboardingOutcome } from "./types";
+
+type Props = {
+  answers: OnboardingAnswers;
+  outcome: OnboardingOutcome | null;
+};
+
+export default function StepComplete({ answers, outcome }: Props) {
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
@@ -27,10 +34,33 @@ export default function StepComplete() {
       </h1>
 
       <p className="mx-auto mt-8 max-w-2xl text-lg leading-8 text-slate-400">
-        Your journey begins today.
-        Every decision, every habit and every opportunity will now
-        move you closer to your North Star.
+        Atlas has converted your answers into a direction and first meaningful action.
       </p>
+
+      <div className="mx-auto mt-9 grid max-w-3xl gap-4 text-left md:grid-cols-2">
+        <article className="rounded-2xl border border-blue-400/20 bg-blue-400/[0.06] p-5">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-blue-300">
+            Your North Star
+          </p>
+          <p className="mt-3 text-base leading-7 text-slate-200">
+            {answers.northStar}
+          </p>
+        </article>
+
+        <article className="rounded-2xl border border-cyan-400/20 bg-cyan-400/[0.06] p-5">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-300">
+            Your First Mission
+          </p>
+          <h2 className="mt-3 text-lg font-semibold text-white">
+            {outcome?.mission.mission ?? "Your first mission is ready"}
+          </h2>
+          {outcome?.mission.reason ? (
+            <p className="mt-2 text-sm leading-6 text-slate-400">
+              {outcome.mission.reason}
+            </p>
+          ) : null}
+        </article>
+      </div>
 
       <Link
         href="/dashboard"

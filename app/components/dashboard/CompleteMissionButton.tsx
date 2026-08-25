@@ -19,6 +19,17 @@ type CompletionResult = {
   ascension?: {
     level?: number;
     score?: number;
+    progressPercent?: number;
+    title?: string;
+  };
+
+  completedMission?: {
+    mission?: string;
+  };
+
+  nextMission?: {
+    mission?: string;
+    reason?: string | null;
   };
 };
 
@@ -107,6 +118,12 @@ export default function CompleteMissionButton({
 
         ascension:
           data.ascension,
+
+        completedMission:
+          data.completedMission,
+
+        nextMission:
+          data.nextMission,
       });
 
       /*
@@ -151,17 +168,63 @@ export default function CompleteMissionButton({
       {result && (
         <div
           aria-live="polite"
-          className="mt-3 rounded-xl border border-emerald-400/20 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-300"
+          className="mt-4 rounded-2xl border border-emerald-400/20 bg-emerald-400/[0.08] p-4 text-left"
         >
-          +
-          {result.xpAwarded ??
-            0}{" "}
-          XP earned
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-300">
+            Mission completed
+          </p>
 
-          {result.ascension
-            ?.level
-            ? ` • Level ${result.ascension.level}`
-            : ""}
+          <p className="mt-2 font-semibold text-white">
+            {result.completedMission?.mission ?? "Your completed mission has been recorded."}
+          </p>
+
+          <div className="mt-3 grid gap-2 text-sm sm:grid-cols-3">
+            <p className="rounded-xl bg-black/15 px-3 py-2 text-emerald-200">
+              +{result.xpAwarded ?? 0} XP earned
+            </p>
+            <p className="rounded-xl bg-black/15 px-3 py-2 text-emerald-200">
+              Level {result.ascension?.level ?? 0}
+            </p>
+            <p className="rounded-xl bg-black/15 px-3 py-2 text-emerald-200">
+              {result.ascension?.progressPercent ?? 0}% through this level
+            </p>
+          </div>
+
+          <div className="mt-3 rounded-xl border border-white/10 bg-white/[0.035] p-3">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
+              What Atlas learned
+            </p>
+            <p className="mt-1.5 text-sm leading-6 text-slate-300">
+              This completion is now part of your progress history and helps Atlas make your next mission more precise.
+            </p>
+          </div>
+
+          {result.nextMission?.mission ? (
+            <div className="mt-3 rounded-xl border border-blue-400/15 bg-blue-400/[0.06] p-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-300">
+                Newly prepared mission
+              </p>
+              <p className="mt-1.5 font-semibold text-white">
+                {result.nextMission.mission}
+              </p>
+              {result.nextMission.reason ? (
+                <p className="mt-1.5 text-sm leading-6 text-slate-400">
+                  {result.nextMission.reason}
+                </p>
+              ) : null}
+            </div>
+          ) : null}
+
+          <button
+            type="button"
+            onClick={() => {
+              router.replace("/dashboard#mission");
+              router.refresh();
+            }}
+            className="mt-4 inline-flex w-full items-center justify-center rounded-xl bg-emerald-300 px-4 py-2.5 font-semibold text-slate-950 transition hover:bg-emerald-200 sm:w-auto"
+          >
+            Continue Ascending
+          </button>
         </div>
       )}
 

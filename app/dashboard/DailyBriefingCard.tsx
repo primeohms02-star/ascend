@@ -83,7 +83,7 @@ export default function DailyBriefingCard({
 
           <article className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
             <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-blue-400">
-              Cortex Insight
+              Atlas Noticed
             </p>
 
             <p className="mt-2 text-sm leading-6 text-slate-300">

@@ -10,6 +10,14 @@ export type OnboardingAnswers = {
   northStar: string;
 };
 
+export type OnboardingOutcome = {
+  mission: {
+    id: string;
+    mission: string;
+    reason?: string | null;
+  };
+};
+
 export const initialOnboardingAnswers:
   OnboardingAnswers = {
     identity: "",

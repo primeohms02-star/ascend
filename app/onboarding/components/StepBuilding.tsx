@@ -15,11 +15,12 @@ import { Compass } from "lucide-react";
 
 import type {
   OnboardingAnswers,
+  OnboardingOutcome,
 } from "./types";
 
 type Props = {
   answers: OnboardingAnswers;
-  onComplete: () => void;
+  onComplete: (outcome: OnboardingOutcome) => void;
 };
 
 const messages = [
@@ -95,7 +96,13 @@ export default function StepBuilding({
           );
         }
 
-        onComplete();
+        if (!data.mission?.id || !data.mission?.mission) {
+          throw new Error("Atlas completed onboarding without returning your first mission.");
+        }
+
+        onComplete({
+          mission: data.mission,
+        });
       } catch (error) {
         submitted.current =
           false;

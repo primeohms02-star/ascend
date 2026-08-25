@@ -26,8 +26,8 @@ export default function StepWelcome({ onNext }: Props) {
       </h1>
 
       <p className="mx-auto mt-8 max-w-2xl text-lg leading-8 text-slate-400">
-        Let&apos;s understand who you are, what you&apos;re aiming for,
-        and where you want to go.
+        Complete your Compass so ASCEND can understand your direction,
+        prepare your first mission and personalize Atlas around you.
       </p>
 
       <button

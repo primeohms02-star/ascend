@@ -19,6 +19,8 @@ type DailyBriefingInput = {
   northStar: string;
   missionTitle: string;
   missionReason: string;
+  missionCreatedAt?: string | null;
+  currentStreak?: number;
 
   /*
    * Canonical Ascension XP—not a percentage.
@@ -83,6 +85,28 @@ export function buildDailyBriefing(
         )}...`
       : cleanNorthStar;
 
+  const missionCreatedAt = brain.missionCreatedAt
+    ? new Date(brain.missionCreatedAt).getTime()
+    : Number.NaN;
+
+  const missionAgeDays = Number.isFinite(missionCreatedAt)
+    ? Math.max(0, Math.floor((Date.now() - missionCreatedAt) / 86_400_000))
+    : 0;
+
+  const currentStreak = Math.max(0, Math.floor(brain.currentStreak ?? 0));
+
+  let atlasNotice = `Your active mission, “${brain.missionTitle}”, is the clearest next step toward ${northStarPreview || "your North Star"}. Completing it will give Atlas a stronger signal for what should come next.`;
+
+  if (!hasMission) {
+    atlasNotice = `Atlas cannot prepare a meaningful next move until your ${brain.journey} journey has an active mission. Confirm your direction to restore the action loop.`;
+  } else if (missionAgeDays >= 2) {
+    atlasNotice = `“${brain.missionTitle}” has been active for ${missionAgeDays} days. If progress is blocked, ask Atlas to identify the obstacle and reduce it to one workable next step.`;
+  } else if (currentStreak >= 3) {
+    atlasNotice = `Your ${currentStreak}-day mission streak is creating consistent evidence of progress. Protect that momentum by completing “${brain.missionTitle}” before taking on another priority.`;
+  } else if (ascensionScore === 0) {
+    atlasNotice = `Completing “${brain.missionTitle}” will establish your first recorded evidence of progress toward ${northStarPreview || "your North Star"}.`;
+  }
+
   return {
     greeting:
       `${getGreeting()}. ${message}`,
@@ -102,9 +126,6 @@ export function buildDailyBriefing(
           )
         : "Start or update your journey so Atlas can prepare a mission from your identity, immediate goal, skills, challenges and North Star.",
 
-    oracle:
-      hasMission
-        ? `The priority is evidence that connects this mission to your direction: ${northStarPreview || "your North Star"}. Complete the defined outcome, then use what you learn to make the next action more precise.`
-        : `Your ${brain.journey} journey needs a current mission before Atlas can evaluate the next meaningful action. Confirm your direction to continue building momentum.`,
+    oracle: atlasNotice,
   };
 }

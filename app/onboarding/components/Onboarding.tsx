@@ -23,6 +23,7 @@ import StepComplete from "./StepComplete";
 import {
   initialOnboardingAnswers,
   type OnboardingAnswers,
+  type OnboardingOutcome,
 } from "./types";
 
 const TOTAL_STEPS = 8;
@@ -42,6 +43,9 @@ export default function Onboarding() {
     useState<OnboardingAnswers>(
       initialOnboardingAnswers
     );
+
+  const [outcome, setOutcome] =
+    useState<OnboardingOutcome | null>(null);
 
   const next =
     useCallback(() => {
@@ -86,7 +90,7 @@ export default function Onboarding() {
 
   return (
     <main className="relative flex min-h-screen items-center justify-center bg-[#05070B] px-6 py-24">
-      {step !==
+      {step <
         BUILDING_STEP && (
         <button
           type="button"
@@ -208,14 +212,18 @@ export default function Onboarding() {
               answers={
                 answers
               }
-              onComplete={
-                next
-              }
+              onComplete={(completedOutcome) => {
+                setOutcome(completedOutcome);
+                next();
+              }}
             />
           )}
 
           {step === 8 && (
-            <StepComplete />
+            <StepComplete
+              answers={answers}
+              outcome={outcome}
+            />
           )}
         </div>
       </div>
