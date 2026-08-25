@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 
 import type { AtlasInsight } from "@/lib/atlas/opportunities/insight";
@@ -6,6 +8,9 @@ type Props = {
   insight: AtlasInsight;
   actionPlanHref: string;
 };
+
+const ACTION_PLAN_RETURN_NAVIGATION_KEY =
+  "ascend:opportunities:action-plan-return";
 
 type ScoreTheme = {
   accent: string;
@@ -199,6 +204,17 @@ export default function AtlasDecisionEngine({
   const scoreDegrees =
     Math.max(0, Math.min(100, insight.score)) * 3.6;
 
+  function rememberActionPlanNavigation() {
+    window.sessionStorage.setItem(
+      ACTION_PLAN_RETURN_NAVIGATION_KEY,
+      JSON.stringify({
+        decisionHref: `${window.location.pathname}${window.location.search}`,
+        destination: new URL(actionPlanHref, window.location.origin).pathname,
+        createdAt: Date.now(),
+      }),
+    );
+  }
+
   return (
     <section
       aria-labelledby="atlas-decision-heading"
@@ -340,6 +356,7 @@ export default function AtlasDecisionEngine({
                 <Link
                   href={actionPlanHref}
                   prefetch
+                  onClick={rememberActionPlanNavigation}
                   className="group inline-flex w-full items-center justify-center gap-2 rounded-xl bg-cyan-400 px-5 py-3.5 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300 focus:outline-none focus:ring-2 focus:ring-cyan-300 focus:ring-offset-2 focus:ring-offset-slate-950 sm:w-auto"
                 >
                   Build My Action Plan
