@@ -120,3 +120,24 @@ export type WorkNotification = {
   readAt: string | null;
   createdAt: string;
 };
+
+export type WorkOverview = {
+  applicationCount: number;
+  activeWorkspaceCount: number;
+  verifiedWorkCount: number;
+  unreadNotificationCount: number;
+  appliedProjectIds: string[];
+};
+
+export type WorkAuditEvent = {
+  id: string;
+  projectId: string;
+  applicationId: string | null;
+  actorUserId: string | null;
+  actorType: "student" | "admin" | "system";
+  eventType: string;
+  fromStatus: string | null;
+  toStatus: string | null;
+  metadata: Record<string, unknown>;
+  createdAt: string;
+};

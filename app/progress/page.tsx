@@ -7,6 +7,8 @@ import AscensionProgress from "@/app/dashboard/AscensionProgress";
 import IdentityCard from "@/app/dashboard/IdentityCard";
 import ProgressCard from "@/app/dashboard/ProgressCard";
 import { getProgressSnapshot } from "@/lib/atlas/dashboard";
+import { listUserVerifiedWork } from "@/lib/ascend-work/service";
+import VerifiedWorkProgressCard from "./VerifiedWorkProgressCard";
 
 export default async function ProgressPage() {
   const { userId } = await auth();
@@ -15,7 +17,10 @@ export default async function ProgressPage() {
     redirect("/sign-in");
   }
 
-  const progress = await getProgressSnapshot(userId);
+  const [progress, verifiedWork] = await Promise.all([
+    getProgressSnapshot(userId),
+    listUserVerifiedWork(userId),
+  ]);
 
   return (
     <AppShell>
@@ -46,6 +51,7 @@ export default async function ProgressPage() {
             />
             <AtlasTimeline timeline={progress.timeline} totalCount={progress.timelineTotal} />
           </div>
+          <VerifiedWorkProgressCard evidence={verifiedWork} />
         </div>
       </main>
     </AppShell>

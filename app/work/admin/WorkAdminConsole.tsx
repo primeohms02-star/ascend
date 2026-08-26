@@ -7,6 +7,7 @@ import type { PaidMissionAdmin } from "@/lib/ascend-work/types";
 import MissionManagement from "./MissionManagement";
 import ApplicantManagement from "./ApplicantManagement";
 import SubmissionManagement from "./SubmissionManagement";
+import AuditHistory from "./AuditHistory";
 
 type Notice = { tone: "success" | "error"; message: string } | null;
 
@@ -126,6 +127,7 @@ export default function WorkAdminConsole({ initialProjects }: { initialProjects:
       <MissionManagement initialProjects={initialProjects} />
       <ApplicantManagement projects={initialProjects} />
       <SubmissionManagement projects={initialProjects} />
+      <AuditHistory projects={initialProjects} />
       <section className={cardClass} aria-labelledby="organization-heading">
         <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-cyan-300">Step 1</p>
         <h2 id="organization-heading" className="mt-1 text-xl font-bold text-white">Create the organisation</h2>

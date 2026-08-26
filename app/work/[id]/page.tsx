@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { auth } from "@clerk/nextjs/server";
 import { notFound, redirect } from "next/navigation";
 import { ArrowLeft, CalendarDays, CheckCircle2, Clock3, WalletCards } from "lucide-react";
@@ -6,6 +5,7 @@ import { ArrowLeft, CalendarDays, CheckCircle2, Clock3, WalletCards } from "luci
 import AppShell from "@/app/components/navigation/AppShell";
 import { getAppliedPaidMissionIds, getPublishedPaidMission, getWorkAccess } from "@/lib/ascend-work/service";
 import ApplyPaidMissionButton from "../ApplyPaidMissionButton";
+import WorkNavigationLink from "../WorkNavigationLink";
 
 function money(amountMinor: number, currency: string) {
   return new Intl.NumberFormat("en-NG", { style: "currency", currency, maximumFractionDigits: 0 }).format(amountMinor / 100);
@@ -35,7 +35,7 @@ export default async function PaidMissionPage({
     <AppShell>
       <main className="min-h-screen bg-gradient-to-br from-[#020617] via-[#07121f] to-[#0f172a]">
         <div className="mx-auto max-w-5xl px-5 py-8 sm:px-6 sm:py-10">
-          <Link href="/work" className="inline-flex items-center gap-2 text-sm font-semibold text-slate-400 hover:text-white"><ArrowLeft size={16} />Back to ASCEND Work</Link>
+          <WorkNavigationLink href="/work" replace className="inline-flex items-center gap-2 text-sm font-semibold text-slate-400 hover:text-white"><ArrowLeft size={16} />Back to ASCEND Work</WorkNavigationLink>
           <header className="mt-6 rounded-3xl border border-cyan-400/20 bg-slate-900/65 p-6 sm:p-8">
             <span className="rounded-full border border-cyan-400/20 bg-cyan-400/[0.07] px-3 py-1 text-xs font-semibold text-cyan-200">{project.category}</span>
             <h1 className="mt-5 text-3xl font-black leading-tight text-white sm:text-4xl">{project.title}</h1>

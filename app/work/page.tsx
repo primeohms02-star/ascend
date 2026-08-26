@@ -1,11 +1,11 @@
-import Link from "next/link";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { ArrowRight, BadgeCheck, Bell, BriefcaseBusiness, Clock3, ShieldCheck, WalletCards } from "lucide-react";
 
 import AppShell from "@/app/components/navigation/AppShell";
-import { countUnreadWorkNotifications, getAppliedPaidMissionIds, getWorkAccess, listPublishedPaidMissions } from "@/lib/ascend-work/service";
+import { getUserWorkOverview, getWorkAccess, listPublishedPaidMissions } from "@/lib/ascend-work/service";
 import { isAscendWorkAdmin } from "@/lib/ascend-work/admin-auth";
+import WorkNavigationLink from "./WorkNavigationLink";
 
 function money(amountMinor: number, currency: string) {
   return new Intl.NumberFormat("en-NG", { style: "currency", currency, maximumFractionDigits: 0 }).format(amountMinor / 100);
@@ -19,12 +19,12 @@ export default async function AscendWorkPage() {
   const { userId } = await auth();
   if (!userId) redirect("/sign-in");
 
-  const [access, projects, appliedIds, unreadNotifications] = await Promise.all([
+  const [access, projects, overview] = await Promise.all([
     getWorkAccess(userId),
     listPublishedPaidMissions(),
-    getAppliedPaidMissionIds(userId),
-    countUnreadWorkNotifications(userId),
+    getUserWorkOverview(userId),
   ]);
+  const appliedIds = new Set(overview.appliedProjectIds);
   const admin = isAscendWorkAdmin(userId);
 
   return (
@@ -45,6 +45,13 @@ export default async function AscendWorkPage() {
             </div>
           </header>
 
+          <section className="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4" aria-label="ASCEND Work overview">
+            <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4"><p className="text-2xl font-black text-white">{projects.length}</p><p className="mt-1 text-xs font-semibold text-slate-400">Available missions</p></div>
+            <WorkNavigationLink href="/work/applications" className="rounded-2xl border border-blue-400/15 bg-blue-400/[0.035] p-4 transition hover:border-blue-400/30"><p className="text-2xl font-black text-blue-200">{overview.applicationCount}</p><p className="mt-1 text-xs font-semibold text-slate-400">Applications</p></WorkNavigationLink>
+            <WorkNavigationLink href="/work/applications" className="rounded-2xl border border-cyan-400/15 bg-cyan-400/[0.035] p-4 transition hover:border-cyan-400/30"><p className="text-2xl font-black text-cyan-200">{overview.activeWorkspaceCount}</p><p className="mt-1 text-xs font-semibold text-slate-400">Active workspaces</p></WorkNavigationLink>
+            <WorkNavigationLink href="/work/evidence" className="rounded-2xl border border-emerald-400/15 bg-emerald-400/[0.035] p-4 transition hover:border-emerald-400/30"><p className="text-2xl font-black text-emerald-200">{overview.verifiedWorkCount}</p><p className="mt-1 text-xs font-semibold text-slate-400">Verified work</p></WorkNavigationLink>
+          </section>
+
           <section className={`mt-5 rounded-2xl border p-5 ${access.active ? "border-emerald-400/20 bg-emerald-400/[0.05]" : "border-amber-400/20 bg-amber-400/[0.05]"}`}>
             <div className="flex items-start gap-3">
               {access.active ? <BadgeCheck className="mt-0.5 text-emerald-300" size={21} aria-hidden="true" /> : <ShieldCheck className="mt-0.5 text-amber-300" size={21} aria-hidden="true" />}
@@ -58,9 +65,9 @@ export default async function AscendWorkPage() {
               </div>
             </div>
             {admin ? (
-              <Link href="/work/admin" className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-cyan-300 hover:text-cyan-200">
+              <WorkNavigationLink href="/work/admin" className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-cyan-300 hover:text-cyan-200">
                 Open Work Admin <ArrowRight size={15} aria-hidden="true" />
-              </Link>
+              </WorkNavigationLink>
             ) : null}
           </section>
 
@@ -72,15 +79,15 @@ export default async function AscendWorkPage() {
                 <p className="mt-2 text-sm leading-6 text-slate-400">Access and matching do not guarantee selection or income.</p>
               </div>
               <div className="flex flex-wrap gap-2">
-                <Link href="/work/applications" className="inline-flex items-center gap-2 rounded-xl border border-blue-400/25 bg-blue-400/[0.08] px-4 py-3 text-sm font-bold text-blue-200 transition hover:border-blue-300/40 hover:bg-blue-400/[0.12]">
+                <WorkNavigationLink href="/work/applications" className="inline-flex items-center gap-2 rounded-xl border border-blue-400/25 bg-blue-400/[0.08] px-4 py-3 text-sm font-bold text-blue-200 transition hover:border-blue-300/40 hover:bg-blue-400/[0.12]">
                   My Applications <ArrowRight size={16} aria-hidden="true" />
-                </Link>
-                <Link href="/work/evidence" className="inline-flex items-center gap-2 rounded-xl border border-emerald-400/25 bg-emerald-400/[0.08] px-4 py-3 text-sm font-bold text-emerald-200 transition hover:border-emerald-300/40 hover:bg-emerald-400/[0.12]">
+                </WorkNavigationLink>
+                <WorkNavigationLink href="/work/evidence" className="inline-flex items-center gap-2 rounded-xl border border-emerald-400/25 bg-emerald-400/[0.08] px-4 py-3 text-sm font-bold text-emerald-200 transition hover:border-emerald-300/40 hover:bg-emerald-400/[0.12]">
                   Verified Work <BadgeCheck size={16} aria-hidden="true" />
-                </Link>
-                <Link href="/work/notifications" className="inline-flex items-center gap-2 rounded-xl border border-cyan-400/25 bg-cyan-400/[0.08] px-4 py-3 text-sm font-bold text-cyan-200 transition hover:border-cyan-300/40 hover:bg-cyan-400/[0.12]">
-                  Notifications{unreadNotifications ? ` (${unreadNotifications})` : ""} <Bell size={16} aria-hidden="true" />
-                </Link>
+                </WorkNavigationLink>
+                <WorkNavigationLink href="/work/notifications" className="inline-flex items-center gap-2 rounded-xl border border-cyan-400/25 bg-cyan-400/[0.08] px-4 py-3 text-sm font-bold text-cyan-200 transition hover:border-cyan-300/40 hover:bg-cyan-400/[0.12]">
+                  Notifications{overview.unreadNotificationCount ? ` (${overview.unreadNotificationCount})` : ""} <Bell size={16} aria-hidden="true" />
+                </WorkNavigationLink>
               </div>
             </div>
 
@@ -100,7 +107,7 @@ export default async function AscendWorkPage() {
                       <span className="flex items-center gap-2"><Clock3 size={16} className="text-blue-300" />{project.estimatedHours} hours</span>
                       <span className="text-slate-500">Apply by {date(project.applicationDeadline)}</span>
                     </div>
-                    <Link href={`/work/${project.id}`} className="mt-5 inline-flex items-center gap-2 font-semibold text-cyan-300 hover:text-cyan-200">Review Paid Mission <ArrowRight size={16} aria-hidden="true" /></Link>
+                    <WorkNavigationLink href={`/work/${project.id}`} className="mt-5 inline-flex items-center gap-2 font-semibold text-cyan-300 hover:text-cyan-200">Review Paid Mission <ArrowRight size={16} aria-hidden="true" /></WorkNavigationLink>
                   </article>
                 ))}
               </div>

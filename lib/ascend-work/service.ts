@@ -2,7 +2,7 @@ import "server-only";
 
 import { ascendWorkClient } from "./client";
 import { isAscendWorkAdmin } from "./admin-auth";
-import type { PaidMission, PaidMissionAdmin, WorkAccess, WorkAccessSource, WorkApplicationAdmin, WorkApplicationWorkspace, WorkNotification, WorkOrganizationAdmin, WorkSubmissionAdmin, WorkSubmissionStatus, WorkVerifiedEvidence } from "./types";
+import type { PaidMission, PaidMissionAdmin, WorkAccess, WorkAccessSource, WorkApplicationAdmin, WorkApplicationWorkspace, WorkAuditEvent, WorkNotification, WorkOrganizationAdmin, WorkOverview, WorkSubmissionAdmin, WorkSubmissionStatus, WorkVerifiedEvidence } from "./types";
 
 type AccessRow = {
   source: WorkAccessSource;
@@ -708,6 +708,47 @@ export async function markWorkNotificationsRead(input: { userId: string; notific
   if (input.notificationId) query = query.eq("id", input.notificationId);
   const { error } = await query;
   if (error) throw new Error(`ASCEND Work notifications could not be updated: ${error.message}`);
+}
+
+export async function getUserWorkOverview(userId: string): Promise<WorkOverview> {
+  const [applicationsResult, evidenceResult, notificationsResult] = await Promise.all([
+    ascendWorkClient.from("ascend_work_applications").select("project_id,status").eq("user_id", userId).neq("status", "withdrawn"),
+    ascendWorkClient.from("ascend_work_verified_evidence").select("id", { count: "exact", head: true }).eq("user_id", userId),
+    ascendWorkClient.from("ascend_work_notifications").select("id", { count: "exact", head: true }).eq("user_id", userId).is("read_at", null),
+  ]);
+  if (applicationsResult.error) throw new Error(`ASCEND Work overview failed: ${applicationsResult.error.message}`);
+  if (evidenceResult.error) throw new Error(`ASCEND Work overview failed: ${evidenceResult.error.message}`);
+  if (notificationsResult.error) throw new Error(`ASCEND Work overview failed: ${notificationsResult.error.message}`);
+  const applications = applicationsResult.data ?? [];
+  return {
+    applicationCount: applications.length,
+    activeWorkspaceCount: applications.filter((item) => item.status === "accepted").length,
+    verifiedWorkCount: evidenceResult.count ?? 0,
+    unreadNotificationCount: notificationsResult.count ?? 0,
+    appliedProjectIds: [...new Set(applications.map((item) => item.project_id))],
+  };
+}
+
+export async function listWorkAuditEventsAdmin(projectId: string): Promise<WorkAuditEvent[]> {
+  const { data, error } = await ascendWorkClient
+    .from("ascend_work_audit_events")
+    .select("id,project_id,application_id,actor_user_id,actor_type,event_type,from_status,to_status,metadata,created_at")
+    .eq("project_id", projectId)
+    .order("created_at", { ascending: false })
+    .limit(500);
+  if (error) throw new Error(`ASCEND Work audit history could not be loaded: ${error.message}`);
+  return (data ?? []).map((row) => ({
+    id: row.id,
+    projectId: row.project_id,
+    applicationId: row.application_id,
+    actorUserId: row.actor_user_id,
+    actorType: row.actor_type as WorkAuditEvent["actorType"],
+    eventType: row.event_type,
+    fromStatus: row.from_status,
+    toStatus: row.to_status,
+    metadata: row.metadata && typeof row.metadata === "object" && !Array.isArray(row.metadata) ? row.metadata as Record<string, unknown> : {},
+    createdAt: row.created_at,
+  }));
 }
 
 export async function grantWorkAccess(input: {

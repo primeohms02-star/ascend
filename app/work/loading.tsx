@@ -1,0 +1,3 @@
+export default function WorkLoading() {
+  return <main className="min-h-screen bg-gradient-to-br from-[#020617] via-[#07121f] to-[#0f172a]"><div className="mx-auto max-w-6xl animate-pulse px-5 py-8 sm:px-6 sm:py-10"><div className="h-4 w-40 rounded bg-slate-800" /><div className="mt-6 h-56 rounded-3xl border border-white/10 bg-white/[0.035]" /><div className="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4">{[0, 1, 2, 3].map((item) => <div key={item} className="h-24 rounded-2xl border border-white/10 bg-white/[0.03]" />)}</div><div className="mt-6 h-40 rounded-2xl border border-white/10 bg-white/[0.03]" /></div></main>;
+}

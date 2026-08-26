@@ -5,6 +5,7 @@ import { ArrowLeft, BadgeCheck, CheckCircle2 } from "lucide-react";
 
 import AppShell from "@/app/components/navigation/AppShell";
 import { listUserVerifiedWork } from "@/lib/ascend-work/service";
+import WorkNavigationLink from "../WorkNavigationLink";
 
 function verifiedDate(value: string) {
   return new Intl.DateTimeFormat("en-NG", { dateStyle: "long" }).format(new Date(value));
@@ -19,9 +20,9 @@ export default async function VerifiedWorkPage() {
     <AppShell>
       <main className="min-h-screen bg-gradient-to-br from-[#020617] via-[#07121f] to-[#0f172a]">
         <div className="mx-auto max-w-5xl px-5 py-8 sm:px-6 sm:py-10">
-          <Link href="/work" className="inline-flex items-center gap-2 text-sm font-semibold text-slate-400 hover:text-white">
+          <WorkNavigationLink href="/work" replace className="inline-flex items-center gap-2 text-sm font-semibold text-slate-400 hover:text-white">
             <ArrowLeft size={16} aria-hidden="true" />Back to ASCEND Work
-          </Link>
+          </WorkNavigationLink>
 
           <header className="mt-6 rounded-3xl border border-emerald-400/20 bg-emerald-400/[0.05] p-6 sm:p-8">
             <BadgeCheck className="text-emerald-300" size={28} aria-hidden="true" />
