@@ -31,7 +31,14 @@ export async function POST(request: Request) {
   try {
     const adminUserId = await requireAscendWorkAdmin();
     const parsed = schema.safeParse(await request.json().catch(() => null));
-    if (!parsed.success) return NextResponse.json({ error: "Invalid Paid Mission record." }, { status: 400 });
+    if (!parsed.success) {
+      const issue = parsed.error.issues[0];
+      const field = issue.path.length ? issue.path.join(".") : "record";
+      return NextResponse.json(
+        { error: `Invalid Paid Mission record — ${field}: ${issue.message}` },
+        { status: 400 },
+      );
+    }
     const project = await createPaidMission({ adminUserId, ...parsed.data });
     return NextResponse.json({ success: true, project }, { status: 201 });
   } catch (error) {
