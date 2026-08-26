@@ -41,3 +41,17 @@ export type WorkApplicationStatus =
   | "completed"
   | "disputed";
 
+export type WorkOrganizationAdmin = {
+  id: string;
+  name: string;
+  website: string | null;
+  verificationStatus: "pending" | "verified" | "rejected" | "suspended";
+};
+
+export type PaidMissionAdmin = Omit<PaidMission, "publishedAt"> & {
+  status: "draft" | "review" | "published" | "paused" | "closed" | "completed" | "cancelled";
+  organizationVerificationStatus: string;
+  publishedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+};

@@ -2,7 +2,7 @@ import "server-only";
 
 import { ascendWorkClient } from "./client";
 import { isAscendWorkAdmin } from "./admin-auth";
-import type { PaidMission, WorkAccess, WorkAccessSource } from "./types";
+import type { PaidMission, PaidMissionAdmin, WorkAccess, WorkAccessSource, WorkOrganizationAdmin } from "./types";
 
 type AccessRow = {
   source: WorkAccessSource;
@@ -25,7 +25,10 @@ type ProjectRow = {
   available_slots: number;
   application_deadline: string;
   delivery_deadline: string;
-  published_at: string;
+  published_at: string | null;
+  status?: PaidMissionAdmin["status"];
+  created_at?: string;
+  updated_at?: string;
   organization: { name: string; verification_status: string } | null;
 };
 
@@ -46,7 +49,18 @@ function mapProject(row: ProjectRow): PaidMission {
     availableSlots: row.available_slots,
     applicationDeadline: row.application_deadline,
     deliveryDeadline: row.delivery_deadline,
+    publishedAt: row.published_at ?? "",
+  };
+}
+
+function mapAdminProject(row: ProjectRow): PaidMissionAdmin {
+  return {
+    ...mapProject(row),
+    status: row.status ?? "draft",
+    organizationVerificationStatus: row.organization?.verification_status ?? "unknown",
     publishedAt: row.published_at,
+    createdAt: row.created_at ?? "",
+    updatedAt: row.updated_at ?? "",
   };
 }
 
@@ -80,6 +94,38 @@ const projectSelection = `
   delivery_deadline,published_at,
   organization:ascend_work_organizations(name,verification_status)
 `;
+
+const adminProjectSelection = `
+  id,organization_id,title,summary,description,category,required_skills,deliverables,
+  payment_amount_minor,currency,estimated_hours,available_slots,application_deadline,
+  delivery_deadline,status,published_at,created_at,updated_at,
+  organization:ascend_work_organizations(name,verification_status)
+`;
+
+export async function listWorkOrganizationsAdmin(): Promise<WorkOrganizationAdmin[]> {
+  const { data, error } = await ascendWorkClient
+    .from("ascend_work_organizations")
+    .select("id,name,website,verification_status")
+    .order("created_at", { ascending: false })
+    .limit(100);
+  if (error) throw new Error(`ASCEND Work organisations could not be loaded: ${error.message}`);
+  return (data ?? []).map((row) => ({
+    id: row.id,
+    name: row.name,
+    website: row.website,
+    verificationStatus: row.verification_status as WorkOrganizationAdmin["verificationStatus"],
+  }));
+}
+
+export async function listPaidMissionsAdmin(): Promise<PaidMissionAdmin[]> {
+  const { data, error } = await ascendWorkClient
+    .from("ascend_work_projects")
+    .select(adminProjectSelection)
+    .order("created_at", { ascending: false })
+    .limit(100);
+  if (error) throw new Error(`ASCEND Work admin projects could not be loaded: ${error.message}`);
+  return (data as unknown as ProjectRow[]).map(mapAdminProject);
+}
 
 export async function listPublishedPaidMissions(): Promise<PaidMission[]> {
   const { data, error } = await ascendWorkClient
@@ -231,6 +277,91 @@ export async function createPaidMission(input: {
     .single();
 
   if (error) throw new Error(`Paid Mission creation failed: ${error.message}`);
+  return data;
+}
+
+export async function updatePaidMissionDraft(input: {
+  adminUserId: string;
+  id: string;
+  title: string;
+  summary: string;
+  description: string;
+  category: string;
+  requiredSkills: string[];
+  deliverables: string[];
+  paymentAmountMinor: number;
+  currency: string;
+  estimatedHours: number;
+  availableSlots: number;
+  applicationDeadline: string;
+  deliveryDeadline: string;
+}) {
+  const { data, error } = await ascendWorkClient
+    .from("ascend_work_projects")
+    .update({
+      title: input.title,
+      summary: input.summary,
+      description: input.description,
+      category: input.category,
+      required_skills: input.requiredSkills,
+      deliverables: input.deliverables,
+      payment_amount_minor: input.paymentAmountMinor,
+      currency: input.currency,
+      estimated_hours: input.estimatedHours,
+      available_slots: input.availableSlots,
+      application_deadline: input.applicationDeadline,
+      delivery_deadline: input.deliveryDeadline,
+    })
+    .eq("id", input.id)
+    .in("status", ["draft", "review"])
+    .select("id,title,status,updated_at")
+    .maybeSingle();
+  if (error) throw new Error(`Paid Mission update failed: ${error.message}`);
+  if (!data) throw new Error("ASCEND_WORK_INVALID_TRANSITION");
+  return data;
+}
+
+export async function transitionPaidMission(input: {
+  adminUserId: string;
+  id: string;
+  action: "submit_review" | "return_draft" | "publish";
+}) {
+  const transitions = {
+    submit_review: { from: "draft", to: "review" },
+    return_draft: { from: "review", to: "draft" },
+    publish: { from: "review", to: "published" },
+  } as const;
+  const transition = transitions[input.action];
+
+  if (input.action === "publish") {
+    const { data: project, error: projectError } = await ascendWorkClient
+      .from("ascend_work_projects")
+      .select("application_deadline,delivery_deadline,organization:ascend_work_organizations(verification_status)")
+      .eq("id", input.id)
+      .eq("status", "review")
+      .maybeSingle();
+    if (projectError) throw new Error(`Paid Mission review failed: ${projectError.message}`);
+    if (!project) throw new Error("ASCEND_WORK_INVALID_TRANSITION");
+    const organization = project.organization as unknown as { verification_status: string } | null;
+    if (organization?.verification_status !== "verified") throw new Error("ASCEND_WORK_ORGANIZATION_NOT_VERIFIED");
+    if (new Date(project.application_deadline) <= new Date()) throw new Error("ASCEND_WORK_DEADLINE_EXPIRED");
+    if (new Date(project.delivery_deadline) <= new Date(project.application_deadline)) throw new Error("ASCEND_WORK_INVALID_DEADLINE");
+  }
+
+  const publishFields = input.action === "publish"
+    ? { reviewed_by: input.adminUserId, published_at: new Date().toISOString() }
+    : input.action === "submit_review"
+      ? { reviewed_by: input.adminUserId, published_at: null }
+      : { reviewed_by: null, published_at: null };
+  const { data, error } = await ascendWorkClient
+    .from("ascend_work_projects")
+    .update({ status: transition.to, ...publishFields })
+    .eq("id", input.id)
+    .eq("status", transition.from)
+    .select("id,title,status,published_at,updated_at")
+    .maybeSingle();
+  if (error) throw new Error(`Paid Mission transition failed: ${error.message}`);
+  if (!data) throw new Error("ASCEND_WORK_INVALID_TRANSITION");
   return data;
 }
 

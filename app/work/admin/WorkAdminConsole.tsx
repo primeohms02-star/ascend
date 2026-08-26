@@ -2,6 +2,10 @@
 
 import { FormEvent, useState } from "react";
 
+import type { PaidMissionAdmin } from "@/lib/ascend-work/types";
+
+import MissionManagement from "./MissionManagement";
+
 type Notice = { tone: "success" | "error"; message: string } | null;
 
 const fieldClass = "mt-1.5 w-full rounded-xl border border-white/10 bg-slate-950/70 px-3.5 py-3 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-cyan-400/40";
@@ -29,7 +33,7 @@ function NoticeBox({ notice }: { notice: Notice }) {
   );
 }
 
-export default function WorkAdminConsole() {
+export default function WorkAdminConsole({ initialProjects }: { initialProjects: PaidMissionAdmin[] }) {
   const [organizationId, setOrganizationId] = useState("");
   const [organizationNotice, setOrganizationNotice] = useState<Notice>(null);
   const [projectNotice, setProjectNotice] = useState<Notice>(null);
@@ -117,6 +121,7 @@ export default function WorkAdminConsole() {
 
   return (
     <div className="mt-8 grid gap-5">
+      <MissionManagement initialProjects={initialProjects} />
       <section className={cardClass} aria-labelledby="organization-heading">
         <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-cyan-300">Step 1</p>
         <h2 id="organization-heading" className="mt-1 text-xl font-bold text-white">Create the organisation</h2>

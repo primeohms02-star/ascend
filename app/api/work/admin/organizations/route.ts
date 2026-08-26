@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { requireAscendWorkAdmin } from "@/lib/ascend-work/admin-auth";
-import { createWorkOrganization } from "@/lib/ascend-work/service";
+import { createWorkOrganization, listWorkOrganizationsAdmin } from "@/lib/ascend-work/service";
 
 const schema = z.object({
   name: z.string().trim().min(2).max(140),
@@ -12,6 +12,19 @@ const schema = z.object({
   verificationStatus: z.enum(["pending", "verified"]).default("pending"),
   verificationNotes: z.string().trim().max(2000).optional(),
 });
+
+export async function GET() {
+  try {
+    await requireAscendWorkAdmin();
+    const organizations = await listWorkOrganizationsAdmin();
+    return NextResponse.json({ organizations });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "";
+    const status = message === "ASCEND_WORK_UNAUTHENTICATED" ? 401 : message === "ASCEND_WORK_FORBIDDEN" ? 403 : 500;
+    if (status === 500) console.error("ASCEND Work organisation list error:", error);
+    return NextResponse.json({ error: status === 500 ? "Organisations could not be loaded." : "Unauthorized" }, { status });
+  }
+}
 
 export async function POST(request: Request) {
   try {
@@ -27,4 +40,3 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: status === 500 ? "Organisation could not be created." : "Unauthorized" }, { status });
   }
 }
-
