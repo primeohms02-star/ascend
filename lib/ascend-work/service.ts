@@ -446,6 +446,15 @@ type WorkspaceRow = {
     submitted_at: string | null;
     reviewed_at: string | null;
     updated_at: string;
+  } | {
+    id: string;
+    deliverable_responses: Record<string, string> | null;
+    student_note: string | null;
+    status: WorkSubmissionStatus;
+    revision_note: string | null;
+    submitted_at: string | null;
+    reviewed_at: string | null;
+    updated_at: string;
   }[] | null;
 };
 
@@ -462,7 +471,9 @@ const workspaceSelection = `
 
 function mapWorkspace(row: WorkspaceRow): WorkApplicationWorkspace {
   if (!row.project) throw new Error("ASCEND_WORK_PROJECT_NOT_FOUND");
-  const submission = row.submission?.[0] ?? null;
+  const submission = Array.isArray(row.submission)
+    ? row.submission[0] ?? null
+    : row.submission;
   return {
     id: row.id,
     projectId: row.project_id,
