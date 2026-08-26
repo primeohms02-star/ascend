@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import { ArrowRight, BadgeCheck, BriefcaseBusiness, Clock3, ShieldCheck, WalletCards } from "lucide-react";
+import { ArrowRight, BadgeCheck, Bell, BriefcaseBusiness, Clock3, ShieldCheck, WalletCards } from "lucide-react";
 
 import AppShell from "@/app/components/navigation/AppShell";
-import { getAppliedPaidMissionIds, getWorkAccess, listPublishedPaidMissions } from "@/lib/ascend-work/service";
+import { countUnreadWorkNotifications, getAppliedPaidMissionIds, getWorkAccess, listPublishedPaidMissions } from "@/lib/ascend-work/service";
 import { isAscendWorkAdmin } from "@/lib/ascend-work/admin-auth";
 
 function money(amountMinor: number, currency: string) {
@@ -19,10 +19,11 @@ export default async function AscendWorkPage() {
   const { userId } = await auth();
   if (!userId) redirect("/sign-in");
 
-  const [access, projects, appliedIds] = await Promise.all([
+  const [access, projects, appliedIds, unreadNotifications] = await Promise.all([
     getWorkAccess(userId),
     listPublishedPaidMissions(),
     getAppliedPaidMissionIds(userId),
+    countUnreadWorkNotifications(userId),
   ]);
   const admin = isAscendWorkAdmin(userId);
 
@@ -76,6 +77,9 @@ export default async function AscendWorkPage() {
                 </Link>
                 <Link href="/work/evidence" className="inline-flex items-center gap-2 rounded-xl border border-emerald-400/25 bg-emerald-400/[0.08] px-4 py-3 text-sm font-bold text-emerald-200 transition hover:border-emerald-300/40 hover:bg-emerald-400/[0.12]">
                   Verified Work <BadgeCheck size={16} aria-hidden="true" />
+                </Link>
+                <Link href="/work/notifications" className="inline-flex items-center gap-2 rounded-xl border border-cyan-400/25 bg-cyan-400/[0.08] px-4 py-3 text-sm font-bold text-cyan-200 transition hover:border-cyan-300/40 hover:bg-cyan-400/[0.12]">
+                  Notifications{unreadNotifications ? ` (${unreadNotifications})` : ""} <Bell size={16} aria-hidden="true" />
                 </Link>
               </div>
             </div>

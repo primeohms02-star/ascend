@@ -26,6 +26,8 @@ function localDateTime(value: string) {
 function statusClass(status: PaidMissionAdmin["status"]) {
   if (status === "published") return "border-emerald-400/25 bg-emerald-400/[0.08] text-emerald-200";
   if (status === "review") return "border-amber-400/25 bg-amber-400/[0.08] text-amber-200";
+  if (status === "paused") return "border-blue-400/25 bg-blue-400/[0.08] text-blue-200";
+  if (status === "closed" || status === "completed") return "border-slate-400/25 bg-slate-400/[0.08] text-slate-300";
   return "border-violet-400/25 bg-violet-400/[0.08] text-violet-200";
 }
 
@@ -90,7 +92,7 @@ export default function MissionManagement({ initialProjects }: { initialProjects
     }
   }
 
-  async function transition(action: "submit_review" | "return_draft" | "publish") {
+  async function transition(action: "submit_review" | "return_draft" | "publish" | "pause" | "resume" | "close" | "complete") {
     if (!selected) return;
     if (action === "publish") {
       const payment = new Intl.NumberFormat("en-NG", { style: "currency", currency: selected.currency, maximumFractionDigits: 0 }).format(selected.paymentAmountMinor / 100);
@@ -99,6 +101,10 @@ export default function MissionManagement({ initialProjects }: { initialProjects
       );
       if (!confirmed) return;
     }
+    if (action === "pause" && !window.confirm(`Pause “${selected.title}”?\n\nIt will immediately leave the student catalogue and stop accepting new applications. Existing applications and workspaces remain intact.`)) return;
+    if (action === "resume" && !window.confirm(`Resume “${selected.title}”?\n\nIt will return to the catalogue and accept applications until its current deadline.`)) return;
+    if (action === "close" && !window.confirm(`Close “${selected.title}”?\n\nIt will stop accepting applications permanently. Existing selected students can continue their work.`)) return;
+    if (action === "complete" && !window.confirm(`Mark “${selected.title}” completed?\n\nThis is allowed only when no unresolved applications or deliveries remain.`)) return;
     setBusy(action);
     setNotice(null);
     try {
@@ -113,6 +119,10 @@ export default function MissionManagement({ initialProjects }: { initialProjects
         submit_review: "Mission moved to review. It remains private.",
         return_draft: "Mission returned to draft.",
         publish: "Mission published and is now visible to eligible users.",
+        pause: "Mission paused and removed from the student catalogue.",
+        resume: "Mission resumed and returned to the student catalogue.",
+        close: "Mission closed to new applications.",
+        complete: "Mission marked completed.",
       };
       setNotice({ tone: "success", message: messages[action] });
     } catch (error) {
@@ -156,24 +166,28 @@ export default function MissionManagement({ initialProjects }: { initialProjects
                 </div>
                 <span className={`rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] ${statusClass(selected.status)}`}>{selected.status}</span>
               </div>
-              <label className={labelClass}>Mission title<input className={fieldClass} name="title" defaultValue={selected.title} minLength={4} maxLength={100} disabled={selected.status === "published"} required /></label>
-              <label className={labelClass}>Category<input className={fieldClass} name="category" defaultValue={selected.category} minLength={2} maxLength={80} disabled={selected.status === "published"} required /></label>
-              <label className={`${labelClass} sm:col-span-2`}>Short summary<textarea className={fieldClass} name="summary" defaultValue={selected.summary} minLength={20} maxLength={320} rows={2} disabled={selected.status === "published"} required /></label>
-              <label className={`${labelClass} sm:col-span-2`}>Full description<textarea className={fieldClass} name="description" defaultValue={selected.description} minLength={40} maxLength={5000} rows={5} disabled={selected.status === "published"} required /></label>
-              <label className={labelClass}>Required skills<input className={fieldClass} name="requiredSkills" defaultValue={selected.requiredSkills.join(", ")} disabled={selected.status === "published"} /></label>
-              <label className={labelClass}>Deliverables<textarea className={fieldClass} name="deliverables" defaultValue={selected.deliverables.join("\n")} rows={4} disabled={selected.status === "published"} required /></label>
-              <label className={labelClass}>Advertised payment<input className={fieldClass} name="paymentAmount" type="number" min="1" step="0.01" defaultValue={selected.paymentAmountMinor / 100} disabled={selected.status === "published"} required /></label>
-              <label className={labelClass}>Currency<input className={fieldClass} name="currency" defaultValue={selected.currency} pattern="[A-Za-z]{3}" maxLength={3} disabled={selected.status === "published"} required /></label>
-              <label className={labelClass}>Estimated hours<input className={fieldClass} name="estimatedHours" type="number" min="1" max="160" defaultValue={selected.estimatedHours} disabled={selected.status === "published"} required /></label>
-              <label className={labelClass}>Available slots<input className={fieldClass} name="availableSlots" type="number" min="1" max="100" defaultValue={selected.availableSlots} disabled={selected.status === "published"} required /></label>
-              <label className={labelClass}>Application deadline<input className={fieldClass} name="applicationDeadline" type="datetime-local" defaultValue={localDateTime(selected.applicationDeadline)} disabled={selected.status === "published"} required /></label>
-              <label className={labelClass}>Delivery deadline<input className={fieldClass} name="deliveryDeadline" type="datetime-local" defaultValue={localDateTime(selected.deliveryDeadline)} disabled={selected.status === "published"} required /></label>
+              <label className={labelClass}>Mission title<input className={fieldClass} name="title" defaultValue={selected.title} minLength={4} maxLength={100} disabled={!['draft', 'review'].includes(selected.status)} required /></label>
+              <label className={labelClass}>Category<input className={fieldClass} name="category" defaultValue={selected.category} minLength={2} maxLength={80} disabled={!['draft', 'review'].includes(selected.status)} required /></label>
+              <label className={`${labelClass} sm:col-span-2`}>Short summary<textarea className={fieldClass} name="summary" defaultValue={selected.summary} minLength={20} maxLength={320} rows={2} disabled={!['draft', 'review'].includes(selected.status)} required /></label>
+              <label className={`${labelClass} sm:col-span-2`}>Full description<textarea className={fieldClass} name="description" defaultValue={selected.description} minLength={40} maxLength={5000} rows={5} disabled={!['draft', 'review'].includes(selected.status)} required /></label>
+              <label className={labelClass}>Required skills<input className={fieldClass} name="requiredSkills" defaultValue={selected.requiredSkills.join(", ")} disabled={!['draft', 'review'].includes(selected.status)} /></label>
+              <label className={labelClass}>Deliverables<textarea className={fieldClass} name="deliverables" defaultValue={selected.deliverables.join("\n")} rows={4} disabled={!['draft', 'review'].includes(selected.status)} required /></label>
+              <label className={labelClass}>Advertised payment<input className={fieldClass} name="paymentAmount" type="number" min="1" step="0.01" defaultValue={selected.paymentAmountMinor / 100} disabled={!['draft', 'review'].includes(selected.status)} required /></label>
+              <label className={labelClass}>Currency<input className={fieldClass} name="currency" defaultValue={selected.currency} pattern="[A-Za-z]{3}" maxLength={3} disabled={!['draft', 'review'].includes(selected.status)} required /></label>
+              <label className={labelClass}>Estimated hours<input className={fieldClass} name="estimatedHours" type="number" min="1" max="160" defaultValue={selected.estimatedHours} disabled={!['draft', 'review'].includes(selected.status)} required /></label>
+              <label className={labelClass}>Available slots<input className={fieldClass} name="availableSlots" type="number" min="1" max="100" defaultValue={selected.availableSlots} disabled={!['draft', 'review'].includes(selected.status)} required /></label>
+              <label className={labelClass}>Application deadline<input className={fieldClass} name="applicationDeadline" type="datetime-local" defaultValue={localDateTime(selected.applicationDeadline)} disabled={!['draft', 'review'].includes(selected.status)} required /></label>
+              <label className={labelClass}>Delivery deadline<input className={fieldClass} name="deliveryDeadline" type="datetime-local" defaultValue={localDateTime(selected.deliveryDeadline)} disabled={!['draft', 'review'].includes(selected.status)} required /></label>
 
               <div className="sm:col-span-2 flex flex-wrap gap-2 border-t border-white/10 pt-4">
-                {selected.status !== "published" ? <button type="submit" disabled={busy !== null} className="rounded-xl border border-white/15 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50">{busy === "save" ? "Saving…" : "Save changes"}</button> : null}
+                {['draft', 'review'].includes(selected.status) ? <button type="submit" disabled={busy !== null} className="rounded-xl border border-white/15 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50">{busy === "save" ? "Saving…" : "Save changes"}</button> : null}
                 {selected.status === "draft" ? <button type="button" onClick={() => void transition("submit_review")} disabled={busy !== null || dirty} className="rounded-xl bg-amber-300 px-4 py-2.5 text-sm font-bold text-slate-950 disabled:opacity-50">{busy === "submit_review" ? "Moving…" : "Move to review"}</button> : null}
                 {selected.status === "review" ? <button type="button" onClick={() => void transition("return_draft")} disabled={busy !== null || dirty} className="rounded-xl border border-violet-300/30 px-4 py-2.5 text-sm font-semibold text-violet-200 disabled:opacity-50">Return to draft</button> : null}
                 {selected.status === "review" ? <button type="button" onClick={() => void transition("publish")} disabled={busy !== null || dirty} className="rounded-xl bg-emerald-400 px-4 py-2.5 text-sm font-bold text-slate-950 disabled:opacity-50">{busy === "publish" ? "Publishing…" : "Publish mission"}</button> : null}
+                {selected.status === "published" ? <button type="button" onClick={() => void transition("pause")} disabled={busy !== null} className="rounded-xl border border-blue-300/30 px-4 py-2.5 text-sm font-semibold text-blue-200 disabled:opacity-50">Pause mission</button> : null}
+                {selected.status === "paused" ? <button type="button" onClick={() => void transition("resume")} disabled={busy !== null} className="rounded-xl bg-emerald-400 px-4 py-2.5 text-sm font-bold text-slate-950 disabled:opacity-50">Resume mission</button> : null}
+                {selected.status === "published" || selected.status === "paused" ? <button type="button" onClick={() => void transition("close")} disabled={busy !== null} className="rounded-xl border border-rose-300/30 px-4 py-2.5 text-sm font-semibold text-rose-200 disabled:opacity-50">Close applications</button> : null}
+                {selected.status === "closed" ? <button type="button" onClick={() => void transition("complete")} disabled={busy !== null} className="rounded-xl border border-slate-300/30 px-4 py-2.5 text-sm font-semibold text-slate-200 disabled:opacity-50">Mark completed</button> : null}
                 {dirty ? <span className="self-center text-xs text-amber-300">Save changes before changing status.</span> : null}
               </div>
             </form>

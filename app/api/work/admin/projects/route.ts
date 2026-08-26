@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { requireAscendWorkAdmin } from "@/lib/ascend-work/admin-auth";
-import { createPaidMission, listPaidMissionsAdmin, transitionPaidMission, updatePaidMissionDraft } from "@/lib/ascend-work/service";
+import { createPaidMission, listPaidMissionsAdmin, transitionPaidMission, transitionPublishedPaidMission, updatePaidMissionDraft } from "@/lib/ascend-work/service";
 
 const missionFields = z.object({
   organizationId: z.string().uuid(),
@@ -44,7 +44,7 @@ const updateSchema = missionFields
 
 const transitionSchema = z.object({
   id: z.string().uuid(),
-  action: z.enum(["submit_review", "return_draft", "publish"]),
+  action: z.enum(["submit_review", "return_draft", "publish", "pause", "resume", "close", "complete"]),
 });
 
 function invalidRecord(error: z.ZodError) {
@@ -98,19 +98,22 @@ export async function PATCH(request: Request) {
     }
     const parsed = transitionSchema.safeParse(body);
     if (!parsed.success) return invalidRecord(parsed.error);
-    const project = await transitionPaidMission({ adminUserId, ...parsed.data });
+    const project = ["pause", "resume", "close", "complete"].includes(parsed.data.action)
+      ? await transitionPublishedPaidMission({ adminUserId, id: parsed.data.id, action: parsed.data.action as "pause" | "resume" | "close" | "complete" })
+      : await transitionPaidMission({ adminUserId, id: parsed.data.id, action: parsed.data.action as "submit_review" | "return_draft" | "publish" });
     return NextResponse.json({ success: true, project });
   } catch (error) {
     const message = error instanceof Error ? error.message : "";
     const status = message === "ASCEND_WORK_UNAUTHENTICATED" ? 401
       : message === "ASCEND_WORK_FORBIDDEN" ? 403
-        : ["ASCEND_WORK_INVALID_TRANSITION", "ASCEND_WORK_DEADLINE_EXPIRED", "ASCEND_WORK_INVALID_DEADLINE", "ASCEND_WORK_ORGANIZATION_NOT_VERIFIED"].includes(message) ? 409
+        : ["ASCEND_WORK_INVALID_TRANSITION", "ASCEND_WORK_DEADLINE_EXPIRED", "ASCEND_WORK_INVALID_DEADLINE", "ASCEND_WORK_ORGANIZATION_NOT_VERIFIED", "ASCEND_WORK_UNRESOLVED_APPLICATIONS"].includes(message) ? 409
           : 500;
     if (status === 500) console.error("ASCEND Work project management error:", error);
     const publicMessage = message === "ASCEND_WORK_INVALID_TRANSITION" ? "This mission changed state. Refresh and try again."
       : message === "ASCEND_WORK_DEADLINE_EXPIRED" ? "Set a future application deadline before publishing."
         : message === "ASCEND_WORK_INVALID_DEADLINE" ? "Delivery must follow the application deadline."
           : message === "ASCEND_WORK_ORGANIZATION_NOT_VERIFIED" ? "Verify the organisation before publishing this Paid Mission."
+            : message === "ASCEND_WORK_UNRESOLVED_APPLICATIONS" ? "Resolve all submitted, shortlisted, accepted or disputed applications before completing this mission."
             : status === 500 ? "Paid Mission could not be updated." : "Unauthorized";
     return NextResponse.json({ error: publicMessage }, { status });
   }

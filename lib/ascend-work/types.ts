@@ -111,3 +111,12 @@ export type WorkVerifiedEvidence = {
   deliverables: Record<string, string>;
   verifiedAt: string;
 };
+
+export type WorkNotification = {
+  id: string;
+  title: string;
+  message: string;
+  href: string | null;
+  readAt: string | null;
+  createdAt: string;
+};

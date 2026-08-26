@@ -2,7 +2,7 @@ import "server-only";
 
 import { ascendWorkClient } from "./client";
 import { isAscendWorkAdmin } from "./admin-auth";
-import type { PaidMission, PaidMissionAdmin, WorkAccess, WorkAccessSource, WorkApplicationAdmin, WorkApplicationWorkspace, WorkOrganizationAdmin, WorkSubmissionAdmin, WorkSubmissionStatus, WorkVerifiedEvidence } from "./types";
+import type { PaidMission, PaidMissionAdmin, WorkAccess, WorkAccessSource, WorkApplicationAdmin, WorkApplicationWorkspace, WorkNotification, WorkOrganizationAdmin, WorkSubmissionAdmin, WorkSubmissionStatus, WorkVerifiedEvidence } from "./types";
 
 type AccessRow = {
   source: WorkAccessSource;
@@ -365,6 +365,55 @@ export async function transitionPaidMission(input: {
   return data;
 }
 
+export async function transitionPublishedPaidMission(input: {
+  adminUserId: string;
+  id: string;
+  action: "pause" | "resume" | "close" | "complete";
+}) {
+  const transitions = {
+    pause: { from: ["published"], to: "paused" },
+    resume: { from: ["paused"], to: "published" },
+    close: { from: ["published", "paused"], to: "closed" },
+    complete: { from: ["closed"], to: "completed" },
+  } as const;
+  const transition = transitions[input.action];
+
+  const { data: project, error: projectError } = await ascendWorkClient
+    .from("ascend_work_projects")
+    .select("id,title,status,application_deadline,delivery_deadline,organization:ascend_work_organizations(verification_status)")
+    .eq("id", input.id)
+    .maybeSingle();
+  if (projectError) throw new Error(`Paid Mission lifecycle check failed: ${projectError.message}`);
+  if (!project || !transition.from.includes(project.status as never)) throw new Error("ASCEND_WORK_INVALID_TRANSITION");
+
+  if (input.action === "resume") {
+    const organization = project.organization as unknown as { verification_status: string } | null;
+    if (organization?.verification_status !== "verified") throw new Error("ASCEND_WORK_ORGANIZATION_NOT_VERIFIED");
+    if (new Date(project.application_deadline) <= new Date()) throw new Error("ASCEND_WORK_DEADLINE_EXPIRED");
+  }
+
+  if (input.action === "complete") {
+    const { count, error: countError } = await ascendWorkClient
+      .from("ascend_work_applications")
+      .select("id", { count: "exact", head: true })
+      .eq("project_id", input.id)
+      .in("status", ["submitted", "shortlisted", "accepted", "disputed"]);
+    if (countError) throw new Error(`Paid Mission completion check failed: ${countError.message}`);
+    if ((count ?? 0) > 0) throw new Error("ASCEND_WORK_UNRESOLVED_APPLICATIONS");
+  }
+
+  const { data, error } = await ascendWorkClient
+    .from("ascend_work_projects")
+    .update({ status: transition.to, reviewed_by: input.adminUserId })
+    .eq("id", input.id)
+    .in("status", [...transition.from])
+    .select("id,title,status,updated_at")
+    .maybeSingle();
+  if (error) throw new Error(`Paid Mission lifecycle update failed: ${error.message}`);
+  if (!data) throw new Error("ASCEND_WORK_INVALID_TRANSITION");
+  return data;
+}
+
 export async function listProjectApplicationsAdmin(projectId: string): Promise<WorkApplicationAdmin[]> {
   const { data, error } = await ascendWorkClient
     .from("ascend_work_applications")
@@ -627,6 +676,38 @@ export async function listUserVerifiedWork(userId: string): Promise<WorkVerified
       : {},
     verifiedAt: row.verified_at,
   }));
+}
+
+export async function listUserWorkNotifications(userId: string): Promise<WorkNotification[]> {
+  const { data, error } = await ascendWorkClient
+    .from("ascend_work_notifications")
+    .select("id,title,message,href,read_at,created_at")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(100);
+  if (error) throw new Error(`ASCEND Work notifications could not be loaded: ${error.message}`);
+  return (data ?? []).map((row) => ({ id: row.id, title: row.title, message: row.message, href: row.href, readAt: row.read_at, createdAt: row.created_at }));
+}
+
+export async function countUnreadWorkNotifications(userId: string): Promise<number> {
+  const { count, error } = await ascendWorkClient
+    .from("ascend_work_notifications")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .is("read_at", null);
+  if (error) throw new Error(`ASCEND Work notification count failed: ${error.message}`);
+  return count ?? 0;
+}
+
+export async function markWorkNotificationsRead(input: { userId: string; notificationId?: string }) {
+  let query = ascendWorkClient
+    .from("ascend_work_notifications")
+    .update({ read_at: new Date().toISOString() })
+    .eq("user_id", input.userId)
+    .is("read_at", null);
+  if (input.notificationId) query = query.eq("id", input.notificationId);
+  const { error } = await query;
+  if (error) throw new Error(`ASCEND Work notifications could not be updated: ${error.message}`);
 }
 
 export async function grantWorkAccess(input: {
