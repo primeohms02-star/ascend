@@ -2,7 +2,7 @@ import "server-only";
 
 import { ascendWorkClient } from "./client";
 import { isAscendWorkAdmin } from "./admin-auth";
-import type { PaidMission, PaidMissionAdmin, WorkAccess, WorkAccessSource, WorkApplicationAdmin, WorkOrganizationAdmin } from "./types";
+import type { PaidMission, PaidMissionAdmin, WorkAccess, WorkAccessSource, WorkApplicationAdmin, WorkApplicationWorkspace, WorkOrganizationAdmin, WorkSubmissionAdmin, WorkSubmissionStatus } from "./types";
 
 type AccessRow = {
   source: WorkAccessSource;
@@ -420,6 +420,180 @@ export async function transitionWorkApplicationAdmin(input: {
     throw new Error(`Application status update failed: ${message}`);
   }
   return (data as { application_id: string; application_status: string }[] | null)?.[0] ?? null;
+}
+
+type WorkspaceRow = {
+  id: string;
+  project_id: string;
+  user_id: string;
+  cover_note: string;
+  status: WorkApplicationWorkspace["applicationStatus"];
+  submitted_at: string;
+  project: {
+    title: string;
+    deliverables: string[] | null;
+    delivery_deadline: string;
+    payment_amount_minor: number;
+    currency: string;
+    organization: { name: string } | null;
+  } | null;
+  submission: {
+    id: string;
+    deliverable_responses: Record<string, string> | null;
+    student_note: string | null;
+    status: WorkSubmissionStatus;
+    revision_note: string | null;
+    submitted_at: string | null;
+    reviewed_at: string | null;
+    updated_at: string;
+  }[] | null;
+};
+
+const workspaceSelection = `
+  id,project_id,user_id,cover_note,status,submitted_at,
+  project:ascend_work_projects(
+    title,deliverables,delivery_deadline,payment_amount_minor,currency,
+    organization:ascend_work_organizations(name)
+  ),
+  submission:ascend_work_submissions(
+    id,deliverable_responses,student_note,status,revision_note,submitted_at,reviewed_at,updated_at
+  )
+`;
+
+function mapWorkspace(row: WorkspaceRow): WorkApplicationWorkspace {
+  if (!row.project) throw new Error("ASCEND_WORK_PROJECT_NOT_FOUND");
+  const submission = row.submission?.[0] ?? null;
+  return {
+    id: row.id,
+    projectId: row.project_id,
+    projectTitle: row.project.title,
+    organizationName: row.project.organization?.name ?? "Verified organisation",
+    applicationStatus: row.status,
+    coverNote: row.cover_note,
+    submittedAt: row.submitted_at,
+    deliverables: row.project.deliverables ?? [],
+    deliveryDeadline: row.project.delivery_deadline,
+    paymentAmountMinor: Number(row.project.payment_amount_minor),
+    currency: row.project.currency,
+    submission: submission ? {
+      id: submission.id,
+      responses: submission.deliverable_responses ?? {},
+      studentNote: submission.student_note ?? "",
+      status: submission.status,
+      revisionNote: submission.revision_note,
+      submittedAt: submission.submitted_at,
+      reviewedAt: submission.reviewed_at,
+      updatedAt: submission.updated_at,
+    } : null,
+  };
+}
+
+export async function listUserWorkApplications(userId: string): Promise<WorkApplicationWorkspace[]> {
+  const { data, error } = await ascendWorkClient
+    .from("ascend_work_applications")
+    .select(workspaceSelection)
+    .eq("user_id", userId)
+    .neq("status", "withdrawn")
+    .order("submitted_at", { ascending: false });
+  if (error) throw new Error(`Your Paid Mission applications could not be loaded: ${error.message}`);
+  return (data as unknown as WorkspaceRow[]).map(mapWorkspace);
+}
+
+export async function getUserWorkApplication(userId: string, applicationId: string): Promise<WorkApplicationWorkspace | null> {
+  const { data, error } = await ascendWorkClient
+    .from("ascend_work_applications")
+    .select(workspaceSelection)
+    .eq("id", applicationId)
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (error) throw new Error(`Your Paid Mission workspace could not be loaded: ${error.message}`);
+  return data ? mapWorkspace(data as unknown as WorkspaceRow) : null;
+}
+
+export async function saveWorkSubmission(input: {
+  userId: string;
+  applicationId: string;
+  responses: Record<string, string>;
+  studentNote: string;
+  submit: boolean;
+}) {
+  const workspace = await getUserWorkApplication(input.userId, input.applicationId);
+  if (!workspace) throw new Error("ASCEND_WORK_APPLICATION_NOT_FOUND");
+  if (workspace.applicationStatus !== "accepted") throw new Error("ASCEND_WORK_WORKSPACE_UNAVAILABLE");
+  if (!workspace.submission) throw new Error("ASCEND_WORK_SUBMISSION_NOT_FOUND");
+  if (!["draft", "revision_requested"].includes(workspace.submission.status)) throw new Error("ASCEND_WORK_SUBMISSION_LOCKED");
+
+  const responses = Object.fromEntries(workspace.deliverables.map((deliverable) => [deliverable, input.responses[deliverable]?.trim() ?? ""]));
+  if (input.submit && workspace.deliverables.some((deliverable) => !responses[deliverable])) {
+    throw new Error("ASCEND_WORK_DELIVERABLES_INCOMPLETE");
+  }
+
+  const nextStatus = input.submit ? "submitted" : workspace.submission.status === "revision_requested" ? "revision_requested" : "draft";
+  const { data, error } = await ascendWorkClient
+    .from("ascend_work_submissions")
+    .update({
+      deliverable_responses: responses,
+      student_note: input.studentNote.trim() || null,
+      status: nextStatus,
+      submitted_at: input.submit ? new Date().toISOString() : workspace.submission.submittedAt,
+    })
+    .eq("id", workspace.submission.id)
+    .eq("user_id", input.userId)
+    .in("status", ["draft", "revision_requested"])
+    .select("id,status,submitted_at,updated_at")
+    .maybeSingle();
+  if (error) throw new Error(`Paid Mission submission could not be saved: ${error.message}`);
+  if (!data) throw new Error("ASCEND_WORK_SUBMISSION_LOCKED");
+  return data;
+}
+
+export async function listProjectSubmissionsAdmin(projectId: string): Promise<WorkSubmissionAdmin[]> {
+  const { data, error } = await ascendWorkClient
+    .from("ascend_work_applications")
+    .select(workspaceSelection)
+    .eq("project_id", projectId)
+    .in("status", ["accepted", "completed", "disputed"])
+    .order("submitted_at", { ascending: true });
+  if (error) throw new Error(`Paid Mission submissions could not be loaded: ${error.message}`);
+  const rows = data as unknown as WorkspaceRow[];
+  const userIds = [...new Set(rows.map((row) => row.user_id))];
+  const profilesByUser = new Map<string, { full_name: string | null; email: string | null }>();
+  if (userIds.length) {
+    const { data: profiles, error: profileError } = await ascendWorkClient.from("profiles").select("clerk_id,full_name,email").in("clerk_id", userIds);
+    if (profileError) throw new Error(`Applicant profiles could not be loaded: ${profileError.message}`);
+    for (const profile of profiles ?? []) profilesByUser.set(profile.clerk_id, profile);
+  }
+  return rows.map((row) => {
+    const profile = profilesByUser.get(row.user_id);
+    return {
+      ...mapWorkspace(row),
+      userId: row.user_id,
+      applicantName: profile?.full_name?.trim() || "ASCEND user",
+      applicantEmail: profile?.email ?? null,
+    };
+  });
+}
+
+export async function reviewWorkSubmissionAdmin(input: {
+  adminUserId: string;
+  submissionId: string;
+  action: "request_revision" | "approve";
+  revisionNote?: string;
+}) {
+  const { data, error } = await ascendWorkClient.rpc("ascend_work_review_submission", {
+    p_submission_id: input.submissionId,
+    p_admin_user_id: input.adminUserId,
+    p_action: input.action,
+    p_revision_note: input.revisionNote ?? null,
+  });
+  if (error) {
+    const message = error.message ?? "";
+    if (message.includes("ASCEND_WORK_INVALID_TRANSITION")) throw new Error("ASCEND_WORK_INVALID_TRANSITION");
+    if (message.includes("ASCEND_WORK_REVISION_NOTE_REQUIRED")) throw new Error("ASCEND_WORK_REVISION_NOTE_REQUIRED");
+    if (message.includes("ASCEND_WORK_SUBMISSION_NOT_FOUND")) throw new Error("ASCEND_WORK_SUBMISSION_NOT_FOUND");
+    throw new Error(`Submission review failed: ${message}`);
+  }
+  return (data as { submission_id: string; submission_status: string }[] | null)?.[0] ?? null;
 }
 
 export async function grantWorkAccess(input: {

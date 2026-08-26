@@ -67,3 +67,35 @@ export type WorkApplicationAdmin = {
   submittedAt: string;
   updatedAt: string;
 };
+
+export type WorkSubmissionStatus = "draft" | "submitted" | "revision_requested" | "approved";
+
+export type WorkApplicationWorkspace = {
+  id: string;
+  projectId: string;
+  projectTitle: string;
+  organizationName: string;
+  applicationStatus: WorkApplicationStatus;
+  coverNote: string;
+  submittedAt: string;
+  deliverables: string[];
+  deliveryDeadline: string;
+  paymentAmountMinor: number;
+  currency: string;
+  submission: {
+    id: string;
+    responses: Record<string, string>;
+    studentNote: string;
+    status: WorkSubmissionStatus;
+    revisionNote: string | null;
+    submittedAt: string | null;
+    reviewedAt: string | null;
+    updatedAt: string;
+  } | null;
+};
+
+export type WorkSubmissionAdmin = WorkApplicationWorkspace & {
+  userId: string;
+  applicantName: string;
+  applicantEmail: string | null;
+};
