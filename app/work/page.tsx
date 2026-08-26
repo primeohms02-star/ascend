@@ -5,6 +5,7 @@ import { ArrowRight, BadgeCheck, BriefcaseBusiness, Clock3, ShieldCheck, WalletC
 
 import AppShell from "@/app/components/navigation/AppShell";
 import { getAppliedPaidMissionIds, getWorkAccess, listPublishedPaidMissions } from "@/lib/ascend-work/service";
+import { isAscendWorkAdmin } from "@/lib/ascend-work/admin-auth";
 
 function money(amountMinor: number, currency: string) {
   return new Intl.NumberFormat("en-NG", { style: "currency", currency, maximumFractionDigits: 0 }).format(amountMinor / 100);
@@ -23,6 +24,7 @@ export default async function AscendWorkPage() {
     listPublishedPaidMissions(),
     getAppliedPaidMissionIds(userId),
   ]);
+  const admin = isAscendWorkAdmin(userId);
 
   return (
     <AppShell>
@@ -54,6 +56,11 @@ export default async function AscendWorkPage() {
                 </p>
               </div>
             </div>
+            {admin ? (
+              <Link href="/work/admin" className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-cyan-300 hover:text-cyan-200">
+                Open Work Admin <ArrowRight size={15} aria-hidden="true" />
+              </Link>
+            ) : null}
           </section>
 
           <section className="mt-9" aria-labelledby="paid-missions-heading">
@@ -95,4 +102,3 @@ export default async function AscendWorkPage() {
     </AppShell>
   );
 }
-
