@@ -8,6 +8,7 @@ import { useAuth, useClerk } from "@clerk/nextjs";
 
 import {
   ChartNoAxesCombined,
+  BriefcaseBusiness,
   CircleHelp,
   Compass,
   Globe2,
@@ -72,6 +73,13 @@ const journeyItems: NavigationItem[] = [
 ];
 
 const discoverItems: NavigationItem[] = [
+  {
+    label: "Work",
+    href: "/work",
+    icon: BriefcaseBusiness,
+    prefetchFullRoute: true,
+    isActive: (pathname) => pathname.startsWith("/work"),
+  },
   {
     label: "Explore",
     href: "/opportunities",
@@ -294,7 +302,7 @@ export default function AppNavigation() {
             </div>
 
             <div className="grid gap-1 sm:grid-cols-2">
-              {[journeyItems[0], journeyItems[1], discoverItems[1], discoverItems[2]].map((item) => (
+              {[journeyItems[0], journeyItems[1], discoverItems[1], discoverItems[2], discoverItems[3]].map((item) => (
                 <NavigationLink
                   key={item.label}
                   item={item}
