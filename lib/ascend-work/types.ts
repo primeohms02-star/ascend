@@ -55,3 +55,15 @@ export type PaidMissionAdmin = Omit<PaidMission, "publishedAt"> & {
   createdAt: string;
   updatedAt: string;
 };
+
+export type WorkApplicationAdmin = {
+  id: string;
+  projectId: string;
+  userId: string;
+  applicantName: string;
+  applicantEmail: string | null;
+  coverNote: string;
+  status: WorkApplicationStatus;
+  submittedAt: string;
+  updatedAt: string;
+};

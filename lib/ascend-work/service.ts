@@ -2,7 +2,7 @@ import "server-only";
 
 import { ascendWorkClient } from "./client";
 import { isAscendWorkAdmin } from "./admin-auth";
-import type { PaidMission, PaidMissionAdmin, WorkAccess, WorkAccessSource, WorkOrganizationAdmin } from "./types";
+import type { PaidMission, PaidMissionAdmin, WorkAccess, WorkAccessSource, WorkApplicationAdmin, WorkOrganizationAdmin } from "./types";
 
 type AccessRow = {
   source: WorkAccessSource;
@@ -363,6 +363,63 @@ export async function transitionPaidMission(input: {
   if (error) throw new Error(`Paid Mission transition failed: ${error.message}`);
   if (!data) throw new Error("ASCEND_WORK_INVALID_TRANSITION");
   return data;
+}
+
+export async function listProjectApplicationsAdmin(projectId: string): Promise<WorkApplicationAdmin[]> {
+  const { data, error } = await ascendWorkClient
+    .from("ascend_work_applications")
+    .select("id,project_id,user_id,cover_note,status,submitted_at,updated_at")
+    .eq("project_id", projectId)
+    .order("submitted_at", { ascending: true })
+    .limit(500);
+  if (error) throw new Error(`Paid Mission applicants could not be loaded: ${error.message}`);
+
+  const applications = data ?? [];
+  const userIds = [...new Set(applications.map((application) => application.user_id))];
+  const profilesByUser = new Map<string, { full_name: string | null; email: string | null }>();
+  if (userIds.length) {
+    const { data: profiles, error: profileError } = await ascendWorkClient
+      .from("profiles")
+      .select("clerk_id,full_name,email")
+      .in("clerk_id", userIds);
+    if (profileError) throw new Error(`Applicant profiles could not be loaded: ${profileError.message}`);
+    for (const profile of profiles ?? []) profilesByUser.set(profile.clerk_id, profile);
+  }
+
+  return applications.map((application) => {
+    const profile = profilesByUser.get(application.user_id);
+    return {
+      id: application.id,
+      projectId: application.project_id,
+      userId: application.user_id,
+      applicantName: profile?.full_name?.trim() || "ASCEND user",
+      applicantEmail: profile?.email ?? null,
+      coverNote: application.cover_note,
+      status: application.status as WorkApplicationAdmin["status"],
+      submittedAt: application.submitted_at,
+      updatedAt: application.updated_at,
+    };
+  });
+}
+
+export async function transitionWorkApplicationAdmin(input: {
+  adminUserId: string;
+  applicationId: string;
+  action: "shortlist" | "accept" | "reject";
+}) {
+  const { data, error } = await ascendWorkClient.rpc("ascend_work_transition_application", {
+    p_application_id: input.applicationId,
+    p_admin_user_id: input.adminUserId,
+    p_action: input.action,
+  });
+  if (error) {
+    const message = error.message ?? "";
+    if (message.includes("ASCEND_WORK_NO_SLOTS")) throw new Error("ASCEND_WORK_NO_SLOTS");
+    if (message.includes("ASCEND_WORK_INVALID_TRANSITION")) throw new Error("ASCEND_WORK_INVALID_TRANSITION");
+    if (message.includes("ASCEND_WORK_APPLICATION_NOT_FOUND")) throw new Error("ASCEND_WORK_APPLICATION_NOT_FOUND");
+    throw new Error(`Application status update failed: ${message}`);
+  }
+  return (data as { application_id: string; application_status: string }[] | null)?.[0] ?? null;
 }
 
 export async function grantWorkAccess(input: {
