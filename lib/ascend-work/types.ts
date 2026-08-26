@@ -99,3 +99,15 @@ export type WorkSubmissionAdmin = WorkApplicationWorkspace & {
   applicantName: string;
   applicantEmail: string | null;
 };
+
+export type WorkVerifiedEvidence = {
+  id: string;
+  applicationId: string;
+  projectId: string;
+  organizationName: string;
+  title: string;
+  summary: string;
+  skills: string[];
+  deliverables: Record<string, string>;
+  verifiedAt: string;
+};

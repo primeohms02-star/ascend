@@ -2,7 +2,7 @@ import "server-only";
 
 import { ascendWorkClient } from "./client";
 import { isAscendWorkAdmin } from "./admin-auth";
-import type { PaidMission, PaidMissionAdmin, WorkAccess, WorkAccessSource, WorkApplicationAdmin, WorkApplicationWorkspace, WorkOrganizationAdmin, WorkSubmissionAdmin, WorkSubmissionStatus } from "./types";
+import type { PaidMission, PaidMissionAdmin, WorkAccess, WorkAccessSource, WorkApplicationAdmin, WorkApplicationWorkspace, WorkOrganizationAdmin, WorkSubmissionAdmin, WorkSubmissionStatus, WorkVerifiedEvidence } from "./types";
 
 type AccessRow = {
   source: WorkAccessSource;
@@ -605,6 +605,28 @@ export async function reviewWorkSubmissionAdmin(input: {
     throw new Error(`Submission review failed: ${message}`);
   }
   return (data as { submission_id: string; submission_status: string }[] | null)?.[0] ?? null;
+}
+
+export async function listUserVerifiedWork(userId: string): Promise<WorkVerifiedEvidence[]> {
+  const { data, error } = await ascendWorkClient
+    .from("ascend_work_verified_evidence")
+    .select("id,application_id,project_id,organization_name,title,summary,skills,deliverables,verified_at")
+    .eq("user_id", userId)
+    .order("verified_at", { ascending: false });
+  if (error) throw new Error(`Verified Work could not be loaded: ${error.message}`);
+  return (data ?? []).map((row) => ({
+    id: row.id,
+    applicationId: row.application_id,
+    projectId: row.project_id,
+    organizationName: row.organization_name,
+    title: row.title,
+    summary: row.summary,
+    skills: row.skills ?? [],
+    deliverables: row.deliverables && typeof row.deliverables === "object" && !Array.isArray(row.deliverables)
+      ? row.deliverables as Record<string, string>
+      : {},
+    verifiedAt: row.verified_at,
+  }));
 }
 
 export async function grantWorkAccess(input: {

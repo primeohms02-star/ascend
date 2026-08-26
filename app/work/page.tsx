@@ -70,9 +70,14 @@ export default async function AscendWorkPage() {
                 <h2 id="paid-missions-heading" className="mt-1 text-2xl font-bold text-white">Available Paid Missions</h2>
                 <p className="mt-2 text-sm leading-6 text-slate-400">Access and matching do not guarantee selection or income.</p>
               </div>
-              <Link href="/work/applications" className="inline-flex items-center gap-2 rounded-xl border border-blue-400/25 bg-blue-400/[0.08] px-4 py-3 text-sm font-bold text-blue-200 transition hover:border-blue-300/40 hover:bg-blue-400/[0.12]">
-                My Applications <ArrowRight size={16} aria-hidden="true" />
-              </Link>
+              <div className="flex flex-wrap gap-2">
+                <Link href="/work/applications" className="inline-flex items-center gap-2 rounded-xl border border-blue-400/25 bg-blue-400/[0.08] px-4 py-3 text-sm font-bold text-blue-200 transition hover:border-blue-300/40 hover:bg-blue-400/[0.12]">
+                  My Applications <ArrowRight size={16} aria-hidden="true" />
+                </Link>
+                <Link href="/work/evidence" className="inline-flex items-center gap-2 rounded-xl border border-emerald-400/25 bg-emerald-400/[0.08] px-4 py-3 text-sm font-bold text-emerald-200 transition hover:border-emerald-300/40 hover:bg-emerald-400/[0.12]">
+                  Verified Work <BadgeCheck size={16} aria-hidden="true" />
+                </Link>
+              </div>
             </div>
 
             {projects.length ? (
