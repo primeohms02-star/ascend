@@ -63,7 +63,8 @@ export default function WorkAdminConsole() {
     event.preventDefault();
     setBusy("project");
     setProjectNotice(null);
-    const form = new FormData(event.currentTarget);
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
     const skills = String(form.get("requiredSkills") ?? "").split(",").map((value) => value.trim()).filter(Boolean);
     const deliverables = String(form.get("deliverables") ?? "").split("\n").map((value) => value.trim()).filter(Boolean);
     try {
@@ -83,7 +84,7 @@ export default function WorkAdminConsole() {
         deliveryDeadline: new Date(String(form.get("deliveryDeadline"))).toISOString(),
         status: "draft",
       });
-      event.currentTarget.reset();
+      formElement.reset();
       setProjectNotice({ tone: "success", message: `Draft “${result.project.title}” created. It is not visible to students.` });
     } catch (error) {
       setProjectNotice({ tone: "error", message: error instanceof Error ? error.message : "Draft could not be created." });
@@ -96,7 +97,8 @@ export default function WorkAdminConsole() {
     event.preventDefault();
     setBusy("access");
     setAccessNotice(null);
-    const form = new FormData(event.currentTarget);
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
     try {
       const result = await postJson<{ grant: { user_id: string; source: string } }>("/api/work/admin/access", {
         userId: form.get("userId"),
@@ -104,7 +106,7 @@ export default function WorkAdminConsole() {
         sponsorName: form.get("sponsorName") || undefined,
         endsAt: form.get("endsAt") ? new Date(String(form.get("endsAt"))).toISOString() : undefined,
       });
-      event.currentTarget.reset();
+      formElement.reset();
       setAccessNotice({ tone: "success", message: `Access granted to ${result.grant.user_id} through ${result.grant.source}.` });
     } catch (error) {
       setAccessNotice({ tone: "error", message: error instanceof Error ? error.message : "Access could not be granted." });
