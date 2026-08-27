@@ -198,19 +198,25 @@ export async function runPartnerScout(triggeredBy: "admin" | "cron"): Promise<{ 
         if (!candidates.has(host) || candidates.get(host)!.confidence < confidence) candidates.set(host, candidate);
       }
     }
-    for (const candidate of candidates.values()) {
-      let profile: Awaited<ReturnType<typeof fetchOfficialProfile>>;
-      try { profile = await fetchOfficialProfile(candidate.host); } catch { profile = null; }
-      if (!profile || profile.kind !== "organisation") continue;
-      const validatedSourceQuality = Math.min(95, candidate.sourceQuality + 10 + (profile.aboutReady ? 8 : 0));
-      if (validatedSourceQuality < 75) continue;
-      const { data: existing, error: existingError } = await ascendWorkClient.from("ascend_work_scout_signals").select("id").eq("website", `https://${candidate.host}`).in("status", ["new", "reviewing", "promoted"]).limit(1).maybeSingle();
-      if (existingError) throw new Error(`SCOUT_DUPLICATE_CHECK_FAILED:${existingError.message}`);
-      if (existing) continue;
-      const confidence = Math.round(validatedSourceQuality * 0.55 + candidate.opportunityFit * 0.45);
-      const { data: added, error } = await ascendWorkClient.from("ascend_work_scout_signals").upsert({ organization_name: profile.identity, website: `https://${candidate.host}`, source_url: candidate.sourceUrl, source_title: candidate.title.slice(0, 300), evidence: candidate.evidence.slice(0, 1500), suggested_category: candidate.category, suggested_mission: candidate.mission, confidence, source_quality: validatedSourceQuality, opportunity_fit: candidate.opportunityFit, need_signal: candidate.needSignal, precision_version: 3, site_identity: profile.identity, contact_url: profile.contactUrl, organization_kind: profile.kind, ownership_verified: true, status: "new", search_query: candidate.query, last_seen_at: new Date().toISOString(), updated_at: new Date().toISOString() }, { onConflict: "source_url" }).select("id");
-      if (error) throw new Error(`SCOUT_SIGNAL_STORE_FAILED:${error.message}`);
-      if ((added ?? []).length > 0) inserted += 1;
+    const candidateList = [...candidates.values()];
+    const validationBatchSize = 12;
+    for (let index = 0; index < candidateList.length; index += validationBatchSize) {
+      const batch = candidateList.slice(index, index + validationBatchSize);
+      const outcomes = await Promise.all(batch.map(async (candidate) => {
+        let profile: Awaited<ReturnType<typeof fetchOfficialProfile>>;
+        try { profile = await fetchOfficialProfile(candidate.host); } catch { profile = null; }
+        if (!profile || profile.kind !== "organisation") return 0;
+        const validatedSourceQuality = Math.min(95, candidate.sourceQuality + 10 + (profile.aboutReady ? 8 : 0));
+        if (validatedSourceQuality < 75) return 0;
+        const { data: existing, error: existingError } = await ascendWorkClient.from("ascend_work_scout_signals").select("id").eq("website", `https://${candidate.host}`).in("status", ["new", "reviewing", "promoted"]).limit(1).maybeSingle();
+        if (existingError) throw new Error(`SCOUT_DUPLICATE_CHECK_FAILED:${existingError.message}`);
+        if (existing) return 0;
+        const confidence = Math.round(validatedSourceQuality * 0.55 + candidate.opportunityFit * 0.45);
+        const { data: added, error } = await ascendWorkClient.from("ascend_work_scout_signals").upsert({ organization_name: profile.identity, website: `https://${candidate.host}`, source_url: candidate.sourceUrl, source_title: candidate.title.slice(0, 300), evidence: candidate.evidence.slice(0, 1500), suggested_category: candidate.category, suggested_mission: candidate.mission, confidence, source_quality: validatedSourceQuality, opportunity_fit: candidate.opportunityFit, need_signal: candidate.needSignal, precision_version: 3, site_identity: profile.identity, contact_url: profile.contactUrl, organization_kind: profile.kind, ownership_verified: true, status: "new", search_query: candidate.query, last_seen_at: new Date().toISOString(), updated_at: new Date().toISOString() }, { onConflict: "source_url" }).select("id");
+        if (error) throw new Error(`SCOUT_SIGNAL_STORE_FAILED:${error.message}`);
+        return (added ?? []).length > 0 ? 1 : 0;
+      }));
+      inserted += outcomes.reduce<number>((total, outcome) => total + outcome, 0);
     }
     await ascendWorkClient.from("ascend_work_scout_runs").update({ status: "completed", discovered_count: discovered, inserted_count: inserted, completed_at: new Date().toISOString() }).eq("id", run.id);
     return { runId: String(run.id), discovered, inserted };

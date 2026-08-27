@@ -3,6 +3,8 @@ import { z } from "zod";
 import { requireAscendWorkAdmin } from "@/lib/ascend-work/admin-auth";
 import { archiveLegacyScoutSignals, listScoutSignals, promoteScoutSignal, runPartnerScout, updateScoutSignal } from "@/lib/ascend-work/partner-scout";
 
+export const maxDuration = 60;
+
 const patchSchema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("status"), id: z.string().uuid(), status: z.enum(["new", "reviewing", "dismissed"]) }),
   z.object({ action: z.literal("promote"), id: z.string().uuid(), contactName: z.string().trim().min(2).max(140), contactEmail: z.string().trim().email().max(320), contactRole: z.string().trim().max(140).optional() }),
