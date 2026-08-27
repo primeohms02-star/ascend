@@ -30,8 +30,9 @@ export default function PartnerScout({ initialSignals, initialConfigured }: { in
   async function run() {
     setBusy("run"); setNotice("");
     const response = await fetch("/api/work/admin/scout", { method: "POST" });
-    const data = await response.json().catch(() => null) as { error?: string; run?: { inserted: number } } | null;
-    setNotice(response.ok ? `Consensus sourcing completed. ${data?.run?.inserted ?? 0} new signals were added.` : data?.error ?? "Consensus sourcing failed.");
+    const data = await response.json().catch(() => null) as { error?: string; run?: { discovered: number; shortlisted: number; confirmed: number; officialVerified: number; inserted: number } } | null;
+    const result = data?.run;
+    setNotice(response.ok && result ? `Sourcing completed: ${result.discovered} discovered, ${result.shortlisted} shortlisted, ${result.confirmed} Brave-confirmed, ${result.officialVerified} officially verified, ${result.inserted} added.` : data?.error ?? "Consensus sourcing failed.");
     await load(); setBusy("");
   }
   async function setStatus(status: "reviewing" | "dismissed") {

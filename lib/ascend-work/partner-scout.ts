@@ -62,8 +62,8 @@ function sourceQualityFor(url: string, title: string, host: string): number {
   const parsed = new URL(url); let score = 45;
   if (host.endsWith(".ng")) score += 12;
   if (parsed.pathname === "/" || parsed.pathname.split("/").filter(Boolean).length <= 1) score += 18;
-  if (editorialPath.test(parsed.pathname)) score -= 35;
-  if (editorialTitle.test(title)) score -= 25;
+  if (editorialPath.test(parsed.pathname)) score -= 10;
+  if (editorialTitle.test(title)) score -= 15;
   const hostToken = organizationNameFromHost(host).toLowerCase().replace(/\s+/g, "");
   if (hostToken.length > 2 && title.toLowerCase().replace(/\s+/g, "").includes(hostToken)) score += 15;
   return Math.max(0, Math.min(100, score));
@@ -237,7 +237,7 @@ export async function promoteScoutSignal(input: { signalId: string; contactName:
   return { leadId: String(lead.id) };
 }
 
-export async function runPartnerScout(triggeredBy: "admin" | "cron"): Promise<{ runId: string; discovered: number; inserted: number }> {
+export async function runPartnerScout(triggeredBy: "admin" | "cron"): Promise<{ runId: string; discovered: number; shortlisted: number; confirmed: number; officialVerified: number; inserted: number }> {
   const tavilyKey = process.env.TAVILY_API_KEY;
   const braveKey = process.env.BRAVE_SEARCH_API_KEY;
   if (!tavilyKey || !braveKey) throw new Error("SCOUT_PROVIDER_NOT_CONFIGURED");
@@ -247,9 +247,9 @@ export async function runPartnerScout(triggeredBy: "admin" | "cron"): Promise<{ 
   if (activeRun) throw new Error("SCOUT_RUN_ALREADY_ACTIVE");
   const { data: run, error: runError } = await ascendWorkClient.from("ascend_work_scout_runs").insert({ provider: "tavily+brave", triggered_by: triggeredBy, status: "running" }).select("id").single();
   if (runError || !run) throw new Error(`SCOUT_RUN_CREATE_FAILED:${runError?.message ?? "empty response"}`);
-  let discovered = 0, inserted = 0;
+  let discovered = 0, shortlisted = 0, confirmed = 0, officialVerified = 0, inserted = 0;
   try {
-    const candidates = new Map<string, { sourceUrl: string; confirmationUrl: string; host: string; title: string; evidence: string; query: string; category: string; mission: string; sourceQuality: number; opportunityFit: number; needSignal: string; demonstratedNeed: string; confidence: number }>();
+    const candidates = new Map<string, { sourceUrl: string; confirmationUrl: string | null; host: string; title: string; evidence: string; query: string; category: string; mission: string; sourceQuality: number; opportunityFit: number; needSignal: string; demonstratedNeed: string; confidence: number }>();
     const settledProviderResults = await Promise.allSettled(defaultQueries.map(async (query) => {
       const [tavily, brave] = await Promise.all([searchTavily(tavilyKey, query), searchBrave(braveKey, query)]);
       return { query, tavily, brave };
@@ -266,38 +266,51 @@ export async function runPartnerScout(triggeredBy: "admin" | "cron"): Promise<{ 
         const sourceUrl = result.url; const host = hostOf(sourceUrl); const evidence = cleanEvidence(result.content);
         if (!host || isExcludedHost(host) || !sourceUrl.startsWith("https://") || evidence.length < 40) continue;
         discovered += 1;
-        const confirmation = braveByHost.get(host); if (!confirmation) continue;
-        const title = decodeHtml(result.title || host); if (isListicle(title, evidence) || isListicle(confirmation.title, confirmation.content)) continue;
+        const confirmation = braveByHost.get(host);
+        const title = decodeHtml(result.title || host); if (isListicle(title, evidence) || (confirmation && isListicle(confirmation.title, confirmation.content))) continue;
         const need = analyzeNeed(`${title}. ${evidence}`);
         const sourceQuality = sourceQualityFor(sourceUrl, title, host);
-        if (sourceQuality < 60 || !need || need.score < 60) continue;
+        if (sourceQuality < 40 || !need || need.score < 60) continue;
         const confidence = Math.min(95, Math.round(sourceQuality * 0.5 + need.score * 0.4 + 10));
-        const candidate = { sourceUrl, confirmationUrl: confirmation.url, host, title, evidence: need.demonstratedNeed, query, category: need.category, mission: need.mission, sourceQuality, opportunityFit: need.score, needSignal: `${need.reason} Tavily and Brave independently confirmed the official domain.`, demonstratedNeed: need.demonstratedNeed, confidence };
+        const candidate = { sourceUrl, confirmationUrl: confirmation?.url ?? null, host, title, evidence: need.demonstratedNeed, query, category: need.category, mission: need.mission, sourceQuality, opportunityFit: need.score, needSignal: need.reason, demonstratedNeed: need.demonstratedNeed, confidence };
         if (!candidates.has(host) || candidates.get(host)!.confidence < confidence) candidates.set(host, candidate);
       }
     }
-    const candidateList = [...candidates.values()];
-    const validationBatchSize = 12;
+    const candidateList = [...candidates.values()].sort((left, right) => right.confidence - left.confidence).slice(0, 12);
+    shortlisted = candidateList.length;
+    const validationBatchSize = 4;
     for (let index = 0; index < candidateList.length; index += validationBatchSize) {
       const batch = candidateList.slice(index, index + validationBatchSize);
       const outcomes = await Promise.all(batch.map(async (candidate) => {
+        let confirmationUrl = candidate.confirmationUrl;
+        if (!confirmationUrl) {
+          try {
+            const targeted = await searchBrave(braveKey, `site:${candidate.host} ${candidate.query}`);
+            confirmationUrl = targeted.find((result) => hostOf(result.url) === candidate.host)?.url ?? null;
+          } catch {
+            confirmationUrl = null;
+          }
+        }
+        if (!confirmationUrl) return 0;
+        confirmed += 1;
         let profile: Awaited<ReturnType<typeof fetchOfficialProfile>>;
         try { profile = await fetchOfficialProfile(candidate.host); } catch { profile = null; }
         if (!profile || profile.kind !== "organisation") return 0;
         const validatedSourceQuality = Math.min(95, candidate.sourceQuality + 10 + (profile.aboutReady ? 8 : 0));
-        if (validatedSourceQuality < 75) return 0;
+        if (validatedSourceQuality < 65) return 0;
+        officialVerified += 1;
         const { data: existing, error: existingError } = await ascendWorkClient.from("ascend_work_scout_signals").select("id").eq("website", `https://${candidate.host}`).in("status", ["new", "reviewing", "promoted"]).limit(1).maybeSingle();
         if (existingError) throw new Error(`SCOUT_DUPLICATE_CHECK_FAILED:${existingError.message}`);
         if (existing) return 0;
         const confidence = Math.round(validatedSourceQuality * 0.55 + candidate.opportunityFit * 0.45);
-        const { data: added, error } = await ascendWorkClient.from("ascend_work_scout_signals").upsert({ organization_name: profile.identity, website: `https://${candidate.host}`, source_url: candidate.sourceUrl, confirmation_url: candidate.confirmationUrl, cross_source_verified: true, source_title: candidate.title.slice(0, 300), evidence: candidate.evidence.slice(0, 900), suggested_category: candidate.category, suggested_mission: candidate.mission, confidence, source_quality: validatedSourceQuality, opportunity_fit: candidate.opportunityFit, need_signal: candidate.needSignal, demonstrated_need: candidate.demonstratedNeed, qualification_status: "potential_need", precision_version: 5, site_identity: profile.identity, contact_url: profile.contactUrl, organization_kind: profile.kind, ownership_verified: true, status: "new", search_query: candidate.query, last_seen_at: new Date().toISOString(), updated_at: new Date().toISOString() }, { onConflict: "source_url" }).select("id");
+        const { data: added, error } = await ascendWorkClient.from("ascend_work_scout_signals").upsert({ organization_name: profile.identity, website: `https://${candidate.host}`, source_url: candidate.sourceUrl, confirmation_url: confirmationUrl, cross_source_verified: true, source_title: candidate.title.slice(0, 300), evidence: candidate.evidence.slice(0, 900), suggested_category: candidate.category, suggested_mission: candidate.mission, confidence, source_quality: validatedSourceQuality, opportunity_fit: candidate.opportunityFit, need_signal: `${candidate.needSignal} Tavily discovered the need and Brave independently confirmed the official domain.`, demonstrated_need: candidate.demonstratedNeed, qualification_status: "potential_need", precision_version: 5, site_identity: profile.identity, contact_url: profile.contactUrl, organization_kind: profile.kind, ownership_verified: true, status: "new", search_query: candidate.query, last_seen_at: new Date().toISOString(), updated_at: new Date().toISOString() }, { onConflict: "source_url" }).select("id");
         if (error) throw new Error(`SCOUT_SIGNAL_STORE_FAILED:${error.message}`);
         return (added ?? []).length > 0 ? 1 : 0;
       }));
       inserted += outcomes.reduce<number>((total, outcome) => total + outcome, 0);
     }
-    await ascendWorkClient.from("ascend_work_scout_runs").update({ status: "completed", discovered_count: discovered, inserted_count: inserted, completed_at: new Date().toISOString() }).eq("id", run.id);
-    return { runId: String(run.id), discovered, inserted };
+    await ascendWorkClient.from("ascend_work_scout_runs").update({ status: "completed", discovered_count: discovered, shortlisted_count: shortlisted, confirmed_count: confirmed, official_verified_count: officialVerified, inserted_count: inserted, completed_at: new Date().toISOString() }).eq("id", run.id);
+    return { runId: String(run.id), discovered, shortlisted, confirmed, officialVerified, inserted };
   } catch (error) {
     await ascendWorkClient.from("ascend_work_scout_runs").update({ status: "failed", error_message: error instanceof Error ? error.message.slice(0, 1000) : "Unknown failure", completed_at: new Date().toISOString() }).eq("id", run.id);
     throw error;
