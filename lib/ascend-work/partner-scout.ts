@@ -195,9 +195,12 @@ async function searchTavily(apiKey: string, query: string): Promise<ProviderResu
   return (payload.results ?? []).map((result) => ({ title: String(result.title ?? ""), url: String(result.url ?? ""), content: String(result.content ?? "") }));
 }
 async function searchBrave(apiKey: string, query: string): Promise<ProviderResult[]> {
-  const params = new URLSearchParams({ q: query, country: "NG", search_lang: "en", count: "20", freshness: "py", safesearch: "strict", extra_snippets: "true" });
-  const response = await fetch(`https://api.search.brave.com/res/v1/web/search?${params}`, { headers: { Accept: "application/json", "X-Subscription-Token": apiKey }, signal: AbortSignal.timeout(10_000) });
-  if (!response.ok) throw new Error(`SCOUT_BRAVE_${response.status}`);
+  const params = new URLSearchParams({ q: query, search_lang: "en", count: "20", freshness: "py", safesearch: "strict", extra_snippets: "true" });
+  const response = await fetch(`https://api.search.brave.com/res/v1/web/search?${params}`, { headers: { Accept: "application/json", "X-Subscription-Token": apiKey, "X-Loc-Country": "NG" }, signal: AbortSignal.timeout(10_000) });
+  if (!response.ok) {
+    const detail = (await response.text().catch(() => "")).replace(/\s+/g, " ").slice(0, 300);
+    throw new Error(`SCOUT_BRAVE_${response.status}${detail ? `:${detail}` : ""}`);
+  }
   const payload = await response.json() as { web?: { results?: Array<{ title?: string; url?: string; description?: string; extra_snippets?: string[] }> } };
   return (payload.web?.results ?? []).map((result) => ({ title: String(result.title ?? ""), url: String(result.url ?? ""), content: [result.description, ...(result.extra_snippets ?? [])].filter(Boolean).join(" ") }));
 }
@@ -247,10 +250,15 @@ export async function runPartnerScout(triggeredBy: "admin" | "cron"): Promise<{ 
   let discovered = 0, inserted = 0;
   try {
     const candidates = new Map<string, { sourceUrl: string; confirmationUrl: string; host: string; title: string; evidence: string; query: string; category: string; mission: string; sourceQuality: number; opportunityFit: number; needSignal: string; demonstratedNeed: string; confidence: number }>();
-    const providerResults = await Promise.all(defaultQueries.map(async (query) => {
+    const settledProviderResults = await Promise.allSettled(defaultQueries.map(async (query) => {
       const [tavily, brave] = await Promise.all([searchTavily(tavilyKey, query), searchBrave(braveKey, query)]);
       return { query, tavily, brave };
     }));
+    const providerResults = settledProviderResults.flatMap((result) => result.status === "fulfilled" ? [result.value] : []);
+    if (providerResults.length === 0) {
+      const failure = settledProviderResults.find((result) => result.status === "rejected");
+      throw failure && failure.status === "rejected" && failure.reason instanceof Error ? failure.reason : new Error("SCOUT_PROVIDERS_UNAVAILABLE");
+    }
     for (const { query, tavily, brave } of providerResults) {
       const braveByHost = new Map<string, ProviderResult>();
       for (const result of brave) { const host = hostOf(result.url); if (host && !isExcludedHost(host) && result.url.startsWith("https://") && !braveByHost.has(host)) braveByHost.set(host, result); }
