@@ -5,11 +5,13 @@ import { isIP } from "node:net";
 import { ascendWorkClient } from "./client";
 
 export type ScoutSignalStatus = "new" | "reviewing" | "promoted" | "dismissed";
+export type ScoutQualificationStatus = "official_organisation" | "potential_need" | "contact_verified";
 export type ScoutSignal = {
   id: string; organizationName: string; website: string; sourceUrl: string; sourceTitle: string;
   evidence: string; suggestedCategory: string; suggestedMission: string; confidence: number;
   sourceQuality: number; opportunityFit: number; needSignal: string; precisionVersion: number;
   siteIdentity: string; contactUrl: string | null; organizationKind: string; ownershipVerified: boolean;
+  demonstratedNeed: string; qualificationStatus: ScoutQualificationStatus;
   status: ScoutSignalStatus; query: string; createdAt: string; updatedAt: string;
 };
 
@@ -30,15 +32,20 @@ const excludedHosts = [
 ];
 const editorialPath = /\/(news|article|articles|blog|blogs|press|story|stories|opportunit(?:y|ies)|grant|grants|directory|listings?)(\/|$)/i;
 const editorialTitle = /\b(top \d+|grant application|funding opportunit|latest news|how to apply|list of|roundup)\b/i;
-const needPatterns: Array<[RegExp, string]> = [
-  [/customer (research|feedback)|survey|market research/i, "The organisation is publicly working on customer or market research."],
-  [/launch(ed|ing)?|new product|new service/i, "A public product or service launch may create a bounded research, content or QA need."],
-  [/campaign|marketing|audience|content/i, "A public campaign or audience initiative may create a contained content or research need."],
-  [/website|platform|mobile app|digital product/i, "A public digital product may create a bounded testing or usability-research need."],
-  [/expand(ed|ing|s)?|growth|new market/i, "Public expansion activity may create a contained market or operations-research need."],
-  [/programme|program|initiative|cohort/i, "A public programme may create a bounded research, data or communications need."],
-  [/data|analytics|report|study/i, "A public data or research activity may create a contained analysis need."],
-];
+type NeedAnalysis = { category: string; reason: string; demonstratedNeed: string; mission: string; score: number };
+const genericIdentity = /^(home|about(?: us)?|welcome|official (?:site|website)|contact(?: us)?|homepage|main page|untitled)$/i;
+const marketingIdentity = /\b(award[- ]winning|best|leading|top[- ]rated|number one|#1|agency in (?:lagos|nigeria)|research for national health|networking for development)\b/i;
+const actionSignal = /\b(announc(?:e|ed|es|ing)|launch(?:ed|es|ing)?|expand(?:ed|s|ing)?|pilot(?:ed|s|ing)?|develop(?:ed|s|ing)?|roll(?:ed|s|ing)? out|redesign(?:ed|s|ing)?|seek(?:s|ing)?|recruit(?:s|ing)?|invite(?:s|d)?|call(?:s|ing)? for|commission(?:ed|s|ing)?|conduct(?:ed|s|ing)?|implement(?:ed|s|ing)?|deliver(?:ed|s|ing)?|introduc(?:e|ed|es|ing)|new|upcoming|current)\b/i;
+const weakPageDebris = /^(?:about|contact|home|hero|banner|logo|image|img|menu|navigation|read more|learn more)(?:\s+(?:image|img))?$/i;
+
+function decodeEntity(entity: string, code: string, hex: string): string {
+  if (code || hex) {
+    const value = Number.parseInt(code || hex, hex ? 16 : 10);
+    return Number.isFinite(value) && value > 0 && value <= 0x10ffff ? String.fromCodePoint(value) : " ";
+  }
+  const named: Record<string, string> = { amp: "&", quot: '"', apos: "'", nbsp: " ", ndash: "–", mdash: "—", hellip: "…", rsquo: "’", lsquo: "‘", rdquo: "”", ldquo: "“" };
+  return named[entity.toLowerCase()] ?? " ";
+}
 
 function hostOf(url: string): string | null { try { return new URL(url).hostname.toLowerCase().replace(/^www\./, ""); } catch { return null; } }
 function isExcludedHost(host: string): boolean { return excludedHosts.some((blocked) => host === blocked || host.endsWith(`.${blocked}`)); }
@@ -58,22 +65,58 @@ function sourceQualityFor(url: string, title: string, host: string): number {
   if (hostToken.length > 2 && title.toLowerCase().replace(/\s+/g, "").includes(hostToken)) score += 15;
   return Math.max(0, Math.min(100, score));
 }
-function opportunityFitFor(text: string): { score: number; reason: string } {
-  const matches = needPatterns.filter(([pattern]) => pattern.test(text));
-  return { score: matches.length === 0 ? 0 : Math.min(85, 40 + matches.length * 15), reason: matches[0]?.[1] ?? "No strong, bounded work-need signal was detected." };
+function decodeHtml(value: string): string {
+  return value
+    .replace(/&#(\d+);|&#x([\da-f]+);|&([a-z]+);/gi, (_match, code: string, hex: string, entity: string) => decodeEntity(entity ?? "", code ?? "", hex ?? ""))
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
-function decodeHtml(value: string): string { return value.replace(/&amp;/gi, "&").replace(/&quot;/gi, '"').replace(/&#39;|&apos;/gi, "'").replace(/&nbsp;/gi, " ").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim(); }
+function cleanEvidence(value: string): string {
+  const cleaned = decodeHtml(value)
+    .replace(/#{1,6}\s*/g, " ")
+    .replace(/\[(?:\.\.\.|…)]/g, " ")
+    .replace(/\b(?:hero|about|banner|logo|thumbnail|featured)\s+(?:img|image)\b/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  const sentences = cleaned.split(/(?<=[.!?])\s+/).map((sentence) => sentence.trim()).filter((sentence) => sentence.length >= 30 && !weakPageDebris.test(sentence));
+  const selected = sentences.filter((sentence) => actionSignal.test(sentence)).slice(0, 3);
+  const evidence = (selected.length > 0 ? selected : sentences.slice(0, 2)).join(" ");
+  return evidence.slice(0, 900).trim();
+}
+function analyzeNeed(value: string): NeedAnalysis | null {
+  const text = cleanEvidence(value);
+  if (text.length < 60 || !actionSignal.test(text)) return null;
+  const matches: Array<{ pattern: RegExp; category: string; reason: string; mission: string }> = [
+    { pattern: /\b(customer research|customer feedback|market research|survey|user research)\b/i, category: "Research", reason: "The organisation publicly described an active customer or market-research need.", mission: "Design and complete a bounded research brief for the stated audience, then deliver source-backed findings and recommendations." },
+    { pattern: /\b(website|platform|mobile app|digital product|portal|user journey|usability)\b/i, category: "Product and website QA", reason: "The organisation publicly described an active digital product or service initiative.", mission: "Test the specific public digital journey identified in the evidence and deliver a prioritized usability and quality-assurance report." },
+    { pattern: /\b(campaign|marketing|audience|content|communications|community engagement)\b/i, category: "Content and marketing", reason: "The organisation publicly described an active campaign, audience or communications initiative.", mission: "Audit the stated initiative’s audience and communications needs, then deliver evidence-backed content recommendations and sample outputs." },
+    { pattern: /\b(data|analytics|dataset|monitoring|evaluation|report|study)\b/i, category: "Data and insights", reason: "The organisation publicly described an active data, reporting or evaluation initiative.", mission: "Verify and structure a bounded sample from the stated initiative, then deliver a concise analysis with documented methodology." },
+    { pattern: /\b(expand|expansion|new market|operations|programme|program|initiative|cohort)\b/i, category: "Operations research", reason: "The organisation publicly described an active programme or operational expansion.", mission: "Research the specific operational question evidenced by the initiative and deliver a scoped implementation brief with practical recommendations." },
+  ];
+  const match = matches.find(({ pattern }) => pattern.test(text));
+  if (!match) return null;
+  const specificity = (text.match(actionSignal) ?? []).length;
+  return { category: match.category, reason: match.reason, demonstratedNeed: text, mission: match.mission, score: Math.min(90, 60 + specificity * 10) };
+}
 function metaContent(html: string, key: string): string {
   const escaped = key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const patterns = [new RegExp(`<meta[^>]+(?:property|name)=["']${escaped}["'][^>]+content=["']([^"']+)["']`, "i"), new RegExp(`<meta[^>]+content=["']([^"']+)["'][^>]+(?:property|name)=["']${escaped}["']`, "i")];
   return decodeHtml(patterns[0].exec(html)?.[1] ?? patterns[1].exec(html)?.[1] ?? "");
 }
-function pageIdentity(html: string, host: string): string {
-  const siteName = metaContent(html, "og:site_name");
-  const title = decodeHtml(/<title[^>]*>([\s\S]*?)<\/title>/i.exec(html)?.[1] ?? "").split(/[|–—]/)[0]?.trim();
-  const h1 = decodeHtml(/<h1[^>]*>([\s\S]*?)<\/h1>/i.exec(html)?.[1] ?? "");
-  const value = siteName || title || h1;
-  return value.length >= 2 && value.length <= 100 ? value : organizationNameFromHost(host);
+function pageIdentity(html: string, host: string): string | null {
+  const hostIdentity = organizationNameFromHost(host);
+  const candidates = [
+    metaContent(html, "og:site_name"),
+    metaContent(html, "application-name"),
+    decodeHtml(/<title[^>]*>([\s\S]*?)<\/title>/i.exec(html)?.[1] ?? "").split(/[|–—]/)[0]?.trim() ?? "",
+    decodeHtml(/<h1[^>]*>([\s\S]*?)<\/h1>/i.exec(html)?.[1] ?? ""),
+  ].map((value) => value.replace(/\s+/g, " ").trim()).filter(Boolean);
+  const credible = candidates.find((value) => value.length >= 2 && value.length <= 100 && !genericIdentity.test(value) && !marketingIdentity.test(value));
+  if (credible) return credible;
+  const normalizedHost = hostIdentity.toLowerCase().replace(/[^a-z0-9]/g, "");
+  const confirmsHost = candidates.some((value) => value.toLowerCase().replace(/[^a-z0-9]/g, "").includes(normalizedHost));
+  return confirmsHost && !genericIdentity.test(hostIdentity) ? hostIdentity : null;
 }
 function contactPath(html: string, website: string): string | null {
   const matches = [...html.matchAll(/href=["']([^"']+)["']/gi)].map((match) => match[1]);
@@ -117,33 +160,25 @@ async function fetchOfficialProfile(host: string): Promise<{ identity: string; c
     }
     if (!response.ok || !response.headers.get("content-type")?.toLowerCase().includes("text/html")) return null;
     const length = Number(response.headers.get("content-length") ?? 0); if (length > 1_000_000) return null;
-    const html = await readLimitedHtml(response); if (!html) return null; const contactUrl = contactPath(html, `https://${host}`); if (!contactUrl) return null;
+    const html = await readLimitedHtml(response); if (!html) return null; const contactUrl = contactPath(html, `https://${host}`); if (!contactUrl) return null; const identity = pageIdentity(html, host); if (!identity) return null;
     const aboutReady = /href=["'][^"']*\/(about|services|products?|programmes?|programs?)(\/|[?#"'])/i.test(html);
-    return { identity: pageIdentity(html, host), contactUrl, aboutReady, kind: organizationKindFor(html) };
+    return { identity, contactUrl, aboutReady, kind: organizationKindFor(html) };
   }
   return null;
 }
-function categoryFor(text: string): string {
-  const value = text.toLowerCase();
-  if (/data|analytics|survey/.test(value)) return "Data and insights";
-  if (/content|media|campaign|marketing/.test(value)) return "Content and marketing";
-  if (/software|platform|website|app|technology/.test(value)) return "Product and website QA";
-  if (/research|report|study|programme/.test(value)) return "Research";
-  return "Operations research";
-}
-function missionFor(category: string): string {
-  if (category === "Data and insights") return "Verify, organize and summarize a bounded dataset or customer-feedback sample.";
-  if (category === "Content and marketing") return "Complete a focused content, audience or competitor audit with evidence-backed recommendations.";
-  if (category === "Product and website QA") return "Test a defined website or product journey and provide a prioritized usability report.";
-  if (category === "Research") return "Produce a source-verified research brief for one clearly defined business question.";
-  return "Research and document a contained operational need with practical recommendations.";
+function isOfficialContact(input: { name: string; email: string; website: string }): boolean {
+  const nameParts = input.name.trim().split(/\s+/).filter(Boolean);
+  if (nameParts.length < 2 || /^(admin|team|support|contact|hello|info|office)$/i.test(nameParts.join(" "))) return false;
+  const emailDomain = input.email.toLowerCase().split("@")[1] ?? "";
+  const websiteHost = hostOf(input.website) ?? "";
+  return Boolean(emailDomain && websiteHost && (emailDomain === websiteHost || emailDomain.endsWith(`.${websiteHost}`) || websiteHost.endsWith(`.${emailDomain}`)));
 }
 function mapSignal(row: Record<string, unknown>): ScoutSignal {
-  return { id: String(row.id), organizationName: String(row.organization_name), website: String(row.website), sourceUrl: String(row.source_url), sourceTitle: String(row.source_title), evidence: String(row.evidence), suggestedCategory: String(row.suggested_category), suggestedMission: String(row.suggested_mission), confidence: Number(row.confidence), sourceQuality: Number(row.source_quality ?? 50), opportunityFit: Number(row.opportunity_fit ?? 50), needSignal: String(row.need_signal ?? "Legacy signal—review its source manually."), precisionVersion: Number(row.precision_version ?? 1), siteIdentity: String(row.site_identity ?? row.organization_name), contactUrl: row.contact_url ? String(row.contact_url) : null, organizationKind: String(row.organization_kind ?? "unverified"), ownershipVerified: Boolean(row.ownership_verified), status: row.status as ScoutSignalStatus, query: String(row.search_query), createdAt: String(row.created_at), updatedAt: String(row.updated_at) };
+  return { id: String(row.id), organizationName: String(row.organization_name), website: String(row.website), sourceUrl: String(row.source_url), sourceTitle: String(row.source_title), evidence: String(row.evidence), suggestedCategory: String(row.suggested_category), suggestedMission: String(row.suggested_mission), confidence: Number(row.confidence), sourceQuality: Number(row.source_quality ?? 50), opportunityFit: Number(row.opportunity_fit ?? 50), needSignal: String(row.need_signal ?? "Legacy signal—review its source manually."), precisionVersion: Number(row.precision_version ?? 1), siteIdentity: String(row.site_identity ?? row.organization_name), contactUrl: row.contact_url ? String(row.contact_url) : null, organizationKind: String(row.organization_kind ?? "unverified"), ownershipVerified: Boolean(row.ownership_verified), demonstratedNeed: String(row.demonstrated_need ?? ""), qualificationStatus: (row.qualification_status ?? "official_organisation") as ScoutQualificationStatus, status: row.status as ScoutSignalStatus, query: String(row.search_query), createdAt: String(row.created_at), updatedAt: String(row.updated_at) };
 }
 
 export async function archiveLegacyScoutSignals(): Promise<number> {
-  const { data, error } = await ascendWorkClient.from("ascend_work_scout_signals").update({ status: "dismissed", updated_at: new Date().toISOString() }).lt("precision_version", 3).in("status", ["new", "reviewing"]).select("id");
+  const { data, error } = await ascendWorkClient.from("ascend_work_scout_signals").update({ status: "dismissed", updated_at: new Date().toISOString() }).lt("precision_version", 4).in("status", ["new", "reviewing"]).select("id");
   if (error) throw new Error(`SCOUT_ARCHIVE_FAILED:${error.message}`);
   return (data ?? []).length;
 }
@@ -163,10 +198,11 @@ export async function updateScoutSignal(id: string, status: ScoutSignalStatus): 
 export async function promoteScoutSignal(input: { signalId: string; contactName: string; contactEmail: string; contactRole?: string }): Promise<{ leadId: string }> {
   const { data: signal, error: signalError } = await ascendWorkClient.from("ascend_work_scout_signals").select("*").eq("id", input.signalId).single();
   if (signalError || !signal) throw new Error("SCOUT_SIGNAL_NOT_FOUND");
-  if (!(["new", "reviewing"] as string[]).includes(String(signal.status)) || Number(signal.precision_version) < 3 || signal.ownership_verified !== true || !signal.contact_url) throw new Error("SCOUT_SIGNAL_NOT_VALIDATED");
+  if (!(["new", "reviewing"] as string[]).includes(String(signal.status)) || Number(signal.precision_version) < 4 || signal.ownership_verified !== true || !signal.contact_url || signal.qualification_status !== "potential_need" || !signal.demonstrated_need) throw new Error("SCOUT_SIGNAL_NOT_VALIDATED");
+  if (!isOfficialContact({ name: input.contactName, email: input.contactEmail, website: String(signal.website) })) throw new Error("SCOUT_CONTACT_NOT_OFFICIAL");
   const { data: lead, error: leadError } = await ascendWorkClient.from("ascend_work_partner_leads").insert({ organization_name: signal.organization_name, website: signal.website, contact_name: input.contactName, contact_email: input.contactEmail.toLowerCase(), contact_role: input.contactRole || null, organization_type: "other", task_category: signal.suggested_category, task_summary: `Public signal for review: ${signal.evidence}\n\nPotential mission: ${signal.suggested_mission}`, expected_deliverables: null, budget_range: "needs-guidance", estimated_hours: "not-sure", funding_confirmed: false, stage: "new", source: "partner_scout" }).select("id").single();
   if (leadError || !lead) throw new Error(`SCOUT_PROMOTE_FAILED:${leadError?.message ?? "empty response"}`);
-  await ascendWorkClient.from("ascend_work_scout_signals").update({ status: "promoted", promoted_lead_id: lead.id, updated_at: new Date().toISOString() }).eq("id", input.signalId);
+  await ascendWorkClient.from("ascend_work_scout_signals").update({ status: "promoted", qualification_status: "contact_verified", verified_contact_name: input.contactName.trim(), verified_contact_email: input.contactEmail.toLowerCase(), verified_contact_role: input.contactRole || null, contact_verified_at: new Date().toISOString(), promoted_lead_id: lead.id, updated_at: new Date().toISOString() }).eq("id", input.signalId);
   return { leadId: String(lead.id) };
 }
 
@@ -181,20 +217,20 @@ export async function runPartnerScout(triggeredBy: "admin" | "cron"): Promise<{ 
   if (runError || !run) throw new Error(`SCOUT_RUN_CREATE_FAILED:${runError?.message ?? "empty response"}`);
   let discovered = 0, inserted = 0;
   try {
-    const candidates = new Map<string, { sourceUrl: string; host: string; title: string; evidence: string; query: string; category: string; mission: string; sourceQuality: number; opportunityFit: number; needSignal: string; confidence: number }>();
+    const candidates = new Map<string, { sourceUrl: string; host: string; title: string; evidence: string; query: string; category: string; mission: string; sourceQuality: number; opportunityFit: number; needSignal: string; demonstratedNeed: string; confidence: number }>();
     for (const query of defaultQueries) {
       const response = await fetch("https://api.tavily.com/search", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ api_key: apiKey, query, search_depth: "basic", max_results: 8, include_answer: false, include_images: false }) });
       if (!response.ok) throw new Error(`SCOUT_PROVIDER_${response.status}`);
       const payload = await response.json() as { results?: Array<{ title?: string; url?: string; content?: string; score?: number }> };
       for (const result of payload.results ?? []) {
-        const sourceUrl = String(result.url ?? ""); const host = hostOf(sourceUrl); const evidence = String(result.content ?? "").trim();
+        const sourceUrl = String(result.url ?? ""); const host = hostOf(sourceUrl); const evidence = cleanEvidence(String(result.content ?? ""));
         if (!host || isExcludedHost(host) || !sourceUrl.startsWith("https://") || evidence.length < 40) continue;
         discovered += 1;
-        const title = String(result.title ?? host); const combined = `${title} ${evidence}`;
-        const sourceQuality = sourceQualityFor(sourceUrl, title, host); const fit = opportunityFitFor(combined);
-        if (sourceQuality < 60 || fit.score < 40) continue;
-        const category = categoryFor(combined); const confidence = Math.round(sourceQuality * 0.55 + fit.score * 0.45);
-        const candidate = { sourceUrl, host, title, evidence, query, category, mission: missionFor(category), sourceQuality, opportunityFit: fit.score, needSignal: fit.reason, confidence };
+        const title = decodeHtml(String(result.title ?? host)); const need = analyzeNeed(`${title}. ${evidence}`);
+        const sourceQuality = sourceQualityFor(sourceUrl, title, host);
+        if (sourceQuality < 60 || !need || need.score < 60) continue;
+        const confidence = Math.round(sourceQuality * 0.55 + need.score * 0.45);
+        const candidate = { sourceUrl, host, title, evidence: need.demonstratedNeed, query, category: need.category, mission: need.mission, sourceQuality, opportunityFit: need.score, needSignal: need.reason, demonstratedNeed: need.demonstratedNeed, confidence };
         if (!candidates.has(host) || candidates.get(host)!.confidence < confidence) candidates.set(host, candidate);
       }
     }
@@ -212,7 +248,7 @@ export async function runPartnerScout(triggeredBy: "admin" | "cron"): Promise<{ 
         if (existingError) throw new Error(`SCOUT_DUPLICATE_CHECK_FAILED:${existingError.message}`);
         if (existing) return 0;
         const confidence = Math.round(validatedSourceQuality * 0.55 + candidate.opportunityFit * 0.45);
-        const { data: added, error } = await ascendWorkClient.from("ascend_work_scout_signals").upsert({ organization_name: profile.identity, website: `https://${candidate.host}`, source_url: candidate.sourceUrl, source_title: candidate.title.slice(0, 300), evidence: candidate.evidence.slice(0, 1500), suggested_category: candidate.category, suggested_mission: candidate.mission, confidence, source_quality: validatedSourceQuality, opportunity_fit: candidate.opportunityFit, need_signal: candidate.needSignal, precision_version: 3, site_identity: profile.identity, contact_url: profile.contactUrl, organization_kind: profile.kind, ownership_verified: true, status: "new", search_query: candidate.query, last_seen_at: new Date().toISOString(), updated_at: new Date().toISOString() }, { onConflict: "source_url" }).select("id");
+        const { data: added, error } = await ascendWorkClient.from("ascend_work_scout_signals").upsert({ organization_name: profile.identity, website: `https://${candidate.host}`, source_url: candidate.sourceUrl, source_title: candidate.title.slice(0, 300), evidence: candidate.evidence.slice(0, 900), suggested_category: candidate.category, suggested_mission: candidate.mission, confidence, source_quality: validatedSourceQuality, opportunity_fit: candidate.opportunityFit, need_signal: candidate.needSignal, demonstrated_need: candidate.demonstratedNeed, qualification_status: "potential_need", precision_version: 4, site_identity: profile.identity, contact_url: profile.contactUrl, organization_kind: profile.kind, ownership_verified: true, status: "new", search_query: candidate.query, last_seen_at: new Date().toISOString(), updated_at: new Date().toISOString() }, { onConflict: "source_url" }).select("id");
         if (error) throw new Error(`SCOUT_SIGNAL_STORE_FAILED:${error.message}`);
         return (added ?? []).length > 0 ? 1 : 0;
       }));
