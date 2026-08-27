@@ -19,6 +19,7 @@ import StepSkills from "./StepSkills";
 import StepChallenge from "./StepChallenge";
 import StepNorthStar from "./StepNorthStar";
 import StepBuilding from "./StepBuilding";
+import StepToolkit from "./StepToolkit";
 import StepComplete from "./StepComplete";
 
 import {
@@ -27,7 +28,7 @@ import {
   type OnboardingOutcome,
 } from "./types";
 
-const TOTAL_STEPS = 8;
+const TOTAL_STEPS = 9;
 const BUILDING_STEP = 7;
 
 export default function Onboarding() {
@@ -229,6 +230,10 @@ export default function Onboarding() {
           )}
 
           {step === 8 && (
+            <StepToolkit onNext={next} />
+          )}
+
+          {step === 9 && (
             <StepComplete
               answers={answers}
               outcome={outcome}

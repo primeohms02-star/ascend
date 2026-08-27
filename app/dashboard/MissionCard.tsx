@@ -85,13 +85,13 @@ export default function MissionCard({
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-orange-300">
               {available
-                ? "Current Mission"
+                ? "Growth Mission"
                 : "Mission Status"}
             </p>
 
             <h2 className="mt-1 text-xl font-semibold text-white">
               {available
-                ? "Your active mission"
+                ? "Your active growth mission"
                 : "No active mission"}
             </h2>
           </div>

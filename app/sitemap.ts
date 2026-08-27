@@ -65,6 +65,15 @@ export default function sitemap():
 
     {
       url:
+        `${SITE_URL}/ascend-work`,
+      changeFrequency:
+        "weekly",
+      priority:
+        0.9,
+    },
+
+    {
+      url:
         `${SITE_URL}/music`,
       changeFrequency:
         "monthly",

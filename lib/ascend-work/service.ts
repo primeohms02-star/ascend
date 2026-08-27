@@ -712,20 +712,52 @@ export async function markWorkNotificationsRead(input: { userId: string; notific
 
 export async function getUserWorkOverview(userId: string): Promise<WorkOverview> {
   const [applicationsResult, evidenceResult, notificationsResult] = await Promise.all([
-    ascendWorkClient.from("ascend_work_applications").select("project_id,status").eq("user_id", userId).neq("status", "withdrawn"),
+    ascendWorkClient.from("ascend_work_applications").select(workspaceSelection).eq("user_id", userId).neq("status", "withdrawn").order("submitted_at", { ascending: false }),
     ascendWorkClient.from("ascend_work_verified_evidence").select("id", { count: "exact", head: true }).eq("user_id", userId),
     ascendWorkClient.from("ascend_work_notifications").select("id", { count: "exact", head: true }).eq("user_id", userId).is("read_at", null),
   ]);
   if (applicationsResult.error) throw new Error(`ASCEND Work overview failed: ${applicationsResult.error.message}`);
   if (evidenceResult.error) throw new Error(`ASCEND Work overview failed: ${evidenceResult.error.message}`);
   if (notificationsResult.error) throw new Error(`ASCEND Work overview failed: ${notificationsResult.error.message}`);
-  const applications = applicationsResult.data ?? [];
+  const applications = (applicationsResult.data as unknown as WorkspaceRow[]).map(mapWorkspace);
+  const activePaidMission = applications.find((item) => item.applicationStatus === "accepted") ?? null;
   return {
     applicationCount: applications.length,
-    activeWorkspaceCount: applications.filter((item) => item.status === "accepted").length,
+    activeWorkspaceCount: applications.filter((item) => item.applicationStatus === "accepted").length,
     verifiedWorkCount: evidenceResult.count ?? 0,
     unreadNotificationCount: notificationsResult.count ?? 0,
-    appliedProjectIds: [...new Set(applications.map((item) => item.project_id))],
+    appliedProjectIds: [...new Set(applications.map((item) => item.projectId))],
+    activePaidMission: activePaidMission ? {
+      applicationId: activePaidMission.id,
+      projectTitle: activePaidMission.projectTitle,
+      organizationName: activePaidMission.organizationName,
+      deliveryDeadline: activePaidMission.deliveryDeadline,
+      submissionStatus: activePaidMission.submission?.status ?? null,
+    } : null,
+  };
+}
+
+export async function getActivePaidMissionContext(userId: string) {
+  const { data, error } = await ascendWorkClient
+    .from("ascend_work_applications")
+    .select(workspaceSelection)
+    .eq("user_id", userId)
+    .eq("status", "accepted")
+    .order("submitted_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) throw new Error(`Active Paid Mission context could not be loaded: ${error.message}`);
+  if (!data) return null;
+
+  const workspace = mapWorkspace(data as unknown as WorkspaceRow);
+  return {
+    applicationId: workspace.id,
+    title: workspace.projectTitle,
+    organization: workspace.organizationName,
+    deliverables: workspace.deliverables,
+    deliveryDeadline: workspace.deliveryDeadline,
+    submissionStatus: workspace.submission?.status ?? null,
   };
 }
 

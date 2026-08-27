@@ -40,6 +40,11 @@ const productLinks = [
   },
 
   {
+    label: "ASCEND Work",
+    href: "/ascend-work",
+  },
+
+  {
     label: "ASCEND Music",
     href: "/music",
   },

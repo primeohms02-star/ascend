@@ -127,6 +127,13 @@ export type WorkOverview = {
   verifiedWorkCount: number;
   unreadNotificationCount: number;
   appliedProjectIds: string[];
+  activePaidMission: {
+    applicationId: string;
+    projectTitle: string;
+    organizationName: string;
+    deliveryDeadline: string;
+    submissionStatus: WorkSubmissionStatus | null;
+  } | null;
 };
 
 export type WorkAuditEvent = {

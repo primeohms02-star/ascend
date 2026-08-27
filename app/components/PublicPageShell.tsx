@@ -55,6 +55,14 @@ const navigation = [
 
   {
     label:
+      "Work",
+
+    href:
+      "/ascend-work",
+  },
+
+  {
+    label:
       "Music",
 
     href:
