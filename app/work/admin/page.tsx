@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import AppShell from "@/app/components/navigation/AppShell";
 import { isAscendWorkAdmin } from "@/lib/ascend-work/admin-auth";
 import { listPaidMissionsAdmin } from "@/lib/ascend-work/service";
+import { listPartnerLeads } from "@/lib/ascend-work/partners";
 
 import WorkAdminConsole from "./WorkAdminConsole";
 
@@ -11,7 +12,7 @@ export default async function AscendWorkAdminPage() {
   const { userId } = await auth();
   if (!userId) redirect("/sign-in");
   if (!isAscendWorkAdmin(userId)) redirect("/work");
-  const projects = await listPaidMissionsAdmin();
+  const [projects, partners] = await Promise.all([listPaidMissionsAdmin(), listPartnerLeads()]);
 
   return (
     <AppShell>
@@ -25,7 +26,7 @@ export default async function AscendWorkAdminPage() {
             </p>
           </header>
 
-          <WorkAdminConsole initialProjects={projects} />
+          <WorkAdminConsole initialProjects={projects} initialPartners={partners} />
         </div>
       </main>
     </AppShell>

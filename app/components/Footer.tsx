@@ -48,6 +48,10 @@ const productLinks = [
     label: "ASCEND Music",
     href: "/music",
   },
+  {
+    label: "ASCEND Work for Organisations",
+    href: "/for-organisations",
+  },
 ];
 
 const exploreLinks = [

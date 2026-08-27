@@ -70,6 +70,11 @@ const navigation = [
   },
 
   {
+    label: "Organisations",
+    href: "/for-organisations",
+  },
+
+  {
     label:
       "FAQ",
 

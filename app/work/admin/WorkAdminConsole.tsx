@@ -3,11 +3,13 @@
 import { FormEvent, useState } from "react";
 
 import type { PaidMissionAdmin } from "@/lib/ascend-work/types";
+import type { WorkPartnerLead } from "@/lib/ascend-work/partners";
 
 import MissionManagement from "./MissionManagement";
 import ApplicantManagement from "./ApplicantManagement";
 import SubmissionManagement from "./SubmissionManagement";
 import AuditHistory from "./AuditHistory";
+import PartnerPipeline from "./PartnerPipeline";
 
 type Notice = { tone: "success" | "error"; message: string } | null;
 
@@ -36,7 +38,7 @@ function NoticeBox({ notice }: { notice: Notice }) {
   );
 }
 
-export default function WorkAdminConsole({ initialProjects }: { initialProjects: PaidMissionAdmin[] }) {
+export default function WorkAdminConsole({ initialProjects, initialPartners }: { initialProjects: PaidMissionAdmin[]; initialPartners: WorkPartnerLead[] }) {
   const [organizationId, setOrganizationId] = useState("");
   const [organizationNotice, setOrganizationNotice] = useState<Notice>(null);
   const [projectNotice, setProjectNotice] = useState<Notice>(null);
@@ -124,6 +126,7 @@ export default function WorkAdminConsole({ initialProjects }: { initialProjects:
 
   return (
     <div className="mt-8 grid gap-5">
+      <PartnerPipeline initialPartners={initialPartners} />
       <MissionManagement initialProjects={initialProjects} />
       <ApplicantManagement projects={initialProjects} />
       <SubmissionManagement projects={initialProjects} />

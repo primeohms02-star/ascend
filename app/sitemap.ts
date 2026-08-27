@@ -82,6 +82,12 @@ export default function sitemap():
     },
 
     {
+      url: `${SITE_URL}/for-organisations`,
+      changeFrequency: "weekly",
+      priority: 0.9,
+    },
+
+    {
       url:
         `${SITE_URL}/roadmap`,
       changeFrequency:

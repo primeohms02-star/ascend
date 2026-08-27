@@ -40,6 +40,10 @@ const navigation = [
     href: "/music",
   },
   {
+    label: "For Organisations",
+    href: "/for-organisations",
+  },
+  {
     label: "Roadmap",
     href: "/roadmap",
   },
