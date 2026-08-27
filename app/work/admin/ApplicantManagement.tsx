@@ -22,12 +22,50 @@ function statusTone(status: WorkApplicationAdmin["status"]) {
 }
 
 export default function ApplicantManagement({ projects }: { projects: PaidMissionAdmin[] }) {
-  const eligibleProjects = useMemo(() => projects.filter((project) => ["published", "paused", "closed", "completed"].includes(project.status)), [projects]);
+  const eligibleProjects = useMemo(() => projects
+    .filter((project) => ["published", "paused", "closed", "completed"].includes(project.status))
+    .sort((left, right) => {
+      const priority = { published: 0, paused: 1, closed: 2, completed: 3 } as const;
+      return priority[left.status as keyof typeof priority] - priority[right.status as keyof typeof priority]
+        || new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime();
+    }), [projects]);
   const [projectId, setProjectId] = useState(eligibleProjects[0]?.id ?? "");
   const [applications, setApplications] = useState<WorkApplicationAdmin[]>([]);
   const [loading, setLoading] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [notice, setNotice] = useState<Notice>(null);
+
+  useEffect(() => {
+    let active = true;
+
+    async function selectLatestAttention() {
+      if (!eligibleProjects.length) return;
+      try {
+        const results = await Promise.all(eligibleProjects.map(async (project) => ({
+          project,
+          applications: (await requestJson<{ applications: WorkApplicationAdmin[] }>(`/api/work/admin/applications?projectId=${encodeURIComponent(project.id)}`)).applications,
+        })));
+        if (!active) return;
+        const attention = results
+          .flatMap(({ project, applications: items }) => items
+            .filter((item) => ["submitted", "shortlisted"].includes(item.status))
+            .map((item) => ({ project, item })))
+          .sort((left, right) => new Date(right.item.updatedAt).getTime() - new Date(left.item.updatedAt).getTime())[0];
+        const selectedResult = attention
+          ? results.find((result) => result.project.id === attention.project.id)
+          : results[0];
+        if (!selectedResult) return;
+        setProjectId(selectedResult.project.id);
+        setApplications(selectedResult.applications);
+      } catch (error) {
+        if (active) setNotice({ tone: "error", message: error instanceof Error ? error.message : "Applicants could not be loaded." });
+      }
+    }
+
+    void selectLatestAttention();
+    const interval = window.setInterval(() => void selectLatestAttention(), 20_000);
+    return () => { active = false; window.clearInterval(interval); };
+  }, [eligibleProjects]);
 
   async function loadApplications(selectedProjectId: string) {
     if (!selectedProjectId) {

@@ -13,12 +13,50 @@ async function requestJson<T>(url: string, options?: RequestInit): Promise<T> {
 }
 
 export default function SubmissionManagement({ projects }: { projects: PaidMissionAdmin[] }) {
-  const eligible = useMemo(() => projects.filter((project) => ["published", "paused", "closed", "completed"].includes(project.status)), [projects]);
+  const eligible = useMemo(() => projects
+    .filter((project) => ["published", "paused", "closed", "completed"].includes(project.status))
+    .sort((left, right) => {
+      const priority = { published: 0, paused: 1, closed: 2, completed: 3 } as const;
+      return priority[left.status as keyof typeof priority] - priority[right.status as keyof typeof priority]
+        || new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime();
+    }), [projects]);
   const [projectId, setProjectId] = useState(eligible[0]?.id ?? "");
   const [submissions, setSubmissions] = useState<WorkSubmissionAdmin[]>([]);
   const [revisionNotes, setRevisionNotes] = useState<Record<string, string>>({});
   const [busyId, setBusyId] = useState<string | null>(null);
   const [notice, setNotice] = useState<{ tone: "success" | "error"; message: string } | null>(null);
+
+  useEffect(() => {
+    let active = true;
+
+    async function selectLatestAttention() {
+      if (!eligible.length) return;
+      try {
+        const results = await Promise.all(eligible.map(async (project) => ({
+          project,
+          submissions: (await requestJson<{ submissions: WorkSubmissionAdmin[] }>(`/api/work/admin/submissions?projectId=${encodeURIComponent(project.id)}`)).submissions,
+        })));
+        if (!active) return;
+        const attention = results
+          .flatMap(({ project, submissions: items }) => items
+            .filter((item) => item.submission?.status === "submitted")
+            .map((item) => ({ project, item })))
+          .sort((left, right) => new Date(right.item.submission?.updatedAt ?? 0).getTime() - new Date(left.item.submission?.updatedAt ?? 0).getTime())[0];
+        const selectedResult = attention
+          ? results.find((result) => result.project.id === attention.project.id)
+          : results[0];
+        if (!selectedResult) return;
+        setProjectId(selectedResult.project.id);
+        setSubmissions(selectedResult.submissions);
+      } catch (error) {
+        if (active) setNotice({ tone: "error", message: error instanceof Error ? error.message : "Submissions could not be loaded." });
+      }
+    }
+
+    void selectLatestAttention();
+    const interval = window.setInterval(() => void selectLatestAttention(), 20_000);
+    return () => { active = false; window.clearInterval(interval); };
+  }, [eligible]);
 
   async function load(id: string) {
     if (!id) { setSubmissions([]); return; }

@@ -7,7 +7,13 @@ import type { PaidMissionAdmin, WorkAuditEvent } from "@/lib/ascend-work/types";
 function label(value: string) { return value.replaceAll("_", " "); }
 
 export default function AuditHistory({ projects }: { projects: PaidMissionAdmin[] }) {
-  const eligible = useMemo(() => projects.filter((project) => !["draft", "review"].includes(project.status)), [projects]);
+  const eligible = useMemo(() => projects
+    .filter((project) => !["draft", "review"].includes(project.status))
+    .sort((left, right) => {
+      const priority = { published: 0, paused: 1, closed: 2, completed: 3, cancelled: 4 } as const;
+      return priority[left.status as keyof typeof priority] - priority[right.status as keyof typeof priority]
+        || new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime();
+    }), [projects]);
   const [projectId, setProjectId] = useState(eligible[0]?.id ?? "");
   const [events, setEvents] = useState<WorkAuditEvent[]>([]);
   const [error, setError] = useState<string | null>(null);

@@ -32,8 +32,14 @@ function statusClass(status: PaidMissionAdmin["status"]) {
 }
 
 export default function MissionManagement({ initialProjects }: { initialProjects: PaidMissionAdmin[] }) {
-  const [projects, setProjects] = useState<PaidMissionAdmin[]>(initialProjects);
-  const [selectedId, setSelectedId] = useState<string | null>(initialProjects[0]?.id ?? null);
+  const orderProjects = (items: PaidMissionAdmin[]) => [...items].sort((left, right) => {
+    const priority = { review: 0, published: 1, paused: 2, closed: 3, draft: 4, completed: 5, cancelled: 6 } as const;
+    return priority[left.status] - priority[right.status]
+      || new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime();
+  });
+  const orderedInitialProjects = orderProjects(initialProjects);
+  const [projects, setProjects] = useState<PaidMissionAdmin[]>(orderedInitialProjects);
+  const [selectedId, setSelectedId] = useState<string | null>(orderedInitialProjects[0]?.id ?? null);
   const [busy, setBusy] = useState<string | null>(null);
   const [dirty, setDirty] = useState(false);
   const [notice, setNotice] = useState<Notice>(null);
@@ -41,12 +47,13 @@ export default function MissionManagement({ initialProjects }: { initialProjects
   const loadProjects = useCallback(async (preferredId?: string) => {
     try {
       const result = await requestJson<{ projects: PaidMissionAdmin[] }>("/api/work/admin/projects");
-      setProjects(result.projects);
+      const orderedProjects = orderProjects(result.projects);
+      setProjects(orderedProjects);
       setSelectedId((current) => {
         const candidate = preferredId ?? current;
-        return candidate && result.projects.some((project) => project.id === candidate)
+        return candidate && orderedProjects.some((project) => project.id === candidate)
           ? candidate
-          : result.projects[0]?.id ?? null;
+          : orderedProjects[0]?.id ?? null;
       });
     } catch (error) {
       setNotice({ tone: "error", message: error instanceof Error ? error.message : "Paid Missions could not be loaded." });
