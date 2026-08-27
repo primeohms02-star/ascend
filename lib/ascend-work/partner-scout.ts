@@ -12,16 +12,17 @@ export type ScoutSignal = {
   sourceQuality: number; opportunityFit: number; needSignal: string; precisionVersion: number;
   siteIdentity: string; contactUrl: string | null; organizationKind: string; ownershipVerified: boolean;
   demonstratedNeed: string; qualificationStatus: ScoutQualificationStatus;
+  crossSourceVerified: boolean; confirmationUrl: string | null;
   status: ScoutSignalStatus; query: string; createdAt: string; updatedAt: string;
 };
 
 const defaultQueries = [
-  "Nigeria startup launched new product official company",
-  "Nigeria SME expanding operations official website",
-  "Nigeria social enterprise new programme official",
-  "Nigeria creative agency new campaign official",
-  "Nigeria NGO research programme official",
-  "Nigeria technology startup customer research official",
+  "Nigeria organisation announced request for proposal research data official website",
+  "Nigeria company launched digital product platform official website",
+  "Nigeria NGO announced programme monitoring evaluation official website",
+  "Nigeria SME announced expansion market research official website",
+  "Nigeria organisation seeking survey customer research official website",
+  "Nigeria creative company announced campaign communications official website",
 ];
 const excludedHosts = [
   "linkedin.com", "facebook.com", "instagram.com", "x.com", "twitter.com", "youtube.com", "wikipedia.org",
@@ -35,8 +36,10 @@ const editorialTitle = /\b(top \d+|grant application|funding opportunit|latest n
 type NeedAnalysis = { category: string; reason: string; demonstratedNeed: string; mission: string; score: number };
 const genericIdentity = /^(home|about(?: us)?|welcome|official (?:site|website)|contact(?: us)?|homepage|main page|untitled)$/i;
 const marketingIdentity = /\b(award[- ]winning|best|leading|top[- ]rated|number one|#1|agency in (?:lagos|nigeria)|research for national health|networking for development)\b/i;
-const actionSignal = /\b(announc(?:e|ed|es|ing)|launch(?:ed|es|ing)?|expand(?:ed|s|ing)?|pilot(?:ed|s|ing)?|develop(?:ed|s|ing)?|roll(?:ed|s|ing)? out|redesign(?:ed|s|ing)?|seek(?:s|ing)?|recruit(?:s|ing)?|invite(?:s|d)?|call(?:s|ing)? for|commission(?:ed|s|ing)?|conduct(?:ed|s|ing)?|implement(?:ed|s|ing)?|deliver(?:ed|s|ing)?|introduc(?:e|ed|es|ing)|new|upcoming|current)\b/i;
+const actionSignal = /\b(announc(?:e|ed|es|ing)|launch(?:ed|es|ing)?|expand(?:ed|s|ing)?|pilot(?:ed|s|ing)?|develop(?:ed|s|ing)?|roll(?:ed|s|ing)? out|redesign(?:ed|s|ing)?|seek(?:s|ing)?|recruit(?:s|ing)?|invite(?:s|d)?|call(?:s|ing)? for|commission(?:ed|s|ing)?|conduct(?:ed|s|ing)?|implement(?:ed|s|ing)?|deliver(?:ed|s|ing)?|introduc(?:e|ed|es|ing)|upcoming|currently)\b/i;
 const weakPageDebris = /^(?:about|contact|home|hero|banner|logo|image|img|menu|navigation|read more|learn more)(?:\s+(?:image|img))?$/i;
+const sloganLanguage = /\b(creating|enabling|empowering|transforming|building|shaping|driving|unlocking)\b.*\b(environment|future|wealth|growth|success|change|opportunities?)\b/i;
+const currentYear = new Date().getUTCFullYear();
 
 function decodeEntity(entity: string, code: string, hex: string): string {
   if (code || hex) {
@@ -84,9 +87,19 @@ function cleanEvidence(value: string): string {
   const evidence = (selected.length > 0 ? selected : sentences.slice(0, 2)).join(" ");
   return evidence.slice(0, 900).trim();
 }
+function isListicle(title: string, evidence: string): boolean {
+  const combined = `${title} ${evidence}`;
+  const numberedEntries = combined.match(/(?:^|\s)\d{1,2}[.)]\s+[A-Z]/g) ?? [];
+  const websites = combined.match(/\b(?:https?:\/\/|www\.)[^\s)]+/gi) ?? [];
+  return /\b(top\s+\d+|list of|\d+\s+(?:best|leading|top)\s+(?:companies|startups|organisations|organizations))\b/i.test(combined) || numberedEntries.length >= 2 || websites.length >= 2;
+}
+function isFreshEvidence(value: string): boolean {
+  const years = [...value.matchAll(/\b(20\d{2})\b/g)].map((match) => Number(match[1])).filter(Number.isFinite);
+  return years.length === 0 || Math.max(...years) >= currentYear - 1;
+}
 function analyzeNeed(value: string): NeedAnalysis | null {
   const text = cleanEvidence(value);
-  if (text.length < 60 || !actionSignal.test(text)) return null;
+  if (text.length < 60 || !actionSignal.test(text) || !isFreshEvidence(text)) return null;
   const matches: Array<{ pattern: RegExp; category: string; reason: string; mission: string }> = [
     { pattern: /\b(customer research|customer feedback|market research|survey|user research)\b/i, category: "Research", reason: "The organisation publicly described an active customer or market-research need.", mission: "Design and complete a bounded research brief for the stated audience, then deliver source-backed findings and recommendations." },
     { pattern: /\b(website|platform|mobile app|digital product|portal|user journey|usability)\b/i, category: "Product and website QA", reason: "The organisation publicly described an active digital product or service initiative.", mission: "Test the specific public digital journey identified in the evidence and deliver a prioritized usability and quality-assurance report." },
@@ -106,16 +119,17 @@ function metaContent(html: string, key: string): string {
 }
 function pageIdentity(html: string, host: string): string | null {
   const hostIdentity = organizationNameFromHost(host);
+  const structuredNames = [...html.matchAll(/"@type"\s*:\s*"(?:Organization|Corporation|NGO|GovernmentOrganization)"[\s\S]{0,800}?"name"\s*:\s*"([^"]+)"/gi)].map((match) => decodeHtml(match[1]));
   const candidates = [
+    ...structuredNames,
     metaContent(html, "og:site_name"),
     metaContent(html, "application-name"),
-    decodeHtml(/<title[^>]*>([\s\S]*?)<\/title>/i.exec(html)?.[1] ?? "").split(/[|–—]/)[0]?.trim() ?? "",
-    decodeHtml(/<h1[^>]*>([\s\S]*?)<\/h1>/i.exec(html)?.[1] ?? ""),
   ].map((value) => value.replace(/\s+/g, " ").trim()).filter(Boolean);
-  const credible = candidates.find((value) => value.length >= 2 && value.length <= 100 && !genericIdentity.test(value) && !marketingIdentity.test(value));
+  const credible = candidates.find((value) => value.length >= 2 && value.length <= 100 && value.split(/\s+/).length <= 8 && !/[.!?]$/.test(value) && !genericIdentity.test(value) && !marketingIdentity.test(value) && !sloganLanguage.test(value));
   if (credible) return credible;
+  const fallbackCandidates = [decodeHtml(/<title[^>]*>([\s\S]*?)<\/title>/i.exec(html)?.[1] ?? ""), decodeHtml(/<h1[^>]*>([\s\S]*?)<\/h1>/i.exec(html)?.[1] ?? "")];
   const normalizedHost = hostIdentity.toLowerCase().replace(/[^a-z0-9]/g, "");
-  const confirmsHost = candidates.some((value) => value.toLowerCase().replace(/[^a-z0-9]/g, "").includes(normalizedHost));
+  const confirmsHost = fallbackCandidates.some((value) => value.toLowerCase().replace(/[^a-z0-9]/g, "").includes(normalizedHost));
   return confirmsHost && !genericIdentity.test(hostIdentity) ? hostIdentity : null;
 }
 function contactPath(html: string, website: string): string | null {
@@ -173,12 +187,26 @@ function isOfficialContact(input: { name: string; email: string; website: string
   const websiteHost = hostOf(input.website) ?? "";
   return Boolean(emailDomain && websiteHost && (emailDomain === websiteHost || emailDomain.endsWith(`.${websiteHost}`) || websiteHost.endsWith(`.${emailDomain}`)));
 }
+type ProviderResult = { title: string; url: string; content: string };
+async function searchTavily(apiKey: string, query: string): Promise<ProviderResult[]> {
+  const response = await fetch("https://api.tavily.com/search", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ api_key: apiKey, query, search_depth: "basic", max_results: 10, include_answer: false, include_images: false, time_range: "year" }), signal: AbortSignal.timeout(10_000) });
+  if (!response.ok) throw new Error(`SCOUT_TAVILY_${response.status}`);
+  const payload = await response.json() as { results?: Array<{ title?: string; url?: string; content?: string }> };
+  return (payload.results ?? []).map((result) => ({ title: String(result.title ?? ""), url: String(result.url ?? ""), content: String(result.content ?? "") }));
+}
+async function searchBrave(apiKey: string, query: string): Promise<ProviderResult[]> {
+  const params = new URLSearchParams({ q: query, country: "NG", search_lang: "en", count: "20", freshness: "py", safesearch: "strict", extra_snippets: "true" });
+  const response = await fetch(`https://api.search.brave.com/res/v1/web/search?${params}`, { headers: { Accept: "application/json", "X-Subscription-Token": apiKey }, signal: AbortSignal.timeout(10_000) });
+  if (!response.ok) throw new Error(`SCOUT_BRAVE_${response.status}`);
+  const payload = await response.json() as { web?: { results?: Array<{ title?: string; url?: string; description?: string; extra_snippets?: string[] }> } };
+  return (payload.web?.results ?? []).map((result) => ({ title: String(result.title ?? ""), url: String(result.url ?? ""), content: [result.description, ...(result.extra_snippets ?? [])].filter(Boolean).join(" ") }));
+}
 function mapSignal(row: Record<string, unknown>): ScoutSignal {
-  return { id: String(row.id), organizationName: String(row.organization_name), website: String(row.website), sourceUrl: String(row.source_url), sourceTitle: String(row.source_title), evidence: String(row.evidence), suggestedCategory: String(row.suggested_category), suggestedMission: String(row.suggested_mission), confidence: Number(row.confidence), sourceQuality: Number(row.source_quality ?? 50), opportunityFit: Number(row.opportunity_fit ?? 50), needSignal: String(row.need_signal ?? "Legacy signal—review its source manually."), precisionVersion: Number(row.precision_version ?? 1), siteIdentity: String(row.site_identity ?? row.organization_name), contactUrl: row.contact_url ? String(row.contact_url) : null, organizationKind: String(row.organization_kind ?? "unverified"), ownershipVerified: Boolean(row.ownership_verified), demonstratedNeed: String(row.demonstrated_need ?? ""), qualificationStatus: (row.qualification_status ?? "official_organisation") as ScoutQualificationStatus, status: row.status as ScoutSignalStatus, query: String(row.search_query), createdAt: String(row.created_at), updatedAt: String(row.updated_at) };
+  return { id: String(row.id), organizationName: String(row.organization_name), website: String(row.website), sourceUrl: String(row.source_url), sourceTitle: String(row.source_title), evidence: String(row.evidence), suggestedCategory: String(row.suggested_category), suggestedMission: String(row.suggested_mission), confidence: Number(row.confidence), sourceQuality: Number(row.source_quality ?? 50), opportunityFit: Number(row.opportunity_fit ?? 50), needSignal: String(row.need_signal ?? "Legacy signal—review its source manually."), precisionVersion: Number(row.precision_version ?? 1), siteIdentity: String(row.site_identity ?? row.organization_name), contactUrl: row.contact_url ? String(row.contact_url) : null, organizationKind: String(row.organization_kind ?? "unverified"), ownershipVerified: Boolean(row.ownership_verified), demonstratedNeed: String(row.demonstrated_need ?? ""), qualificationStatus: (row.qualification_status ?? "official_organisation") as ScoutQualificationStatus, crossSourceVerified: Boolean(row.cross_source_verified), confirmationUrl: row.confirmation_url ? String(row.confirmation_url) : null, status: row.status as ScoutSignalStatus, query: String(row.search_query), createdAt: String(row.created_at), updatedAt: String(row.updated_at) };
 }
 
 export async function archiveLegacyScoutSignals(): Promise<number> {
-  const { data, error } = await ascendWorkClient.from("ascend_work_scout_signals").update({ status: "dismissed", updated_at: new Date().toISOString() }).lt("precision_version", 4).in("status", ["new", "reviewing"]).select("id");
+  const { data, error } = await ascendWorkClient.from("ascend_work_scout_signals").update({ status: "dismissed", updated_at: new Date().toISOString() }).lt("precision_version", 5).in("status", ["new", "reviewing"]).select("id");
   if (error) throw new Error(`SCOUT_ARCHIVE_FAILED:${error.message}`);
   return (data ?? []).length;
 }
@@ -198,7 +226,7 @@ export async function updateScoutSignal(id: string, status: ScoutSignalStatus): 
 export async function promoteScoutSignal(input: { signalId: string; contactName: string; contactEmail: string; contactRole?: string }): Promise<{ leadId: string }> {
   const { data: signal, error: signalError } = await ascendWorkClient.from("ascend_work_scout_signals").select("*").eq("id", input.signalId).single();
   if (signalError || !signal) throw new Error("SCOUT_SIGNAL_NOT_FOUND");
-  if (!(["new", "reviewing"] as string[]).includes(String(signal.status)) || Number(signal.precision_version) < 4 || signal.ownership_verified !== true || !signal.contact_url || signal.qualification_status !== "potential_need" || !signal.demonstrated_need) throw new Error("SCOUT_SIGNAL_NOT_VALIDATED");
+  if (!(["new", "reviewing"] as string[]).includes(String(signal.status)) || Number(signal.precision_version) < 5 || signal.ownership_verified !== true || signal.cross_source_verified !== true || !signal.contact_url || signal.qualification_status !== "potential_need" || !signal.demonstrated_need) throw new Error("SCOUT_SIGNAL_NOT_VALIDATED");
   if (!isOfficialContact({ name: input.contactName, email: input.contactEmail, website: String(signal.website) })) throw new Error("SCOUT_CONTACT_NOT_OFFICIAL");
   const { data: lead, error: leadError } = await ascendWorkClient.from("ascend_work_partner_leads").insert({ organization_name: signal.organization_name, website: signal.website, contact_name: input.contactName, contact_email: input.contactEmail.toLowerCase(), contact_role: input.contactRole || null, organization_type: "other", task_category: signal.suggested_category, task_summary: `Public signal for review: ${signal.evidence}\n\nPotential mission: ${signal.suggested_mission}`, expected_deliverables: null, budget_range: "needs-guidance", estimated_hours: "not-sure", funding_confirmed: false, stage: "new", source: "partner_scout" }).select("id").single();
   if (leadError || !lead) throw new Error(`SCOUT_PROMOTE_FAILED:${leadError?.message ?? "empty response"}`);
@@ -207,30 +235,36 @@ export async function promoteScoutSignal(input: { signalId: string; contactName:
 }
 
 export async function runPartnerScout(triggeredBy: "admin" | "cron"): Promise<{ runId: string; discovered: number; inserted: number }> {
-  const apiKey = process.env.TAVILY_API_KEY;
-  if (!apiKey) throw new Error("SCOUT_PROVIDER_NOT_CONFIGURED");
+  const tavilyKey = process.env.TAVILY_API_KEY;
+  const braveKey = process.env.BRAVE_SEARCH_API_KEY;
+  if (!tavilyKey || !braveKey) throw new Error("SCOUT_PROVIDER_NOT_CONFIGURED");
   const activeSince = new Date(Date.now() - 15 * 60 * 1000).toISOString();
   const { data: activeRun, error: activeRunError } = await ascendWorkClient.from("ascend_work_scout_runs").select("id").eq("status", "running").gte("started_at", activeSince).limit(1).maybeSingle();
   if (activeRunError) throw new Error(`SCOUT_RUN_CHECK_FAILED:${activeRunError.message}`);
   if (activeRun) throw new Error("SCOUT_RUN_ALREADY_ACTIVE");
-  const { data: run, error: runError } = await ascendWorkClient.from("ascend_work_scout_runs").insert({ provider: "tavily", triggered_by: triggeredBy, status: "running" }).select("id").single();
+  const { data: run, error: runError } = await ascendWorkClient.from("ascend_work_scout_runs").insert({ provider: "tavily+brave", triggered_by: triggeredBy, status: "running" }).select("id").single();
   if (runError || !run) throw new Error(`SCOUT_RUN_CREATE_FAILED:${runError?.message ?? "empty response"}`);
   let discovered = 0, inserted = 0;
   try {
-    const candidates = new Map<string, { sourceUrl: string; host: string; title: string; evidence: string; query: string; category: string; mission: string; sourceQuality: number; opportunityFit: number; needSignal: string; demonstratedNeed: string; confidence: number }>();
-    for (const query of defaultQueries) {
-      const response = await fetch("https://api.tavily.com/search", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ api_key: apiKey, query, search_depth: "basic", max_results: 8, include_answer: false, include_images: false }) });
-      if (!response.ok) throw new Error(`SCOUT_PROVIDER_${response.status}`);
-      const payload = await response.json() as { results?: Array<{ title?: string; url?: string; content?: string; score?: number }> };
-      for (const result of payload.results ?? []) {
-        const sourceUrl = String(result.url ?? ""); const host = hostOf(sourceUrl); const evidence = cleanEvidence(String(result.content ?? ""));
+    const candidates = new Map<string, { sourceUrl: string; confirmationUrl: string; host: string; title: string; evidence: string; query: string; category: string; mission: string; sourceQuality: number; opportunityFit: number; needSignal: string; demonstratedNeed: string; confidence: number }>();
+    const providerResults = await Promise.all(defaultQueries.map(async (query) => {
+      const [tavily, brave] = await Promise.all([searchTavily(tavilyKey, query), searchBrave(braveKey, query)]);
+      return { query, tavily, brave };
+    }));
+    for (const { query, tavily, brave } of providerResults) {
+      const braveByHost = new Map<string, ProviderResult>();
+      for (const result of brave) { const host = hostOf(result.url); if (host && !isExcludedHost(host) && result.url.startsWith("https://") && !braveByHost.has(host)) braveByHost.set(host, result); }
+      for (const result of tavily) {
+        const sourceUrl = result.url; const host = hostOf(sourceUrl); const evidence = cleanEvidence(result.content);
         if (!host || isExcludedHost(host) || !sourceUrl.startsWith("https://") || evidence.length < 40) continue;
         discovered += 1;
-        const title = decodeHtml(String(result.title ?? host)); const need = analyzeNeed(`${title}. ${evidence}`);
+        const confirmation = braveByHost.get(host); if (!confirmation) continue;
+        const title = decodeHtml(result.title || host); if (isListicle(title, evidence) || isListicle(confirmation.title, confirmation.content)) continue;
+        const need = analyzeNeed(`${title}. ${evidence}`);
         const sourceQuality = sourceQualityFor(sourceUrl, title, host);
         if (sourceQuality < 60 || !need || need.score < 60) continue;
-        const confidence = Math.round(sourceQuality * 0.55 + need.score * 0.45);
-        const candidate = { sourceUrl, host, title, evidence: need.demonstratedNeed, query, category: need.category, mission: need.mission, sourceQuality, opportunityFit: need.score, needSignal: need.reason, demonstratedNeed: need.demonstratedNeed, confidence };
+        const confidence = Math.min(95, Math.round(sourceQuality * 0.5 + need.score * 0.4 + 10));
+        const candidate = { sourceUrl, confirmationUrl: confirmation.url, host, title, evidence: need.demonstratedNeed, query, category: need.category, mission: need.mission, sourceQuality, opportunityFit: need.score, needSignal: `${need.reason} Tavily and Brave independently confirmed the official domain.`, demonstratedNeed: need.demonstratedNeed, confidence };
         if (!candidates.has(host) || candidates.get(host)!.confidence < confidence) candidates.set(host, candidate);
       }
     }
@@ -248,7 +282,7 @@ export async function runPartnerScout(triggeredBy: "admin" | "cron"): Promise<{ 
         if (existingError) throw new Error(`SCOUT_DUPLICATE_CHECK_FAILED:${existingError.message}`);
         if (existing) return 0;
         const confidence = Math.round(validatedSourceQuality * 0.55 + candidate.opportunityFit * 0.45);
-        const { data: added, error } = await ascendWorkClient.from("ascend_work_scout_signals").upsert({ organization_name: profile.identity, website: `https://${candidate.host}`, source_url: candidate.sourceUrl, source_title: candidate.title.slice(0, 300), evidence: candidate.evidence.slice(0, 900), suggested_category: candidate.category, suggested_mission: candidate.mission, confidence, source_quality: validatedSourceQuality, opportunity_fit: candidate.opportunityFit, need_signal: candidate.needSignal, demonstrated_need: candidate.demonstratedNeed, qualification_status: "potential_need", precision_version: 4, site_identity: profile.identity, contact_url: profile.contactUrl, organization_kind: profile.kind, ownership_verified: true, status: "new", search_query: candidate.query, last_seen_at: new Date().toISOString(), updated_at: new Date().toISOString() }, { onConflict: "source_url" }).select("id");
+        const { data: added, error } = await ascendWorkClient.from("ascend_work_scout_signals").upsert({ organization_name: profile.identity, website: `https://${candidate.host}`, source_url: candidate.sourceUrl, confirmation_url: candidate.confirmationUrl, cross_source_verified: true, source_title: candidate.title.slice(0, 300), evidence: candidate.evidence.slice(0, 900), suggested_category: candidate.category, suggested_mission: candidate.mission, confidence, source_quality: validatedSourceQuality, opportunity_fit: candidate.opportunityFit, need_signal: candidate.needSignal, demonstrated_need: candidate.demonstratedNeed, qualification_status: "potential_need", precision_version: 5, site_identity: profile.identity, contact_url: profile.contactUrl, organization_kind: profile.kind, ownership_verified: true, status: "new", search_query: candidate.query, last_seen_at: new Date().toISOString(), updated_at: new Date().toISOString() }, { onConflict: "source_url" }).select("id");
         if (error) throw new Error(`SCOUT_SIGNAL_STORE_FAILED:${error.message}`);
         return (added ?? []).length > 0 ? 1 : 0;
       }));
