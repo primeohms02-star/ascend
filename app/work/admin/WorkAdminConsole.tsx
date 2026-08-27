@@ -4,12 +4,14 @@ import { FormEvent, useState } from "react";
 
 import type { PaidMissionAdmin } from "@/lib/ascend-work/types";
 import type { WorkPartnerLead } from "@/lib/ascend-work/partners";
+import type { ScoutSignal } from "@/lib/ascend-work/partner-scout";
 
 import MissionManagement from "./MissionManagement";
 import ApplicantManagement from "./ApplicantManagement";
 import SubmissionManagement from "./SubmissionManagement";
 import AuditHistory from "./AuditHistory";
 import PartnerPipeline from "./PartnerPipeline";
+import PartnerScout from "./PartnerScout";
 
 type Notice = { tone: "success" | "error"; message: string } | null;
 
@@ -38,7 +40,7 @@ function NoticeBox({ notice }: { notice: Notice }) {
   );
 }
 
-export default function WorkAdminConsole({ initialProjects, initialPartners }: { initialProjects: PaidMissionAdmin[]; initialPartners: WorkPartnerLead[] }) {
+export default function WorkAdminConsole({ initialProjects, initialPartners, initialScoutSignals, scoutConfigured }: { initialProjects: PaidMissionAdmin[]; initialPartners: WorkPartnerLead[]; initialScoutSignals: ScoutSignal[]; scoutConfigured: boolean }) {
   const [organizationId, setOrganizationId] = useState("");
   const [organizationNotice, setOrganizationNotice] = useState<Notice>(null);
   const [projectNotice, setProjectNotice] = useState<Notice>(null);
@@ -126,6 +128,7 @@ export default function WorkAdminConsole({ initialProjects, initialPartners }: {
 
   return (
     <div className="mt-8 grid gap-5">
+      <PartnerScout initialSignals={initialScoutSignals} initialConfigured={scoutConfigured} />
       <PartnerPipeline initialPartners={initialPartners} />
       <MissionManagement initialProjects={initialProjects} />
       <ApplicantManagement projects={initialProjects} />

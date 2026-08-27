@@ -5,6 +5,7 @@ import AppShell from "@/app/components/navigation/AppShell";
 import { isAscendWorkAdmin } from "@/lib/ascend-work/admin-auth";
 import { listPaidMissionsAdmin } from "@/lib/ascend-work/service";
 import { listPartnerLeads } from "@/lib/ascend-work/partners";
+import { listScoutSignals } from "@/lib/ascend-work/partner-scout";
 
 import WorkAdminConsole from "./WorkAdminConsole";
 
@@ -12,7 +13,7 @@ export default async function AscendWorkAdminPage() {
   const { userId } = await auth();
   if (!userId) redirect("/sign-in");
   if (!isAscendWorkAdmin(userId)) redirect("/work");
-  const [projects, partners] = await Promise.all([listPaidMissionsAdmin(), listPartnerLeads()]);
+  const [projects, partners, scoutSignals] = await Promise.all([listPaidMissionsAdmin(), listPartnerLeads(), listScoutSignals()]);
 
   return (
     <AppShell>
@@ -26,7 +27,7 @@ export default async function AscendWorkAdminPage() {
             </p>
           </header>
 
-          <WorkAdminConsole initialProjects={projects} initialPartners={partners} />
+          <WorkAdminConsole initialProjects={projects} initialPartners={partners} initialScoutSignals={scoutSignals} scoutConfigured={Boolean(process.env.TAVILY_API_KEY)} />
         </div>
       </main>
     </AppShell>
