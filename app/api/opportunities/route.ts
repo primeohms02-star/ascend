@@ -13,6 +13,14 @@ import type { OpportunityLocationMode } from "@/lib/atlas/opportunities/location
 
 export const dynamic = "force-dynamic";
 
+function isTemporaryUpstreamFailure(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+
+  return /gateway timeout|timed? out|fetch failed|bad gateway|service unavailable|econnreset|und_err/i.test(
+    message,
+  );
+}
+
 function parsePositiveInteger(
   value: string | null,
   fallback: number
@@ -146,13 +154,19 @@ export async function GET(
       error
     );
 
+    const temporaryFailure = isTemporaryUpstreamFailure(error);
+
     return NextResponse.json(
       {
-        error:
-          "Failed to fetch opportunities",
+        error: temporaryFailure
+          ? "Atlas could not reach the opportunity service. Please try again."
+          : "Failed to fetch opportunities",
       },
       {
-        status: 500,
+        status: temporaryFailure ? 503 : 500,
+        headers: temporaryFailure
+          ? { "Retry-After": "3", "Cache-Control": "private, no-store" }
+          : { "Cache-Control": "private, no-store" },
       }
     );
   }

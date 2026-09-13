@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useAuth, useClerk } from "@clerk/nextjs";
+import { useClerk } from "@clerk/nextjs";
 
 import {
   ChartNoAxesCombined,
@@ -22,7 +22,6 @@ import {
   Target,
   X,
 } from "lucide-react";
-import { warmDefaultOpportunityPage } from "@/lib/atlas/opportunities/client-page-cache";
 
 type NavigationItem = {
   label: string;
@@ -155,27 +154,10 @@ function NavigationLink({
 
 export default function AppNavigation() {
   const pathname = usePathname();
-  const { userId } = useAuth();
   const { signOut } = useClerk();
   const [moreOpen, setMoreOpen] = useState(false);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const moreButtonRef = useRef<HTMLButtonElement>(null);
-
-  useEffect(() => {
-    if (!userId || pathname.startsWith("/opportunities")) {
-      return;
-    }
-
-    const timeout = window.setTimeout(() => {
-      void warmDefaultOpportunityPage(userId).catch(() => {
-        // Explore performs its normal live request if background warming fails.
-      });
-    }, 1200);
-
-    return () => {
-      window.clearTimeout(timeout);
-    };
-  }, [pathname, userId]);
 
   useEffect(() => {
     if (!moreOpen) {

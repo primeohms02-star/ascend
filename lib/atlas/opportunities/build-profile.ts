@@ -38,6 +38,45 @@ type SkillSignal = {
   pattern: RegExp;
 };
 
+const OPPORTUNITY_PROFILE_READ_ATTEMPTS = 2;
+
+function isTransientReadError(error: unknown): boolean {
+  const message =
+    error instanceof Error
+      ? error.message
+      : typeof error === "object" && error && "message" in error
+        ? String(error.message)
+        : String(error);
+
+  return /gateway timeout|timed? out|fetch failed|bad gateway|service unavailable|econnreset|und_err/i.test(
+    message,
+  );
+}
+
+async function retryTransientRead<T>(
+  label: string,
+  operation: () => Promise<T>,
+): Promise<T> {
+  let lastError: unknown;
+
+  for (let attempt = 1; attempt <= OPPORTUNITY_PROFILE_READ_ATTEMPTS; attempt += 1) {
+    try {
+      return await operation();
+    } catch (error) {
+      lastError = error;
+
+      if (!isTransientReadError(error) || attempt === OPPORTUNITY_PROFILE_READ_ATTEMPTS) {
+        throw error;
+      }
+
+      console.warn(`${label} temporarily failed; retrying once.`, error);
+      await new Promise((resolve) => setTimeout(resolve, 250));
+    }
+  }
+
+  throw lastError;
+}
+
 const SKILL_SIGNALS:
   SkillSignal[] = [
     {
@@ -469,70 +508,48 @@ export async function buildOpportunityProfile(
   );
 
   const [
-    profileResult,
-    onboardingResult,
+    profileRow,
+    onboarding,
     musicProfile,
   ] = await Promise.all([
-    supabaseServer
-      .from("profiles")
-      .select(
-        "clerk_id, journey, north_star"
-      )
-      .eq(
-        "clerk_id",
-        profile.clerkId
-      )
-      .maybeSingle(),
+    retryTransientRead("Opportunity profile read", async () => {
+      const { data, error } = await supabaseServer
+        .from("profiles")
+        .select("clerk_id, journey, north_star")
+        .eq("clerk_id", profile.clerkId)
+        .maybeSingle();
 
-    supabaseServer
-      .from(
-        "atlas_onboarding_context"
-      )
-      .select(
-        "identity, goal, skills, challenges, north_star"
-      )
-      .eq(
-        "user_id",
-        profile.clerkId
-      )
-      .maybeSingle(),
+      if (error) {
+        throw new Error(`Opportunity profile load failed: ${error.message}`);
+      }
 
-    loadMusicProfile(
-      profile.clerkId
+      return data as ProfileRow | null;
+    }),
+
+    retryTransientRead("Opportunity onboarding read", async () => {
+      const { data, error } = await supabaseServer
+        .from("atlas_onboarding_context")
+        .select("identity, goal, skills, challenges, north_star")
+        .eq("user_id", profile.clerkId)
+        .maybeSingle();
+
+      if (error) {
+        throw new Error(`Opportunity onboarding context load failed: ${error.message}`);
+      }
+
+      return data as OnboardingRow | null;
+    }),
+
+    retryTransientRead("Opportunity music profile read", () =>
+      loadMusicProfile(profile.clerkId),
     ),
   ]);
-
-  if (
-    profileResult.error
-  ) {
-    throw new Error(
-      `Opportunity profile load failed: ${profileResult.error.message}`
-    );
-  }
-
-  if (
-    onboardingResult.error
-  ) {
-    throw new Error(
-      `Opportunity onboarding context load failed: ${onboardingResult.error.message}`
-    );
-  }
-
-  const profileRow =
-    profileResult.data as
-      | ProfileRow
-      | null;
 
   if (!profileRow) {
     throw new Error(
       "Profile not found"
     );
   }
-
-  const onboarding =
-    onboardingResult.data as
-      | OnboardingRow
-      | null;
 
   const identity =
     clean(

@@ -109,14 +109,26 @@ export async function getAtlasDashboard(clerkId: string) {
    * conversation/knowledge/strategy context here made every dashboard visit
    * perform many database reads that the page never renders.
    */
-  const [storedProfile, currentMission, progressRecord, momentum, streakRecord] =
-    await Promise.all([
+  const results = await Promise.allSettled([
       getProfile(clerkId),
       getActiveMission(clerkId),
       getProgress(clerkId),
       getMomentum(clerkId),
       getStreak(clerkId),
     ]);
+
+  const labels = ["profile", "mission", "progress", "momentum", "streak"];
+  results.forEach((result, index) => {
+    if (result.status === "rejected") {
+      console.error(`Dashboard ${labels[index]} read failed:`, result.reason);
+    }
+  });
+
+  const storedProfile = results[0].status === "fulfilled" ? results[0].value : null;
+  const currentMission = results[1].status === "fulfilled" ? results[1].value : null;
+  const progressRecord = results[2].status === "fulfilled" ? results[2].value : null;
+  const momentum = results[3].status === "fulfilled" ? results[3].value : null;
+  const streakRecord = results[4].status === "fulfilled" ? results[4].value : null;
 
   const profile = storedProfile ?? fallbackProfile(clerkId);
 

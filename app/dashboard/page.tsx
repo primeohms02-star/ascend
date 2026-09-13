@@ -58,9 +58,12 @@ export default async function DashboardPage() {
     redirect("/sign-in");
   }
 
-  const onboardingContext = await loadOnboardingContext(userId);
+  const onboardingContext = await loadOnboardingContext(userId).catch((error) => {
+    console.error("Dashboard onboarding check failed:", error);
+    return undefined;
+  });
 
-  if (!isOnboardingContextComplete(onboardingContext)) {
+  if (onboardingContext !== undefined && !isOnboardingContextComplete(onboardingContext)) {
     redirect("/onboarding");
   }
 
