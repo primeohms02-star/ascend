@@ -12,6 +12,7 @@ import SubmissionManagement from "./SubmissionManagement";
 import AuditHistory from "./AuditHistory";
 import PartnerPipeline from "./PartnerPipeline";
 import PartnerScout from "./PartnerScout";
+import MissionAcquisition from "./MissionAcquisition";
 
 type Notice = { tone: "success" | "error"; message: string } | null;
 
@@ -129,6 +130,7 @@ export default function WorkAdminConsole({ initialProjects, initialPartners, ini
   return (
     <div className="mt-8 grid gap-5">
       <PartnerScout initialSignals={initialScoutSignals} initialConfigured={scoutConfigured} />
+      <MissionAcquisition initialPartners={initialPartners} />
       <PartnerPipeline initialPartners={initialPartners} />
       <MissionManagement initialProjects={initialProjects} />
       <ApplicantManagement projects={initialProjects} />
