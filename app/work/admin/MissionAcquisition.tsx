@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useCallback, useEffect, useState } from "react";
 import type { WorkPartnerLead } from "@/lib/ascend-work/partners";
 
 export default function MissionAcquisition({ initialPartners }: { initialPartners: WorkPartnerLead[] }) {
@@ -10,6 +10,20 @@ export default function MissionAcquisition({ initialPartners }: { initialPartner
   const [busy, setBusy] = useState(false);
   const selected = partners.find((lead) => lead.id === selectedId) ?? null;
 
+  const refresh = useCallback(async () => {
+    const response = await fetch("/api/work/admin/partners", { cache: "no-store" });
+    if (!response.ok) return;
+    const payload = await response.json() as { partners: WorkPartnerLead[] };
+    setPartners(payload.partners);
+    setSelectedId((current) => current && payload.partners.some((lead) => lead.id === current) ? current : payload.partners[0]?.id ?? "");
+  }, []);
+
+  useEffect(() => {
+    const firstRefresh = window.setTimeout(() => void refresh(), 0);
+    const timer = window.setInterval(() => void refresh(), 10_000);
+    return () => { window.clearTimeout(firstRefresh); window.clearInterval(timer); };
+  }, [refresh]);
+
   async function act(body: Record<string, unknown>) {
     if (!selected) return;
     setBusy(true); setNotice("");
@@ -17,6 +31,7 @@ export default function MissionAcquisition({ initialPartners }: { initialPartner
     const payload = await response.json().catch(() => null) as { error?: string; partner?: WorkPartnerLead; projectId?: string } | null;
     if (response.ok && payload?.partner) setPartners((items) => items.map((item) => item.id === payload.partner?.id ? payload.partner : item));
     setNotice(response.ok ? (payload?.projectId ? "Private mission draft created. Review it in Mission Control before publication." : "Acquisition record updated.") : payload?.error ?? "Action failed.");
+    if (response.ok) await refresh();
     setBusy(false);
   }
 
