@@ -11,6 +11,10 @@ import {
   FOUNDER_URL,
   LOGO_PATH,
   ORGANIZATION_ID,
+  PRAEVORYN_LINKEDIN_URL,
+  PRAEVORYN_NAME,
+  PRAEVORYN_ORGANIZATION_ID,
+  PRAEVORYN_URL,
   SITE_URL,
   SOFTWARE_ID,
   WEBSITE_ID,
@@ -79,6 +83,11 @@ const structuredData = {
           FOUNDER_ID,
       },
 
+      parentOrganization: {
+        "@id":
+          PRAEVORYN_ORGANIZATION_ID,
+      },
+
       contactPoint: {
         "@type":
           "ContactPoint",
@@ -115,6 +124,37 @@ const structuredData = {
         ASCEND_TIKTOK_URL,
         ASCEND_YOUTUBE_URL,
       ],
+    },
+
+    {
+      "@type":
+        "Organization",
+
+      "@id":
+        PRAEVORYN_ORGANIZATION_ID,
+
+      name:
+        PRAEVORYN_NAME,
+
+      url:
+        PRAEVORYN_URL,
+
+      description:
+        "Praevoryn is a human-centred technology company building intelligent systems for progress and the parent company behind ASCEND.",
+
+      founder: {
+        "@id":
+          FOUNDER_ID,
+      },
+
+      sameAs: [
+        PRAEVORYN_LINKEDIN_URL,
+      ],
+
+      owns: {
+        "@id":
+          SOFTWARE_ID,
+      },
     },
 
     {
@@ -245,6 +285,11 @@ const structuredData = {
       provider: {
         "@id":
           ORGANIZATION_ID,
+      },
+
+      creator: {
+        "@id":
+          PRAEVORYN_ORGANIZATION_ID,
       },
 
       image:

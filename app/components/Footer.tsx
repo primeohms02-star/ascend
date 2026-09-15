@@ -11,6 +11,7 @@ import {
   ASCEND_TIKTOK_URL,
   ASCEND_X_URL,
   ASCEND_YOUTUBE_URL,
+  PRAEVORYN_URL,
 } from "@/lib/seo";
 
 const productLinks = [
@@ -343,10 +344,21 @@ export default function Footer() {
             Potential.
           </p>
 
-          <p>
-            Every meaningful journey begins
-            with direction.
-          </p>
+          <div className="flex flex-col gap-2 sm:items-end">
+            <a
+              href={PRAEVORYN_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="transition hover:text-white"
+            >
+              Built by Praevoryn
+            </a>
+
+            <p>
+              Every meaningful journey begins
+              with direction.
+            </p>
+          </div>
         </div>
       </div>
     </footer>

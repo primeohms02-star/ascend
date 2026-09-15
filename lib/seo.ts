@@ -39,6 +39,18 @@ export const ASCEND_TIKTOK_URL =
 export const ASCEND_YOUTUBE_URL =
   "https://youtube.com/@ascendai_space";
 
+export const PRAEVORYN_NAME =
+  "Praevoryn";
+
+export const PRAEVORYN_URL =
+  "https://www.praevoryn.com";
+
+export const PRAEVORYN_LINKEDIN_URL =
+  "https://www.linkedin.com/company/praevoryn/";
+
+export const PRAEVORYN_ORGANIZATION_ID =
+  `${PRAEVORYN_URL}/#organization`;
+
 export const ORGANIZATION_ID =
   `${SITE_URL}/#organization`;
 

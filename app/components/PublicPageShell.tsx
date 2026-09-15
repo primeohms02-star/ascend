@@ -5,6 +5,8 @@ import type {
 import Image from "next/image";
 import Link from "next/link";
 
+import { PRAEVORYN_URL } from "@/lib/seo";
+
 type PublicPageShellProps = {
   eyebrow: string;
   title: string;
@@ -201,6 +203,15 @@ export default function PublicPageShell({
           </p>
 
           <div className="flex flex-wrap gap-5">
+            <a
+              href={PRAEVORYN_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="transition hover:text-white"
+            >
+              Built by Praevoryn
+            </a>
+
             <Link
               href="/founder"
               className="transition hover:text-white"
