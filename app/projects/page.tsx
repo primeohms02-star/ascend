@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { ArrowRight, FolderKanban, Search, ShieldCheck, Sparkles } from "lucide-react";
 
 import AppShell from "@/app/components/navigation/AppShell";
+import { isProjectsAdmin } from "@/lib/projects/admin-auth";
 import { listPublishedProjects } from "@/lib/projects/service";
 import type { ProjectDifficulty, ProjectType } from "@/lib/projects/types";
 import ProjectCard from "./ProjectCard";
@@ -14,6 +15,7 @@ export default async function ProjectsPage({ searchParams }: { searchParams: Sea
   const { userId } = await auth();
   if (!userId) redirect("/sign-in");
   const params = await searchParams;
+  const showAdminConsole = isProjectsAdmin(userId);
   const page = Math.max(1, Number(params.page) || 1);
   const result = await listPublishedProjects({
     page,
@@ -30,7 +32,7 @@ export default async function ProjectsPage({ searchParams }: { searchParams: Sea
         <div><p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-cyan-300">Projects</p>
           <h1 className="mt-1 text-3xl font-bold tracking-tight text-white sm:text-4xl">Build proof through real work</h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-400">Complete practical work, strengthen your skills and turn finished Projects into evidence of what you can do.</p></div>
-        <div className="flex gap-2"><Link href="/projects/my" className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2.5 text-sm font-semibold text-white">My Projects</Link><Link href="/projects/evidence" className="rounded-xl bg-cyan-500 px-4 py-2.5 text-sm font-semibold text-slate-950">My Evidence</Link></div>
+        <div className="flex flex-wrap gap-2">{showAdminConsole&&<Link href="/projects/admin" className="rounded-xl border border-violet-300/20 bg-violet-300/[0.07] px-4 py-2.5 text-sm font-semibold text-violet-200">Admin Console</Link>}<Link href="/projects/my" className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2.5 text-sm font-semibold text-white">My Projects</Link><Link href="/projects/evidence" className="rounded-xl bg-cyan-500 px-4 py-2.5 text-sm font-semibold text-slate-950">My Evidence</Link></div>
       </header>
 
       <section className="mt-6 grid gap-3 sm:grid-cols-3">
