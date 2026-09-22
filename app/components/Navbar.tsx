@@ -32,16 +32,8 @@ const navigation = [
     href: "/faq",
   },
   {
-    label: "Work",
-    href: "/ascend-work",
-  },
-  {
     label: "Music",
     href: "/music",
-  },
-  {
-    label: "For Organisations",
-    href: "/for-organisations",
   },
   {
     label: "Roadmap",

@@ -10,15 +10,12 @@ import {
   Sparkles,
   Target,
   TrendingUp,
-  BriefcaseBusiness,
-  CalendarClock,
 } from "lucide-react";
 
 import AppShell from "@/app/components/navigation/AppShell";
 import { getAtlasDashboard } from "@/lib/atlas/dashboard";
 import { loadOnboardingContext } from "@/lib/atlas/onboardingContext";
 import { isOnboardingContextComplete } from "@/lib/atlas/onboardingCompletion";
-import { getUserWorkOverview } from "@/lib/ascend-work/service";
 
 import DailyBriefingCard from "@/app/dashboard/DailyBriefingCard";
 import CompassCard from "@/app/dashboard/CompassCard";
@@ -67,15 +64,7 @@ export default async function DashboardPage() {
     redirect("/onboarding");
   }
 
-  const [dashboard, workOverview] = await Promise.all([
-    getAtlasDashboard(userId),
-    getUserWorkOverview(userId).catch((error) => {
-      console.error("Dashboard Work Overview Error:", error);
-      return null;
-    }),
-  ]);
-
-  const activePaidMission = workOverview?.activePaidMission ?? null;
+  const dashboard = await getAtlasDashboard(userId);
 
   return (
     <AppShell>
@@ -163,7 +152,7 @@ export default async function DashboardPage() {
               </Link>
             </div>
 
-            <div className="grid items-start gap-4 lg:grid-cols-2">
+            <div className="max-w-3xl">
               <MissionCard
                 title={dashboard.mission.title}
                 description={dashboard.mission.description}
@@ -171,22 +160,6 @@ export default async function DashboardPage() {
                 available={dashboard.mission.available}
                 northStar={dashboard.compass.northStar}
               />
-
-              {activePaidMission ? (
-                <article className="rounded-2xl border border-emerald-400/20 bg-gradient-to-br from-emerald-400/[0.07] via-slate-900/80 to-slate-950 p-5">
-                  <div className="flex items-start justify-between gap-3">
-                    <div><p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-300">Paid Mission</p><h3 className="mt-1 text-xl font-semibold text-white">Your active paid workspace</h3></div>
-                    <BriefcaseBusiness size={21} className="text-emerald-300" aria-hidden="true" />
-                  </div>
-                  <div className="mt-4 rounded-xl border border-white/10 bg-white/[0.035] p-3.5"><p className="break-words text-base font-semibold leading-7 text-white">{activePaidMission.projectTitle}</p><p className="mt-1 text-sm text-slate-400">{activePaidMission.organizationName}</p></div>
-                  <div className="mt-3 flex items-center gap-2 text-sm text-slate-400"><CalendarClock size={16} className="text-emerald-300" aria-hidden="true" />Due {new Intl.DateTimeFormat("en-NG", { dateStyle: "medium" }).format(new Date(activePaidMission.deliveryDeadline))}</div>
-                  <div className="mt-4 flex flex-wrap gap-3"><Link href={`/work/applications/${activePaidMission.applicationId}`} className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-4 py-2.5 text-sm font-bold text-slate-950">Open Paid Workspace <ArrowRight size={15} aria-hidden="true" /></Link><Link href="/atlas" className="inline-flex items-center gap-2 rounded-xl border border-blue-400/25 bg-blue-400/[0.07] px-4 py-2.5 text-sm font-semibold text-blue-200">Ask Atlas</Link></div>
-                </article>
-              ) : (
-                <Link href="/work" className="group rounded-2xl border border-emerald-400/18 bg-emerald-400/[0.045] p-5 transition hover:border-emerald-300/30">
-                  <BriefcaseBusiness size={20} className="text-emerald-300" aria-hidden="true" /><p className="mt-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-300">ASCEND Work</p><h3 className="mt-1.5 text-lg font-semibold text-white">Turn direction into verified experience</h3><p className="mt-2 text-sm leading-6 text-slate-400">Review available Paid Missions without losing your Growth Mission.</p><span className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-emerald-300">Open Work <ArrowRight size={15} aria-hidden="true" /></span>
-                </Link>
-              )}
             </div>
           </section>
 

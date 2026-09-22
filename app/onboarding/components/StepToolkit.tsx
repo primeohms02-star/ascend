@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ArrowRight, BriefcaseBusiness, ChartNoAxesCombined, Music2, Search } from "lucide-react";
+import { ArrowRight, ChartNoAxesCombined, Compass, Music2, Search } from "lucide-react";
 
 type Props = {
   onNext: () => void;
@@ -15,9 +15,9 @@ const tools = [
     accent: "text-cyan-300 border-cyan-400/20 bg-cyan-400/[0.06]",
   },
   {
-    icon: BriefcaseBusiness,
-    title: "ASCEND Work",
-    description: "Apply for reviewed Paid Missions and turn approved work into verified experience.",
+    icon: Compass,
+    title: "Missions",
+    description: "Turn your direction into a clear next action and build momentum through meaningful completion.",
     accent: "text-emerald-300 border-emerald-400/20 bg-emerald-400/[0.06]",
   },
   {
@@ -29,7 +29,7 @@ const tools = [
   {
     icon: ChartNoAxesCombined,
     title: "Progress",
-    description: "Build visible evidence of momentum from missions, milestones and verified work.",
+    description: "Build visible evidence of momentum from missions, milestones and completed actions.",
     accent: "text-blue-300 border-blue-400/20 bg-blue-400/[0.06]",
   },
 ];
@@ -67,10 +67,6 @@ export default function StepToolkit({ onNext }: Props) {
           );
         })}
       </div>
-
-      <p className="mx-auto mt-7 max-w-2xl text-center text-xs leading-5 text-slate-500">
-        Paid Mission access does not guarantee selection or income. Every published mission is reviewed and shows its payment and requirements.
-      </p>
 
       <div className="text-center">
         <button

@@ -1,4 +1,10 @@
-# ASCEND Work — Pilot Specification
+# ASCEND Work - Archived V1 Prototype Specification
+
+> Archived on 22 September 2026. The V1 runtime implementation was removed from
+> the active ASCEND application. This document and the historical Supabase
+> migrations are retained as an engineering record for the clean ASCEND Work
+> rebuild planned for ASCEND V2. Nothing in this specification should be treated
+> as a currently available product, pricing commitment or commercial offer.
 
 ## Product promise
 
@@ -40,4 +46,3 @@ The pilot records entitlements but does not process subscriptions or project pay
 ## Pilot scope
 
 The first release includes the database foundation, access grants, verified organisations, published projects, student discovery, project details, applications and admin-only creation APIs. Employer self-service, automated payouts, messaging, deliverable uploads, reviews, disputes, portfolio publication and institutional dashboards follow after the controlled pilot proves supply and completion quality.
-

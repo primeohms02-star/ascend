@@ -57,23 +57,10 @@ const navigation = [
 
   {
     label:
-      "Work",
-
-    href:
-      "/ascend-work",
-  },
-
-  {
-    label:
       "Music",
 
     href:
       "/music",
-  },
-
-  {
-    label: "Organisations",
-    href: "/for-organisations",
   },
 
   {

@@ -19,7 +19,6 @@ import {
 } from "@/lib/atlas/onboardingContext";
 
 import { loadMusicProfile } from "@/lib/music/profile";
-import { getActivePaidMissionContext } from "@/lib/ascend-work/service";
 
 import {
   getGroqReasoningOptions,
@@ -137,7 +136,6 @@ export async function loadAtlasContext(
     compassAnswers,
     compassResults,
     memory,
-    activePaidMission,
   ] = await Promise.all([
     getProfile(clerkId),
     getProgress(clerkId),
@@ -152,10 +150,6 @@ export async function loadAtlasContext(
     loadCompassAnswers(clerkId),
     loadCompassResults(clerkId),
     loadConversation(clerkId, memoryLimit),
-    getActivePaidMissionContext(clerkId).catch((error) => {
-      console.error("Atlas Paid Mission Context Error:", error);
-      return null;
-    }),
   ]);
 
   const profile =
@@ -198,7 +192,6 @@ export async function loadAtlasContext(
     compassAnswers,
     compassResults,
     memory,
-    activePaidMission,
   };
 }
 
@@ -441,31 +434,6 @@ Music Pathway data is supporting live context.
 It must never replace the user's canonical North Star or active mission.
 
 Ordinary music conversation must never create, replace, complete or progress a mission.
-
-=============================
-ASCEND WORK — LIVE PAID MISSION
-=============================
-
-${
-  atlas.activePaidMission
-    ? `Paid Mission: ${atlas.activePaidMission.title}
-Organisation: ${atlas.activePaidMission.organization}
-Delivery deadline: ${atlas.activePaidMission.deliveryDeadline}
-Submission status: ${atlas.activePaidMission.submissionStatus ?? "Not available"}
-Deliverables:
-${atlas.activePaidMission.deliverables.map((deliverable) => `- ${deliverable}`).join("\n")}`
-    : "The user has no active Paid Mission workspace."
-}
-
-A Paid Mission is separate from the user's Growth Mission below.
-
-Never replace, complete, hide or regenerate the Growth Mission because a Paid Mission exists.
-
-You may help the user understand requirements, plan work, research responsibly, review their draft and identify missing requirements.
-
-Never fabricate evidence, impersonate the user, claim work was completed, or submit deliverables for them.
-
-Paid Mission state changes only through the approved ASCEND Work interfaces.
 
 =============================
 CURRENT MISSION — LIVE

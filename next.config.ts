@@ -28,6 +28,25 @@ const privateSearchHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  async redirects() {
+    return [
+      {
+        source: "/work/:path*",
+        destination: "/dashboard",
+        permanent: false,
+      },
+      {
+        source: "/ascend-work",
+        destination: "/roadmap",
+        permanent: false,
+      },
+      {
+        source: "/for-organisations",
+        destination: "/contact",
+        permanent: false,
+      },
+    ];
+  },
   async headers() {
     return privateRoutes.map(
       (source) => ({
