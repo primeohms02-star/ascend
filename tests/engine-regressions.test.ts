@@ -23,6 +23,11 @@ import {
   validateProjectPublication,
   validateProjectReward,
 } from "../lib/projects/lifecycle";
+import {
+  parseProjectListInput,
+  parseProjectSubmissionInput,
+  requireProjectId,
+} from "../lib/projects/input";
 
 const beginnerProfile: OpportunityProfile = {
   clerkId: "test-user",
@@ -353,4 +358,44 @@ test("Project publication requires complete criteria, rights, and deadlines", ()
     },
   }, new Date("2026-09-22T12:00:00.000Z"));
   assert.ok(invalid.length >= 5);
+});
+
+test("Project list input is bounded and unknown filters are ignored", () => {
+  const input = parseProjectListInput(new URLSearchParams({
+    page: "3",
+    pageSize: "500",
+    type: "unknown",
+    difficulty: "beginner",
+    search: "  Portfolio project  ",
+  }));
+
+  assert.equal(input.page, 3);
+  assert.equal(input.pageSize, 24);
+  assert.equal(input.projectType, undefined);
+  assert.equal(input.difficulty, "beginner");
+  assert.equal(input.search, "Portfolio project");
+});
+
+test("Project IDs reject malformed route values", () => {
+  assert.equal(
+    requireProjectId("123e4567-e89b-42d3-a456-426614174000"),
+    "123e4567-e89b-42d3-a456-426614174000",
+  );
+  assert.throws(() => requireProjectId("not-a-project"), /valid Project ID/i);
+});
+
+test("Project submission input drops empty and excessive unsafe values", () => {
+  const entries = Object.fromEntries(
+    Array.from({ length: 35 }, (_, index) => [` deliverable-${index} `, ` response-${index} `]),
+  );
+  entries.empty = "   ";
+
+  const input = parseProjectSubmissionInput({
+    deliverableResponses: entries,
+    participantNote: "  My submission note  ",
+  });
+
+  assert.equal(Object.keys(input.deliverableResponses).length, 30);
+  assert.equal(input.deliverableResponses["deliverable-0"], "response-0");
+  assert.equal(input.participantNote, "My submission note");
 });

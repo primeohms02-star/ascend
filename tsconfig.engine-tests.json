@@ -19,6 +19,8 @@
     "lib/atlas/replyFormatting.ts",
     "lib/engine/missionSimilarity.ts",
     "lib/projects/lifecycle.ts",
+    "lib/projects/errors.ts",
+    "lib/projects/input.ts",
     "lib/projects/types.ts"
   ]
 }
