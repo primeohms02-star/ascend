@@ -21,6 +21,7 @@
     "lib/projects/lifecycle.ts",
     "lib/projects/errors.ts",
     "lib/projects/input.ts",
+    "lib/projects/presentation.ts",
     "lib/projects/types.ts"
   ]
 }

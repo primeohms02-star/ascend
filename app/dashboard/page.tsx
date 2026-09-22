@@ -4,9 +4,9 @@ import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import {
   ArrowRight,
+  BriefcaseBusiness,
   Compass,
   Orbit,
-  Search,
   Sparkles,
   Target,
   TrendingUp,
@@ -35,10 +35,10 @@ const quickActions = [
     icon: Target,
   },
   {
-    href: "/opportunities",
-    label: "Explore",
-    detail: "Discover possibilities beyond ASCEND.",
-    icon: Search,
+    href: "/projects",
+    label: "Projects",
+    detail: "Build skills and proof through real work.",
+    icon: BriefcaseBusiness,
   },
   {
     href: "/progress",

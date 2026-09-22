@@ -28,6 +28,11 @@ import {
   parseProjectSubmissionInput,
   requireProjectId,
 } from "../lib/projects/input";
+import {
+  formatProjectDuration,
+  participationStatusLabel,
+  projectTypeLabel,
+} from "../lib/projects/presentation";
 
 const beginnerProfile: OpportunityProfile = {
   clerkId: "test-user",
@@ -398,4 +403,19 @@ test("Project submission input drops empty and excessive unsafe values", () => {
   assert.equal(Object.keys(input.deliverableResponses).length, 30);
   assert.equal(input.deliverableResponses["deliverable-0"], "response-0");
   assert.equal(input.participantNote, "My submission note");
+});
+
+test("Project presentation keeps Practice and Reward Projects distinct", () => {
+  assert.equal(projectTypeLabel("practice"), "Practice Project");
+  assert.equal(projectTypeLabel("reward"), "Reward Project");
+});
+
+test("Project duration remains understandable across minutes and hours", () => {
+  assert.equal(formatProjectDuration(45), "45 min");
+  assert.equal(formatProjectDuration(90), "1.5 hrs");
+});
+
+test("Project participation states use clear user-facing language", () => {
+  assert.equal(participationStatusLabel("revision_requested"), "Revision requested");
+  assert.equal(participationStatusLabel("pending"), "Awaiting review");
 });

@@ -1,5 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
+import Link from "next/link";
+import { ArrowRight, BadgeCheck } from "lucide-react";
 
 import AppShell from "@/app/components/navigation/AppShell";
 import AtlasTimeline from "@/app/components/dashboard/AtlasTimeline";
@@ -46,6 +48,9 @@ export default async function ProgressPage() {
             />
             <AtlasTimeline timeline={progress.timeline} totalCount={progress.timelineTotal} />
           </div>
+          <Link href="/projects/evidence" className="mt-4 flex items-center justify-between gap-4 rounded-2xl border border-emerald-300/15 bg-emerald-300/[0.045] p-5 transition hover:border-emerald-300/25">
+            <span className="flex items-center gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-300/[0.08] text-emerald-300"><BadgeCheck size={20}/></span><span><span className="block text-sm font-semibold text-white">Verified Project experience</span><span className="mt-0.5 block text-xs text-slate-500">See evidence created from reviewed work.</span></span></span><ArrowRight size={17} className="text-emerald-300"/>
+          </Link>
         </div>
       </main>
     </AppShell>

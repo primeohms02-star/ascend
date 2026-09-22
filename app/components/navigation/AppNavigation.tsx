@@ -8,6 +8,7 @@ import { useClerk } from "@clerk/nextjs";
 
 import {
   ChartNoAxesCombined,
+  BriefcaseBusiness,
   CircleHelp,
   Compass,
   Globe2,
@@ -71,6 +72,12 @@ const journeyItems: NavigationItem[] = [
 ];
 
 const discoverItems: NavigationItem[] = [
+  {
+    label: "Projects",
+    href: "/projects",
+    icon: BriefcaseBusiness,
+    isActive: (pathname) => pathname.startsWith("/projects") && !pathname.startsWith("/projects/admin"),
+  },
   {
     label: "Explore",
     href: "/opportunities",

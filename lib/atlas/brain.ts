@@ -65,6 +65,7 @@ import {
 } from "../compass/results";
 
 import { normalizeAtlasListArtifacts } from "./replyFormatting";
+import { listUserParticipations } from "@/lib/projects/service";
 
 type AtlasConversationRole =
   | "user"
@@ -136,6 +137,7 @@ export async function loadAtlasContext(
     compassAnswers,
     compassResults,
     memory,
+    projectParticipations,
   ] = await Promise.all([
     getProfile(clerkId),
     getProgress(clerkId),
@@ -150,6 +152,7 @@ export async function loadAtlasContext(
     loadCompassAnswers(clerkId),
     loadCompassResults(clerkId),
     loadConversation(clerkId, memoryLimit),
+    listUserParticipations(clerkId).catch(() => []),
   ]);
 
   const profile =
@@ -192,6 +195,7 @@ export async function loadAtlasContext(
     compassAnswers,
     compassResults,
     memory,
+    projectParticipations,
   };
 }
 
@@ -313,6 +317,16 @@ export async function buildAtlasContext(
       };
     })
     .filter((entry) => entry.answer.length > 0);
+
+  const compactProjects = (atlas.projectParticipations ?? []).slice(0, 10).map((entry) => {
+    const project = entry.project as unknown as { title?: string } | null;
+    return {
+      title: project?.title ?? "ASCEND Project",
+      status: entry.status,
+      submission_status: entry.submissionStatus,
+      evidence_status: entry.evidenceStatus,
+    };
+  });
 
   const systemPrompt = `
 You are ATLAS, the strategic intelligence inside ASCEND.
@@ -529,6 +543,20 @@ COMPASS ANSWERS
 =============================
 
 ${JSON.stringify(compactCompassAnswers)}
+
+=============================
+ASCEND PROJECTS — LIVE
+=============================
+
+${JSON.stringify(compactProjects)}
+
+Projects are practical work the user joined inside ASCEND.
+
+Treat completed or awarded Project evidence as reviewed evidence, not proof of unlimited ability.
+
+Never claim a Project reward is guaranteed, paid or delivered unless the live Project record explicitly confirms delivery.
+
+Do not submit work, change a Project status or make a review decision through ordinary conversation.
 
 =============================
 RESPONSE MODES

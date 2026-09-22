@@ -3,6 +3,7 @@ import "server-only";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { ProjectServiceError, projectErrorFromDatabase } from "./errors";
 import type { ProjectListInput, ProjectSubmissionInput } from "./input";
+import type { ProjectCard } from "./types";
 
 const projectCardFields = [
   "id",
@@ -59,7 +60,7 @@ export async function listPublishedProjects(input: ProjectListInput) {
 
   const total = count ?? 0;
   return {
-    projects: data ?? [],
+    projects: (data ?? []) as unknown as ProjectCard[],
     pagination: {
       page: input.page,
       pageSize: input.pageSize,
@@ -125,6 +126,79 @@ export async function listUserParticipations(userId: string) {
     .select("id,project_id,status,joined_at,started_at,submitted_at,completed_at,updated_at")
     .eq("user_id", userId)
     .order("updated_at", { ascending: false });
+  if (error) throw projectErrorFromDatabase(error);
+  const participations = data ?? [];
+  if (!participations.length) return [];
+
+  const projectIds = participations.map((item) => item.project_id);
+  const participationIds = participations.map((item) => item.id);
+  const [projectsResult, submissionsResult, evidenceResult] = await Promise.all([
+    supabaseAdmin.from("ascend_projects").select(projectCardFields).in("id", projectIds),
+    supabaseAdmin.from("ascend_project_submissions").select("participation_id,status").in("participation_id", participationIds),
+    supabaseAdmin.from("ascend_project_evidence").select("participation_id,evidence_status").in("participation_id", participationIds),
+  ]);
+  if (projectsResult.error) throw projectErrorFromDatabase(projectsResult.error);
+  if (submissionsResult.error) throw projectErrorFromDatabase(submissionsResult.error);
+  if (evidenceResult.error) throw projectErrorFromDatabase(evidenceResult.error);
+
+  const projectRows = (projectsResult.data ?? []) as unknown as ProjectCard[];
+  const projects = new Map(projectRows.map((item) => [item.id, item]));
+  const submissions = new Map((submissionsResult.data ?? []).map((item) => [item.participation_id, item.status]));
+  const evidence = new Map((evidenceResult.data ?? []).map((item) => [item.participation_id, item.evidence_status]));
+
+  return participations.map((item) => ({
+    ...item,
+    project: projects.get(item.project_id) ?? null,
+    submissionStatus: submissions.get(item.id) ?? null,
+    evidenceStatus: evidence.get(item.id) ?? null,
+  }));
+}
+
+export async function getUserProjectWorkspace(projectId: string, userId: string) {
+  const participationResult = await supabaseAdmin
+    .from("ascend_project_participations")
+    .select("*")
+    .eq("project_id", projectId)
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (participationResult.error) throw projectErrorFromDatabase(participationResult.error);
+  if (!participationResult.data) {
+    throw new ProjectServiceError("PARTICIPATION_REQUIRED", "Join this Project before opening its workspace.", 403);
+  }
+
+  const [projectResult, criteriaResult, submissionResult, evidenceResult] = await Promise.all([
+    supabaseAdmin.from("ascend_projects").select(projectDetailFields).eq("id", projectId).single(),
+    supabaseAdmin.from("ascend_project_criteria").select("id,title,description,weight,position").eq("project_id", projectId).order("position"),
+    supabaseAdmin.from("ascend_project_submissions").select("id,deliverable_responses,participant_note,status,current_version,revision_note,revision_deadline,submitted_at,reviewed_at,updated_at").eq("participation_id", participationResult.data.id).maybeSingle(),
+    supabaseAdmin.from("ascend_project_evidence").select("id,title,summary,skills,evidence_status,visibility,share_token,verified_at,created_at").eq("participation_id", participationResult.data.id).maybeSingle(),
+  ]);
+
+  if (projectResult.error) throw projectErrorFromDatabase(projectResult.error);
+  if (criteriaResult.error) throw projectErrorFromDatabase(criteriaResult.error);
+  if (submissionResult.error) throw projectErrorFromDatabase(submissionResult.error);
+  if (evidenceResult.error) throw projectErrorFromDatabase(evidenceResult.error);
+
+  const reviewsResult = submissionResult.data
+    ? await supabaseAdmin.from("ascend_project_reviews").select("outcome,criterion_scores,overall_score,user_feedback,created_at").eq("submission_id", submissionResult.data.id).order("created_at", { ascending: false })
+    : { data: [], error: null };
+  if (reviewsResult.error) throw projectErrorFromDatabase(reviewsResult.error);
+
+  return {
+    project: projectResult.data,
+    criteria: criteriaResult.data ?? [],
+    participation: participationResult.data,
+    submission: submissionResult.data,
+    reviews: reviewsResult.data ?? [],
+    evidence: evidenceResult.data,
+  };
+}
+
+export async function listUserProjectEvidence(userId: string) {
+  const { data, error } = await supabaseAdmin
+    .from("ascend_project_evidence")
+    .select("id,project_id,title,summary,skills,evidence_status,visibility,share_token,verified_at,created_at")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
   if (error) throw projectErrorFromDatabase(error);
   return data ?? [];
 }

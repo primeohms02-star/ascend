@@ -42,6 +42,40 @@ export type ProjectEvidenceVisibility = "private" | "approved_organizations" | "
 export type ProjectRewardModel = "winner" | "completion" | "non_cash";
 export type ProjectFundingStatus = "draft" | "awaiting_confirmation" | "confirmed" | "secured" | "cancelled";
 
+export type ProjectCard = {
+  id: string;
+  project_type: ProjectType;
+  entry_mode: ProjectEntryMode;
+  title: string;
+  summary: string;
+  category: string;
+  difficulty: ProjectDifficulty;
+  skills: string[];
+  estimated_minutes: number;
+  capacity: number | null;
+  feedback_level: ProjectFeedbackLevel;
+  starts_at: string | null;
+  join_deadline: string | null;
+  submission_deadline: string;
+  results_at: string | null;
+  published_at: string | null;
+  sponsor_id: string | null;
+};
+
+export type ProjectParticipationSummary = {
+  id: string;
+  project_id: string;
+  status: ProjectParticipationStatus;
+  joined_at: string;
+  started_at: string | null;
+  submitted_at: string | null;
+  completed_at: string | null;
+  updated_at: string;
+  project: ProjectCard | null;
+  submissionStatus: ProjectSubmissionStatus | null;
+  evidenceStatus: ProjectEvidenceStatus | null;
+};
+
 export type ProjectRewardConfiguration = {
   projectType: ProjectType;
   rewardModel: ProjectRewardModel | null;

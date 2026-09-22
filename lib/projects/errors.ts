@@ -12,6 +12,7 @@ export type ProjectErrorCode =
   | "PARTICIPATION_INACTIVE"
   | "SUBMISSION_LOCKED"
   | "SUBMISSION_EMPTY"
+  | "REVISION_CLOSED"
   | "SERVICE_FAILURE";
 
 export class ProjectServiceError extends Error {
@@ -38,6 +39,7 @@ const databaseErrorMap: Record<string, ProjectServiceError> = {
   ASCEND_PROJECT_PARTICIPATION_INACTIVE: new ProjectServiceError("PARTICIPATION_INACTIVE", "This participation can no longer be updated.", 409),
   ASCEND_PROJECT_SUBMISSION_LOCKED: new ProjectServiceError("SUBMISSION_LOCKED", "This submission is locked until a revision is requested.", 409),
   ASCEND_PROJECT_SUBMISSION_EMPTY: new ProjectServiceError("SUBMISSION_EMPTY", "Add at least one deliverable before submitting.", 400),
+  ASCEND_PROJECT_REVISION_CLOSED: new ProjectServiceError("REVISION_CLOSED", "The revision window has closed.", 409),
 };
 
 export function projectErrorFromDatabase(error: unknown): ProjectServiceError {
