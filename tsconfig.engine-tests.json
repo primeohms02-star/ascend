@@ -17,6 +17,8 @@
     "lib/atlas/opportunities/types.ts",
     "lib/atlas/missionContent.ts",
     "lib/atlas/replyFormatting.ts",
-    "lib/engine/missionSimilarity.ts"
+    "lib/engine/missionSimilarity.ts",
+    "lib/projects/lifecycle.ts",
+    "lib/projects/types.ts"
   ]
 }

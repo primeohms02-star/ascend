@@ -17,6 +17,12 @@ import {
   resolveOpportunityMatchScore,
 } from "../lib/atlas/opportunities/match-score";
 import { isOnboardingContextComplete } from "../lib/atlas/onboardingCompletion";
+import {
+  canTransitionProjectParticipation,
+  canTransitionProjectStatus,
+  validateProjectPublication,
+  validateProjectReward,
+} from "../lib/projects/lifecycle";
 
 const beginnerProfile: OpportunityProfile = {
   clerkId: "test-user",
@@ -252,4 +258,99 @@ test("only personalized snapshot scores can bypass detail reranking", () => {
     hasPersonalizedSnapshotScore({ score: Number.NaN, snapshotId: "snapshot" }),
     false,
   );
+});
+
+test("Project lifecycle rejects skipped review and result stages", () => {
+  assert.equal(canTransitionProjectStatus("draft", "review"), true);
+  assert.equal(canTransitionProjectStatus("draft", "published"), false);
+  assert.equal(canTransitionProjectStatus("reviewing", "results_ready"), true);
+  assert.equal(canTransitionProjectStatus("reviewing", "completed"), false);
+  assert.equal(canTransitionProjectStatus("completed", "published"), false);
+});
+
+test("Project participation preserves review and revision boundaries", () => {
+  assert.equal(canTransitionProjectParticipation("joined", "submitted"), true);
+  assert.equal(canTransitionProjectParticipation("submitted", "revision_requested"), true);
+  assert.equal(canTransitionProjectParticipation("revision_requested", "submitted"), true);
+  assert.equal(canTransitionProjectParticipation("joined", "awarded"), false);
+  assert.equal(canTransitionProjectParticipation("withdrawn", "submitted"), false);
+});
+
+test("Practice Projects cannot silently promise rewards", () => {
+  assert.deepEqual(validateProjectReward({
+    projectType: "practice",
+    rewardModel: null,
+    recipientCount: null,
+    amountMinor: null,
+    currency: null,
+    nonCashDescription: null,
+    fundingStatus: null,
+  }), []);
+
+  assert.equal(validateProjectReward({
+    projectType: "practice",
+    rewardModel: "winner",
+    recipientCount: 1,
+    amountMinor: 50_000_00,
+    currency: "NGN",
+    nonCashDescription: null,
+    fundingStatus: "secured",
+  }).length, 1);
+});
+
+test("Reward Projects cannot publish with unfunded or unclear rewards", () => {
+  const errors = validateProjectReward({
+    projectType: "reward",
+    rewardModel: "winner",
+    recipientCount: 3,
+    amountMinor: 30_000_00,
+    currency: "NGN",
+    nonCashDescription: null,
+    fundingStatus: "awaiting_confirmation",
+  });
+  assert.ok(errors.some((error) => /funding/i.test(error)));
+});
+
+test("Project publication requires complete criteria, rights, and deadlines", () => {
+  const valid = validateProjectPublication({
+    title: "Create a Student Launch Plan",
+    summary: "Build a practical launch plan for a fictional student-focused application.",
+    brief: "Create a concise launch plan that identifies the audience, channels, weekly actions and success measures.",
+    deliverables: ["One launch-plan document"],
+    criteriaWeights: [30, 30, 25, 15],
+    submissionDeadline: "2026-10-20T12:00:00.000Z",
+    rightsModel: "portfolio",
+    usageTerms: "The submission remains the user's portfolio work and will not be used commercially.",
+    reward: {
+      projectType: "practice",
+      rewardModel: null,
+      recipientCount: null,
+      amountMinor: null,
+      currency: null,
+      nonCashDescription: null,
+      fundingStatus: null,
+    },
+  }, new Date("2026-09-22T12:00:00.000Z"));
+  assert.deepEqual(valid, []);
+
+  const invalid = validateProjectPublication({
+    title: "Test",
+    summary: "Too short",
+    brief: "Too short",
+    deliverables: [],
+    criteriaWeights: [80, 30],
+    submissionDeadline: "2026-01-01T00:00:00.000Z",
+    rightsModel: "portfolio",
+    usageTerms: "",
+    reward: {
+      projectType: "practice",
+      rewardModel: null,
+      recipientCount: null,
+      amountMinor: null,
+      currency: null,
+      nonCashDescription: null,
+      fundingStatus: null,
+    },
+  }, new Date("2026-09-22T12:00:00.000Z"));
+  assert.ok(invalid.length >= 5);
 });
