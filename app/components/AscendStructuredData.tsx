@@ -12,6 +12,7 @@ import {
   LOGO_PATH,
   ORGANIZATION_ID,
   PRAEVORYN_LINKEDIN_URL,
+  PRAEVORYN_FOUNDER_URL,
   PRAEVORYN_NAME,
   PRAEVORYN_ORGANIZATION_ID,
   PRAEVORYN_URL,
@@ -180,15 +181,34 @@ const structuredData = {
         "Founder & Chief Executive Officer",
 
       description:
-        "Chukwudumebi Orakwue is the Founder and Chief Executive Officer of ASCEND, an operating system for human potential.",
+        "Chukwudumebi Orakwue is a technology founder, the Founder and Chief Executive Officer of Praevoryn, and the Founder and Chief Executive Officer of ASCEND.",
 
-      worksFor: {
-        "@id":
-          ORGANIZATION_ID,
-      },
+      image:
+        `${SITE_URL}/chukwudumebi-orakwue.webp`,
+
+      worksFor: [
+        {
+          "@id":
+            PRAEVORYN_ORGANIZATION_ID,
+        },
+        {
+          "@id":
+            ORGANIZATION_ID,
+        },
+      ],
+
+      knowsAbout: [
+        "Human-centred technology",
+        "Human potential",
+        "Product strategy",
+        "Strategic decision support",
+        "Opportunity discovery",
+        "Personal development",
+      ],
 
       sameAs: [
         FOUNDER_LINKEDIN_URL,
+        PRAEVORYN_FOUNDER_URL,
       ],
 
       mainEntityOfPage: {

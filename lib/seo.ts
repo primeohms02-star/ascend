@@ -45,6 +45,9 @@ export const PRAEVORYN_NAME =
 export const PRAEVORYN_URL =
   "https://www.praevoryn.com";
 
+export const PRAEVORYN_FOUNDER_URL =
+  `${PRAEVORYN_URL}/founder`;
+
 export const PRAEVORYN_LINKEDIN_URL =
   "https://www.linkedin.com/company/praevoryn/";
 

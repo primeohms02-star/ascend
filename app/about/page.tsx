@@ -118,13 +118,28 @@ export default function AboutPage() {
           Founded in June 2026
         </p>
 
-        <p className="mt-3 max-w-4xl text-sm leading-7 text-slate-400 sm:text-base">
-          ASCEND was founded to build a calmer,
+          <p className="mt-3 max-w-4xl text-sm leading-7 text-slate-400 sm:text-base">
+            ASCEND was founded to build a calmer,
           more intentional relationship between
           human potential and technology—one
           centred on direction, meaningful action
-          and evidence of growth.
-        </p>
+            and evidence of growth.
+          </p>
+
+          <p className="mt-4 max-w-4xl text-sm leading-7 text-slate-400 sm:text-base">
+            ASCEND is the flagship platform of{" "}
+            <a
+              href="https://www.praevoryn.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-semibold text-cyan-300 transition hover:text-cyan-200"
+            >
+              Praevoryn
+            </a>
+            , a human-centred technology company
+            building intelligent systems for
+            progress.
+          </p>
 
         <div className="mt-6 border-t border-white/[0.08] pt-5">
           <p className="text-sm leading-7 text-slate-400">

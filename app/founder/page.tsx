@@ -17,12 +17,14 @@ import {
   FOUNDER_NAME,
   FOUNDER_URL,
   ORGANIZATION_ID,
+  PRAEVORYN_FOUNDER_URL,
+  PRAEVORYN_ORGANIZATION_ID,
   WEBSITE_ID,
   createPublicPageMetadata,
 } from "@/lib/seo";
 
 const description =
-  "Chukwudumebi Orakwue is the Founder & CEO of ASCEND, an operating system for human potential built to connect purpose, direction, intelligent decision support, meaningful action and growth.";
+  "Chukwudumebi Orakwue is a technology founder, the Founder & CEO of Praevoryn, and the Founder & CEO of ASCEND, an operating system for human potential.";
 
 export const metadata =
   createPublicPageMetadata({
@@ -33,6 +35,12 @@ export const metadata =
 
     path:
       "/founder",
+
+    socialImagePath:
+      "/chukwudumebi-orakwue.webp",
+
+    socialImageAlt:
+      "Chukwudumebi Orakwue, Founder and CEO of Praevoryn and ASCEND",
   });
 
 const profileStructuredData = {
@@ -49,7 +57,7 @@ const profileStructuredData = {
     FOUNDER_URL,
 
   name:
-    `${FOUNDER_NAME} — Founder & CEO of ASCEND`,
+    `${FOUNDER_NAME} — Founder & CEO of Praevoryn and ASCEND`,
 
   description,
 
@@ -86,18 +94,34 @@ const profileStructuredData = {
       "Founder & Chief Executive Officer",
 
     description:
-      "Founder and Chief Executive Officer of ASCEND, leading the vision and development of a connected system for human potential.",
+      "Technology founder, Founder and Chief Executive Officer of Praevoryn, and Founder and Chief Executive Officer of ASCEND.",
 
     image:
       "https://ascendai.space/chukwudumebi-orakwue.webp",
 
-    worksFor: {
-      "@id":
-        ORGANIZATION_ID,
-    },
+    worksFor: [
+      {
+        "@id":
+          PRAEVORYN_ORGANIZATION_ID,
+      },
+      {
+        "@id":
+          ORGANIZATION_ID,
+      },
+    ],
+
+    knowsAbout: [
+      "Human-centred technology",
+      "Human potential",
+      "Product strategy",
+      "Strategic decision support",
+      "Opportunity discovery",
+      "Personal development",
+    ],
 
     sameAs: [
       FOUNDER_LINKEDIN_URL,
+      PRAEVORYN_FOUNDER_URL,
     ],
   },
 };
@@ -142,7 +166,7 @@ export default function FounderPage() {
     <PublicPageShell
       eyebrow="Founder & Leadership"
       title={FOUNDER_NAME}
-      description="Founder & CEO of ASCEND — building technology designed to help people discover their direction and turn potential into meaningful progress."
+      description="Founder & CEO of Praevoryn and ASCEND — building human-centred technology that helps people find direction and make meaningful progress."
     >
       <script
         type="application/ld+json"
@@ -173,9 +197,10 @@ export default function FounderPage() {
               <span className="font-semibold text-white">
                 Chukwudumebi Orakwue
               </span>{" "}
-              is the Founder &amp; CEO of ASCEND,
-              an operating system for human
-              potential.
+              is a technology founder, the Founder
+              &amp; CEO of Praevoryn, and the
+              Founder &amp; CEO of ASCEND—an
+              operating system for human potential.
             </p>
 
             <p>
@@ -222,11 +247,11 @@ export default function FounderPage() {
           </div>
 
           <div className="p-7 sm:p-9">
-          <p className="text-sm font-semibold uppercase tracking-[0.22em] text-blue-300">
-            Leadership
-          </p>
+            <p className="text-sm font-semibold uppercase tracking-[0.22em] text-blue-300">
+              Leadership
+            </p>
 
-          <dl className="mt-7 space-y-6">
+            <dl className="mt-7 space-y-6">
             <div>
               <dt className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
                 Name
@@ -253,7 +278,7 @@ export default function FounderPage() {
               </dt>
 
               <dd className="mt-2 text-lg font-semibold text-white">
-                ASCEND
+                Praevoryn &amp; ASCEND
               </dd>
             </div>
 
@@ -281,7 +306,7 @@ export default function FounderPage() {
                 </a>
               </dd>
             </div>
-          </dl>
+            </dl>
           </div>
         </aside>
       </section>
@@ -372,6 +397,22 @@ export default function FounderPage() {
             className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.05] px-6 py-3 font-semibold text-slate-200 transition hover:border-blue-400/30 hover:bg-white/[0.08] hover:text-white"
           >
             ASCEND on LinkedIn
+
+            <ArrowUpRight
+              size={17}
+              aria-hidden="true"
+            />
+          </a>
+
+          <a
+            href={
+              PRAEVORYN_FOUNDER_URL
+            }
+            target="_blank"
+            rel="me noopener noreferrer"
+            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.05] px-6 py-3 font-semibold text-slate-200 transition hover:border-blue-400/30 hover:bg-white/[0.08] hover:text-white"
+          >
+            Founder profile on Praevoryn
 
             <ArrowUpRight
               size={17}
