@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 
 import {
   ArrowUpRight,
@@ -86,6 +87,9 @@ const profileStructuredData = {
 
     description:
       "Founder and Chief Executive Officer of ASCEND, leading the vision and development of a connected system for human potential.",
+
+    image:
+      "https://ascendai.space/chukwudumebi-orakwue.webp",
 
     worksFor: {
       "@id":
@@ -203,7 +207,21 @@ export default function FounderPage() {
           </div>
         </article>
 
-        <aside className="rounded-3xl border border-blue-400/20 bg-blue-500/[0.07] p-7 sm:p-9">
+        <aside className="overflow-hidden rounded-3xl border border-blue-400/20 bg-blue-500/[0.07]">
+          <div className="relative aspect-[4/5] overflow-hidden border-b border-white/10 bg-slate-950">
+            <Image
+              src="/chukwudumebi-orakwue.webp"
+              alt="Chukwudumebi Orakwue, Founder and CEO of ASCEND"
+              fill
+              priority
+              sizes="(max-width: 1024px) 100vw, 32vw"
+              className="object-cover object-[center_18%]"
+            />
+
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-slate-950/75 to-transparent" />
+          </div>
+
+          <div className="p-7 sm:p-9">
           <p className="text-sm font-semibold uppercase tracking-[0.22em] text-blue-300">
             Leadership
           </p>
@@ -264,6 +282,7 @@ export default function FounderPage() {
               </dd>
             </div>
           </dl>
+          </div>
         </aside>
       </section>
 
