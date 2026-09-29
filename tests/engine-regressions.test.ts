@@ -33,6 +33,8 @@ import {
   participationStatusLabel,
   projectTypeLabel,
 } from "../lib/projects/presentation";
+import { mapFlutterwaveTransferStatus, projectTransferReference, verifyFlutterwaveWebhook } from "../lib/projects/payments/security";
+import { createHmac } from "node:crypto";
 
 const beginnerProfile: OpportunityProfile = {
   clerkId: "test-user",
@@ -58,6 +60,9 @@ const seniorRole: Opportunity = {
   location: "Lagos, Nigeria",
   tags: ["finance", "investment management", "CFA"],
 };
+
+test("Flutterwave webhooks require a valid signature",()=>{const body=JSON.stringify({event:"transfer.completed",data:{reference:"test"}});const secret="test-secret";const signature=createHmac("sha256",secret).update(body).digest("base64");assert.equal(verifyFlutterwaveWebhook(body,new Headers({"flutterwave-signature":signature}),secret),true);assert.equal(verifyFlutterwaveWebhook(body,new Headers({"flutterwave-signature":"wrong"}),secret),false);assert.equal(verifyFlutterwaveWebhook(body,new Headers({"verif-hash":secret}),secret),true)});
+test("Project payout references are deterministic and statuses are conservative",()=>{assert.equal(projectTransferReference("abc"),"ascend-project-abc");assert.equal(mapFlutterwaveTransferStatus("SUCCESSFUL"),"delivered");assert.equal(mapFlutterwaveTransferStatus("FAILED"),"issue_reported");assert.equal(mapFlutterwaveTransferStatus("NEW"),"processing")});
 
 test("new and partial accounts cannot bypass onboarding", () => {
   assert.equal(isOnboardingContextComplete(null), false);

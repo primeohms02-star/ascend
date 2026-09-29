@@ -22,6 +22,8 @@
     "lib/projects/errors.ts",
     "lib/projects/input.ts",
     "lib/projects/presentation.ts",
+    "lib/projects/payments/security.ts",
+    "lib/projects/payments/types.ts",
     "lib/projects/types.ts"
   ]
 }
