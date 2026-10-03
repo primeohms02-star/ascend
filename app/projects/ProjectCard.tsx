@@ -1,18 +1,16 @@
 import Link from "next/link";
-import { ArrowRight, Clock3, Layers3, Trophy } from "lucide-react";
+import { ArrowRight, Clock3, Layers3 } from "lucide-react";
 
-import { formatProjectDate, formatProjectDuration, projectDifficultyLabel, projectTypeLabel } from "@/lib/projects/presentation";
+import { formatProjectDate, formatProjectDuration, projectDifficultyLabel } from "@/lib/projects/presentation";
 import type { ProjectCard as ProjectCardType } from "@/lib/projects/types";
 
 export default function ProjectCard({ project }: { project: ProjectCardType }) {
-  const reward = project.project_type === "reward";
+
   return (
     <Link href={`/projects/${project.id}`} className="group flex h-full flex-col rounded-2xl border border-white/[0.08] bg-white/[0.03] p-5 transition hover:-translate-y-0.5 hover:border-cyan-300/20 hover:bg-white/[0.045]">
       <div className="flex items-start justify-between gap-3">
-        <span className={`rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.13em] ${reward ? "border-amber-300/20 bg-amber-300/[0.07] text-amber-200" : "border-cyan-300/20 bg-cyan-300/[0.06] text-cyan-200"}`}>
-          {projectTypeLabel(project.project_type)}
-        </span>
-        {reward ? <Trophy size={17} className="text-amber-300" aria-hidden="true" /> : <Layers3 size={17} className="text-cyan-300" aria-hidden="true" />}
+        <span className="rounded-full border border-cyan-300/20 px-2.5 py-1 text-xs text-cyan-200">{project.experience_kind === "explore" ? "Explore" : "Build"}</span>
+        <Layers3 size={17} className="text-cyan-300" aria-hidden="true" />
       </div>
       <p className="mt-4 text-xs font-medium text-slate-500">{project.category} · {projectDifficultyLabel(project.difficulty)}</p>
       <h2 className="mt-1.5 text-lg font-semibold leading-7 text-white">{project.title}</h2>

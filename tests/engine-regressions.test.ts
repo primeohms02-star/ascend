@@ -1,5 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { coachingFingerprint, parseCoachingFeedback } from "../lib/projects/coaching";
+import { evidenceLabel, milestoneProgress } from "../lib/projects/presentation";
+import { directionMatches } from "../lib/projects/recommendations";
 
 import { assessApplicationReadiness } from "../lib/atlas/opportunities/application-readiness";
 import { analyzeOpportunityDeadline, isOpportunityExpired } from "../lib/atlas/opportunities/deadline";
@@ -33,8 +36,6 @@ import {
   participationStatusLabel,
   projectTypeLabel,
 } from "../lib/projects/presentation";
-import { mapFlutterwaveTransferStatus, projectTransferReference, verifyFlutterwaveWebhook } from "../lib/projects/payments/security";
-import { createHmac } from "node:crypto";
 
 const beginnerProfile: OpportunityProfile = {
   clerkId: "test-user",
@@ -60,9 +61,6 @@ const seniorRole: Opportunity = {
   location: "Lagos, Nigeria",
   tags: ["finance", "investment management", "CFA"],
 };
-
-test("Flutterwave webhooks require a valid signature",()=>{const body=JSON.stringify({event:"transfer.completed",data:{reference:"test"}});const secret="test-secret";const signature=createHmac("sha256",secret).update(body).digest("base64");assert.equal(verifyFlutterwaveWebhook(body,new Headers({"flutterwave-signature":signature}),secret),true);assert.equal(verifyFlutterwaveWebhook(body,new Headers({"flutterwave-signature":"wrong"}),secret),false);assert.equal(verifyFlutterwaveWebhook(body,new Headers({"verif-hash":secret}),secret),true)});
-test("Project payout references are deterministic and statuses are conservative",()=>{assert.equal(projectTransferReference("abc"),"ascend-project-abc");assert.equal(mapFlutterwaveTransferStatus("SUCCESSFUL"),"delivered");assert.equal(mapFlutterwaveTransferStatus("FAILED"),"issue_reported");assert.equal(mapFlutterwaveTransferStatus("NEW"),"processing")});
 
 test("new and partial accounts cannot bypass onboarding", () => {
   assert.equal(isOnboardingContextComplete(null), false);
@@ -313,7 +311,7 @@ test("Practice Projects cannot silently promise rewards", () => {
   }).length, 1);
 });
 
-test("Reward Projects cannot publish with unfunded or unclear rewards", () => {
+test("Reward Projects are retired even when funding is secured", () => {
   const errors = validateProjectReward({
     projectType: "reward",
     rewardModel: "winner",
@@ -321,9 +319,9 @@ test("Reward Projects cannot publish with unfunded or unclear rewards", () => {
     amountMinor: 30_000_00,
     currency: "NGN",
     nonCashDescription: null,
-    fundingStatus: "awaiting_confirmation",
+    fundingStatus: "secured",
   });
-  assert.ok(errors.some((error) => /funding/i.test(error)));
+  assert.ok(errors.some((error) => /retired/i.test(error)));
 });
 
 test("Project publication requires complete criteria, rights, and deadlines", () => {
@@ -411,8 +409,8 @@ test("Project submission input drops empty and excessive unsafe values", () => {
 });
 
 test("Project presentation keeps Practice and Reward Projects distinct", () => {
-  assert.equal(projectTypeLabel("practice"), "Practice Project");
-  assert.equal(projectTypeLabel("reward"), "Reward Project");
+  assert.equal(projectTypeLabel("practice"), "Project");
+  assert.equal(projectTypeLabel("reward"), "Historical Project");
 });
 
 test("Project duration remains understandable across minutes and hours", () => {
@@ -423,4 +421,33 @@ test("Project duration remains understandable across minutes and hours", () => {
 test("Project participation states use clear user-facing language", () => {
   assert.equal(participationStatusLabel("revision_requested"), "Revision requested");
   assert.equal(participationStatusLabel("pending"), "Awaiting review");
+});
+
+
+test("Atlas coaching cache follows content and brief changes, not object order", () => {
+  const a=coachingFingerprint("brief",{b:"second",a:"first"},"reflection");
+  assert.equal(a,coachingFingerprint("brief",{a:"first",b:"second"},"reflection"));
+  assert.notEqual(a,coachingFingerprint("changed brief",{a:"first",b:"second"},"reflection"));
+  assert.notEqual(a,coachingFingerprint("brief",{a:"edited",b:"second"},"reflection"));
+  assert.notEqual(a,coachingFingerprint("brief",{a:"first",b:"second"},"edited reflection"));
+});
+test("Atlas feedback cannot introduce authority fields and rejects malformed output", () => {
+  assert.deepEqual(parseCoachingFeedback({strengths:["Clear scope"],improvements:[],nextStep:"Explain one choice.",verified:true,score:100}),{strengths:["Clear scope"],improvements:[],nextStep:"Explain one choice."});
+  assert.throws(()=>parseCoachingFeedback({strengths:"excellent",improvements:[],nextStep:"next"}));
+  assert.throws(()=>parseCoachingFeedback({strengths:[],improvements:[],nextStep:"x".repeat(1001)}));
+});
+test("Milestone draft progress ignores unknown fields and blank responses", () => {
+  assert.deepEqual(milestoneProgress(["First","Second"],{First:"A detailed response to the first milestone",Second:" ",Extra:"Not a milestone"}),{drafted:1,total:2,next:"Second"});
+});
+test("Completion never implies human review without the review record", () => {
+  assert.equal(evidenceLabel("completed",null),"Completed");
+  assert.equal(evidenceLabel("verified",null),"Completed");
+  assert.equal(evidenceLabel("verified","reviewer"),"Human reviewed");
+  assert.equal(canTransitionProjectParticipation("completed","awarded"),false);
+});
+test("Direction recommendations need a relevant shared topic", () => {
+  const p={category:"Music",title:"Plan an original release",skills:["Creative strategy"]};
+  assert.deepEqual(directionMatches("I want to build skills",p),[]);
+  assert.deepEqual(directionMatches("Build a finance career",p),[]);
+  assert.deepEqual(directionMatches("Create music",p),["music"]);
 });

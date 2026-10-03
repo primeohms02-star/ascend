@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { ProjectServiceError } from "./errors";
 
+
 export function projectApiError(error: unknown) {
   if (error instanceof ProjectServiceError) {
     return NextResponse.json({ error: error.message, code: error.code }, { status: error.status });
@@ -12,8 +13,6 @@ export function projectApiError(error: unknown) {
   if (error instanceof Error && error.message === "PROJECTS_ADMIN_FORBIDDEN") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
-  if(error instanceof Error&&error.message==="PROJECT_PAYMENTS_DISABLED")return NextResponse.json({error:"Project payments are not enabled yet.",code:"PAYMENTS_DISABLED"},{status:503});
-  if(error instanceof Error&&error.message==="PROJECT_PAYMENTS_NOT_CONFIGURED")return NextResponse.json({error:"Project payments are not configured.",code:"PAYMENTS_NOT_CONFIGURED"},{status:503});
 
   console.error("Projects API Error:", error);
   return NextResponse.json(

@@ -22,9 +22,9 @@ const participationTransitions: Record<ProjectParticipationStatus, readonly Proj
   pending: ["joined", "withdrawn", "disqualified"],
   joined: ["in_progress", "submitted", "withdrawn", "disqualified"],
   in_progress: ["submitted", "withdrawn", "disqualified"],
-  submitted: ["revision_requested", "completed", "not_completed", "awarded", "disqualified"],
+  submitted: ["revision_requested", "completed", "not_completed", "disqualified"],
   revision_requested: ["submitted", "withdrawn", "not_completed", "disqualified"],
-  completed: ["awarded"],
+  completed: [],
   not_completed: [],
   awarded: [],
   withdrawn: [],
@@ -32,42 +32,24 @@ const participationTransitions: Record<ProjectParticipationStatus, readonly Proj
 };
 
 export function canTransitionProjectStatus(from: ProjectStatus, to: ProjectStatus): boolean {
-  return projectTransitions[from].includes(to);
+  return projectTransitions[from]?.includes(to) ?? false;
 }
 
 export function canTransitionProjectParticipation(
   from: ProjectParticipationStatus,
   to: ProjectParticipationStatus,
 ): boolean {
-  return participationTransitions[from].includes(to);
+  return participationTransitions[from]?.includes(to) ?? false;
 }
 
 export function validateProjectReward(reward: ProjectRewardConfiguration): string[] {
   if (reward.projectType === "practice") {
-    return reward.rewardModel === null && reward.amountMinor === null && reward.currency === null
+    return reward.rewardModel === null && reward.amountMinor === null && reward.currency === null && reward.recipientCount === null && reward.nonCashDescription === null && reward.fundingStatus === null
       ? []
       : ["Practice Projects cannot contain a financial or competitive reward configuration."];
   }
 
-  const errors: string[] = [];
-  if (!reward.rewardModel) errors.push("Reward Projects require a reward model.");
-  if (!reward.fundingStatus || !["confirmed", "secured"].includes(reward.fundingStatus)) {
-    errors.push("Reward funding must be confirmed or secured before publication.");
-  }
-  if (!reward.recipientCount || reward.recipientCount < 1) {
-    errors.push("Reward Projects require at least one recipient.");
-  }
-
-  if (reward.rewardModel === "winner" || reward.rewardModel === "completion") {
-    if (!reward.amountMinor || reward.amountMinor < 1) errors.push("Financial rewards require a positive amount.");
-    if (!reward.currency || !/^[A-Z]{3}$/.test(reward.currency)) errors.push("Financial rewards require a valid currency code.");
-  }
-
-  if (reward.rewardModel === "non_cash" && !reward.nonCashDescription?.trim()) {
-    errors.push("Non-cash rewards require a clear description.");
-  }
-
-  return errors;
+  return ["Reward Projects are retired. Create an Explore or Build Project."];
 }
 
 export function validateProjectPublication(input: ProjectPublicationReadiness, now = new Date()): string[] {
@@ -75,9 +57,10 @@ export function validateProjectPublication(input: ProjectPublicationReadiness, n
   if (input.title.trim().length < 4) errors.push("Add a clear Project title.");
   if (input.summary.trim().length < 20) errors.push("Add a useful Project summary.");
   if (input.brief.trim().length < 40) errors.push("Add a complete Project brief.");
-  if (!input.deliverables.length || input.deliverables.some((item) => item.trim().length < 3)) {
-    errors.push("Add at least one clear deliverable.");
+  if (!input.deliverables.length || input.deliverables.some((item) => item.trim().length < 3 || item.trim().length > 120)) {
+    errors.push("Add clear deliverables of 3–120 characters.");
   }
+  if (new Set(input.deliverables).size !== input.deliverables.length) errors.push("Use unique milestone titles.");
   if (!input.criteriaWeights.length || input.criteriaWeights.some((weight) => weight <= 0)) {
     errors.push("Add positive evaluation criteria weights.");
   } else if (input.criteriaWeights.reduce((total, weight) => total + weight, 0) !== 100) {
@@ -85,6 +68,7 @@ export function validateProjectPublication(input: ProjectPublicationReadiness, n
   }
   const deadline = new Date(input.submissionDeadline);
   if (Number.isNaN(deadline.getTime()) || deadline <= now) errors.push("Set a future submission deadline.");
+  if (input.rightsModel !== "portfolio") errors.push("Learning Projects must preserve participant portfolio rights.");
   if (!input.usageTerms.trim()) errors.push("Add submission usage terms.");
   errors.push(...validateProjectReward(input.reward));
   return errors;

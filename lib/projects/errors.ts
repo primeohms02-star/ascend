@@ -27,6 +27,7 @@ export class ProjectServiceError extends Error {
 }
 
 const databaseErrorMap: Record<string, ProjectServiceError> = {
+  ASCEND_PROJECT_INCOMPLETE: new ProjectServiceError("INVALID_REQUEST", "Add a meaningful response to every milestone (at least 20 characters) and a reflection (at least 40 characters).",400),
   ASCEND_PROJECT_INVALID_USER: new ProjectServiceError("INVALID_REQUEST", "A valid user is required.", 400),
   ASCEND_PROJECT_NOT_FOUND: new ProjectServiceError("PROJECT_NOT_FOUND", "This Project could not be found.", 404),
   ASCEND_PROJECT_UNAVAILABLE: new ProjectServiceError("PROJECT_UNAVAILABLE", "This Project is not currently available.", 409),

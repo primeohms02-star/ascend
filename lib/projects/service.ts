@@ -1,4 +1,5 @@
 import "server-only";
+import { directionMatches } from "./recommendations";
 
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { ProjectServiceError, projectErrorFromDatabase } from "./errors";
@@ -8,6 +9,7 @@ import type { ProjectCard } from "./types";
 const projectCardFields = [
   "id",
   "project_type",
+  "experience_kind",
   "entry_mode",
   "title",
   "summary",
@@ -45,11 +47,12 @@ export async function listPublishedProjects(input: ProjectListInput) {
   let query = supabaseAdmin
     .from("ascend_projects")
     .select(projectCardFields, { count: "exact" })
-    .eq("status", "published")
+    .eq("project_type", "practice").eq("status", "published")
     .gt("submission_deadline", now)
     .order("published_at", { ascending: false })
     .range(from, to);
 
+  if (input.experienceKind) query=query.eq("experience_kind",input.experienceKind);
   if (input.projectType) query = query.eq("project_type", input.projectType);
   if (input.difficulty) query = query.eq("difficulty", input.difficulty);
   if (input.category) query = query.eq("category", input.category);
@@ -74,37 +77,21 @@ export async function listPublishedProjects(input: ProjectListInput) {
 
 export async function getPublishedProject(projectId: string, userId: string) {
   const now = new Date().toISOString();
-  const [projectResult, criteriaResult, rewardResult, participationResult] = await Promise.all([
-    supabaseAdmin.from("ascend_projects").select(projectDetailFields).eq("id", projectId).eq("status", "published").gt("submission_deadline", now).maybeSingle(),
+  const [projectResult, criteriaResult, participationResult] = await Promise.all([
+    supabaseAdmin.from("ascend_projects").select(projectDetailFields).eq("id", projectId).eq("project_type", "practice").eq("status", "published").gt("submission_deadline", now).maybeSingle(),
     supabaseAdmin.from("ascend_project_criteria").select("id,title,description,weight,position").eq("project_id", projectId).order("position"),
-    supabaseAdmin.from("ascend_project_rewards").select("reward_model,recipient_count,amount_minor,currency,non_cash_description,funding_status,expected_delivery_at").eq("project_id", projectId).maybeSingle(),
     supabaseAdmin.from("ascend_project_participations").select("id,status,joined_at,started_at,submitted_at,completed_at").eq("project_id", projectId).eq("user_id", userId).maybeSingle(),
   ]);
 
   if (projectResult.error) throw projectErrorFromDatabase(projectResult.error);
   if (!projectResult.data) throw new ProjectServiceError("PROJECT_NOT_FOUND", "This Project is unavailable or could not be found.", 404);
   if (criteriaResult.error) throw projectErrorFromDatabase(criteriaResult.error);
-  if (rewardResult.error) throw projectErrorFromDatabase(rewardResult.error);
   if (participationResult.error) throw projectErrorFromDatabase(participationResult.error);
 
   const project = projectResult.data as unknown as Record<string, unknown> & { sponsor_id: string | null };
-  let sponsor = null;
-  if (project.sponsor_id) {
-    const sponsorResult = await supabaseAdmin
-      .from("ascend_project_sponsors")
-      .select("id,name,website,verification_status")
-      .eq("id", project.sponsor_id)
-      .eq("verification_status", "verified")
-      .maybeSingle();
-    if (sponsorResult.error) throw projectErrorFromDatabase(sponsorResult.error);
-    sponsor = sponsorResult.data;
-  }
-
   return {
     project,
     criteria: criteriaResult.data ?? [],
-    reward: rewardResult.data,
-    sponsor,
     participation: participationResult.data,
   };
 }
@@ -183,6 +170,7 @@ export async function getUserProjectWorkspace(projectId: string, userId: string)
     : { data: [], error: null };
   if (reviewsResult.error) throw projectErrorFromDatabase(reviewsResult.error);
 
+  if ((projectResult.data as unknown as {project_type:string}).project_type !== "practice") throw new ProjectServiceError("PROJECT_UNAVAILABLE","This historical Project is read-only. Contact support for its records.",409);
   return {
     project: projectResult.data,
     criteria: criteriaResult.data ?? [],
@@ -196,7 +184,7 @@ export async function getUserProjectWorkspace(projectId: string, userId: string)
 export async function listUserProjectEvidence(userId: string) {
   const { data, error } = await supabaseAdmin
     .from("ascend_project_evidence")
-    .select("id,project_id,title,summary,skills,evidence_status,visibility,share_token,verified_at,created_at")
+    .select("id,project_id,title,summary,skills,deliverable_preview,evidence_status,visibility,share_token,verified_by,verified_at,created_at")
     .eq("user_id", userId)
     .order("created_at", { ascending: false });
   if (error) throw projectErrorFromDatabase(error);
@@ -231,4 +219,13 @@ export async function saveUserSubmission(
   const submission = Array.isArray(data) ? data[0] : data;
   if (!submission) throw new ProjectServiceError("SERVICE_FAILURE", "ASCEND could not save this submission.", 500);
   return submission;
+}
+
+export async function projectsForDirection(userId:string) {
+  const profile = await supabaseAdmin.from("profiles").select("north_star").eq("clerk_id",userId).maybeSingle();
+  const direction = String(profile.data?.north_star??"");
+  if(!direction || profile.error)return [];
+  const result=await supabaseAdmin.from("ascend_projects").select(projectCardFields).eq("project_type","practice").eq("status","published").gt("submission_deadline",new Date().toISOString()).order("published_at",{ascending:false}).limit(60);
+  if(result.error)return [];
+  return (result.data as unknown as ProjectCard[]).map(project=>({project,matches:directionMatches(direction,project)})).filter(item=>item.matches.length>0).sort((a,b)=>b.matches.length-a.matches.length).slice(0,3);
 }

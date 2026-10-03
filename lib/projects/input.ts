@@ -2,13 +2,14 @@ import type { ProjectDifficulty, ProjectType } from "./types";
 import { ProjectServiceError } from "./errors";
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-const projectTypes: ProjectType[] = ["practice", "reward"];
+const projectTypes: ProjectType[] = ["practice"];
 const difficulties: ProjectDifficulty[] = ["beginner", "intermediate", "advanced"];
 
 export type ProjectListInput = {
   page: number;
   pageSize: number;
   projectType?: ProjectType;
+  experienceKind?: "explore" | "build";
   difficulty?: ProjectDifficulty;
   category?: string;
   search?: string;
@@ -42,6 +43,7 @@ export function parseProjectListInput(searchParams: URLSearchParams): ProjectLis
       Number.isInteger(requestedPageSize) && requestedPageSize > 0
         ? Math.min(requestedPageSize, 24)
         : 12,
+    experienceKind: ["explore","build"].includes(searchParams.get("experience")??"") ? searchParams.get("experience") as "explore"|"build" : undefined,
     projectType: projectTypes.includes(requestedType as ProjectType)
       ? (requestedType as ProjectType)
       : undefined,

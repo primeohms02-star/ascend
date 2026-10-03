@@ -45,6 +45,7 @@ export type ProjectFundingStatus = "draft" | "awaiting_confirmation" | "confirme
 export type ProjectCard = {
   id: string;
   project_type: ProjectType;
+  experience_kind: "explore" | "build";
   entry_mode: ProjectEntryMode;
   title: string;
   summary: string;

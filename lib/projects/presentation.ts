@@ -1,7 +1,7 @@
 import type { ProjectDifficulty, ProjectParticipationStatus, ProjectStatus, ProjectType } from "./types";
 
 export function projectTypeLabel(type: ProjectType) {
-  return type === "reward" ? "Reward Project" : "Practice Project";
+  return type === "reward" ? "Historical Project" : "Project";
 }
 
 export function projectDifficultyLabel(difficulty: ProjectDifficulty) {
@@ -41,7 +41,11 @@ export function formatProjectDate(value: string | null | undefined) {
   return new Intl.DateTimeFormat("en", { day: "numeric", month: "short", year: "numeric" }).format(date);
 }
 
-export function formatRewardAmount(amountMinor: number | null, currency: string | null) {
-  if (!amountMinor || !currency) return null;
-  return new Intl.NumberFormat("en", { style: "currency", currency, maximumFractionDigits: 0 }).format(amountMinor / 100);
+export function evidenceLabel(status: string, reviewer?: string | null) {
+  return status === "verified" && reviewer ? "Human reviewed" : "Completed";
+}
+
+export function milestoneProgress(deliverables: string[], responses: Record<string,string>) {
+  const drafted = deliverables.filter(item=>(responses[item]?.trim().length ?? 0)>=20).length;
+  return { drafted, total: deliverables.length, next: deliverables.find(item=>(responses[item]?.trim().length ?? 0)<20) ?? null };
 }
