@@ -10,7 +10,7 @@ export type BriefingParticipation = { project_id: string; status: string; update
 export type ProjectBriefing = { title: string; reason: string; nextStep: string; href: string; action: string };
 
 export function selectProjectBriefing(
-  direction: string,
+  direction: string | { northStar: string; identity: string; goal: string; skills: string[] },
   projects: BriefingProject[],
   participations: BriefingParticipation[],
   submissions: { project_id: string; deliverable_responses: Record<string, string> }[],
@@ -34,17 +34,28 @@ export function selectProjectBriefing(
       href: `/projects/${project.id}/workspace`, action: "Continue your project",
     };
   }
+  const context = typeof direction === "string" ? { northStar: direction, identity: "", goal: "", skills: [] } : direction;
+  const signals = [
+    { text: context.northStar, label: "North Star", weight: 4 },
+    { text: context.goal, label: "saved goal", weight: 3 },
+    { text: context.identity, label: "chosen pathway", weight: 2 },
+    { text: context.skills.join(" "), label: "declared skills", weight: 1 },
+  ];
   const previouslyJoined = new Set(participations.map(p => p.project_id));
   const ranked = available.filter(p => !previouslyJoined.has(p.id)
     && (!p.join_deadline || Date.parse(p.join_deadline) > now))
-    .map(project => ({ project, matches: directionMatches(direction, project) }))
-    .filter(item => item.matches.length > 0)
-    .sort((a, b) => b.matches.length - a.matches.length || a.project.id.localeCompare(b.project.id));
+    .map(project => {
+      const evidence = signals.map(signal => ({ ...signal, matches: directionMatches(signal.text, project) }))
+        .filter(signal => signal.matches.length > 0);
+      return { project, evidence, score: evidence.reduce((sum, signal) => sum + signal.matches.length * signal.weight, 0) };
+    })
+    .filter(item => item.score > 0)
+    .sort((a, b) => b.score - a.score || a.project.id.localeCompare(b.project.id));
   const best = ranked[0];
   if (!best) return null;
   return {
     title: best.project.title,
-    reason: `Connects with your saved direction through ${best.matches.slice(0, 3).join(", ")}.`,
+    reason: `Connects with your ${best.evidence[0].label} through ${best.evidence[0].matches.slice(0, 3).join(", ")}.`,
     nextStep: "Explore the brief and build work you can add to your portfolio.",
     href: `/projects/${best.project.id}`, action: "View project",
   };

@@ -481,3 +481,17 @@ test("Briefing hides closed, future, retired and expired projects", () => {
   }
   assert.equal(selectProjectBriefing("", [{...briefingProject,join_deadline:"2026-01-01"}], [{project_id:briefingProject.id,status:"joined",updated_at:"2026-10-06"}], [], briefingNow)?.action,"Continue your project");
 });
+
+
+test("Briefing uses saved pathway when North Star is broad without repeating completed work", () => {
+  const business = {...briefingProject, id: "business", title: "Build a fictional business plan", category: "Business", skills: ["planning"]};
+  const profile = {northStar:"A star working in a nice company", identity:"Business Professional", goal:"", skills:[]};
+  assert.match(selectProjectBriefing(profile, [business], [], [], briefingNow)?.reason ?? "", /chosen pathway/);
+  assert.equal(selectProjectBriefing(profile, [business], [{project_id:"business",status:"completed",updated_at:"2026-10-06"}], [], briefingNow),null);
+  assert.equal(selectProjectBriefing({...profile,identity:"Music creator"}, [business], [], [], briefingNow),null);
+});
+test("Briefing explains goal and declared skill matches without verification claims", () => {
+  const profile = {northStar:"",identity:"",goal:"product management",skills:[]};
+  assert.match(selectProjectBriefing(profile,[briefingProject],[],[],briefingNow)?.reason ?? "", /saved goal/);
+  assert.match(selectProjectBriefing({...profile,goal:"",skills:["product management"]},[briefingProject],[],[],briefingNow)?.reason ?? "", /declared skills/);
+});
