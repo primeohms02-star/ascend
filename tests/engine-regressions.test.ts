@@ -451,3 +451,33 @@ test("Direction recommendations need a relevant shared topic", () => {
   assert.deepEqual(directionMatches("Build a finance career",p),[]);
   assert.deepEqual(directionMatches("Create music",p),["music"]);
 });
+
+// Dashboard project suggestions must respect availability and participation history.
+import { selectProjectBriefing, type BriefingProject } from "../lib/projects/briefing";
+const briefingNow = Date.parse("2026-10-07T10:00:00Z");
+const briefingProject: BriefingProject = {
+  id: "project-one", title: "Design a campus app", category: "Technology", skills: ["product management"],
+  project_type: "practice", status: "published", starts_at: null, join_deadline: null,
+  submission_deadline: "2027-01-01T00:00:00Z", deliverables: ["Identify the problem", "Design the solution"],
+};
+test("Briefing suggests relevant projects and excludes previous participation", () => {
+  assert.equal(selectProjectBriefing("product management", [briefingProject], [], [], briefingNow)?.action, "View project");
+  assert.equal(selectProjectBriefing("music production", [briefingProject], [], [], briefingNow), null);
+  assert.equal(selectProjectBriefing("", [briefingProject], [], [], briefingNow), null);
+  for (const status of ["completed", "submitted", "withdrawn", "disqualified"]) {
+    assert.equal(selectProjectBriefing("product management", [briefingProject], [{project_id:briefingProject.id,status,updated_at:"2026-10-06"}], [], briefingNow), null);
+  }
+});
+test("Briefing resumes unfinished milestones and respects reviewer revisions", () => {
+  const participation = {project_id:briefingProject.id,status:"in_progress",updated_at:"2026-10-06"};
+  const result = selectProjectBriefing("", [briefingProject], [participation], [{project_id:briefingProject.id,deliverable_responses:{"Identify the problem":"A sufficiently detailed saved milestone response."}}], briefingNow);
+  assert.equal(result?.action, "Continue your project");
+  assert.equal(result?.nextStep, "Next milestone: Design the solution");
+  assert.match(selectProjectBriefing("", [briefingProject], [{...participation,status:"revision_requested"}], [], briefingNow)?.nextStep ?? "", /reviewer/);
+});
+test("Briefing hides closed, future, retired and expired projects", () => {
+  for (const change of [{status:"draft"},{status:"paused"},{project_type:"reward"},{starts_at:"2027-01-01"},{submission_deadline:"2026-01-01"},{submission_deadline:"invalid"},{join_deadline:"2026-01-01"}]) {
+    assert.equal(selectProjectBriefing("product management", [{...briefingProject,...change}], [], [], briefingNow), null);
+  }
+  assert.equal(selectProjectBriefing("", [{...briefingProject,join_deadline:"2026-01-01"}], [{project_id:briefingProject.id,status:"joined",updated_at:"2026-10-06"}], [], briefingNow)?.action,"Continue your project");
+});

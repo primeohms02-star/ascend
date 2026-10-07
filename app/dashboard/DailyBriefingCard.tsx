@@ -1,4 +1,5 @@
 import Link from "next/link";
+import ProjectBriefing from "./ProjectBriefing";
 import { ArrowRight } from "lucide-react";
 
 type Props = {
@@ -91,6 +92,7 @@ export default function DailyBriefingCard({
             </p>
           </article>
         </div>
+        <ProjectBriefing />
       </div>
     </section>
   );
