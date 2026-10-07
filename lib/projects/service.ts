@@ -188,7 +188,12 @@ export async function listUserProjectEvidence(userId: string) {
     .eq("user_id", userId)
     .order("created_at", { ascending: false });
   if (error) throw projectErrorFromDatabase(error);
-  return data ?? [];
+  const rows = data ?? [];
+  if (!rows.length) return [];
+  const projects = await supabaseAdmin.from("ascend_projects").select("id,project_type").in("id", rows.map(row=>row.project_id));
+  if (projects.error) throw projectErrorFromDatabase(projects.error);
+  const types = new Map((projects.data ?? []).map(project=>[project.id,project.project_type]));
+  return rows.map(row=>({...row,project_type:types.get(row.project_id) ?? null}));
 }
 
 export async function getUserSubmission(projectId: string, userId: string) {

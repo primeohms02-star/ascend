@@ -495,3 +495,30 @@ test("Briefing explains goal and declared skill matches without verification cla
   assert.match(selectProjectBriefing(profile,[briefingProject],[],[],briefingNow)?.reason ?? "", /saved goal/);
   assert.match(selectProjectBriefing({...profile,goal:"",skills:["product management"]},[briefingProject],[],[],briefingNow)?.reason ?? "", /declared skills/);
 });
+
+import { buildApplicationMaterial } from "../lib/projects/application-material";
+import { requirementSkillMatches } from "../lib/projects/opportunity-projects";
+import { starterGuidance } from "../lib/projects/starter-guidance";
+test("Application drafts preserve learning context and source excerpts without inventing results", () => {
+  const result=buildApplicationMaterial({title:"Campus concept",summary:"Untrusted claimed revenue",deliverable_preview:{Research:"A fictional audience and untested hypothesis",Ignored:42}});
+  assert.match(result.cv,/Independent ASCEND learning project/);
+  assert.match(result.portfolio,/fictional audience/);
+  assert.doesNotMatch(result.cv,/Untrusted claimed revenue|Ignored/);
+  assert.match(result.interview,/Do not invent impact/);
+  assert.ok(result.atlasContext.length<=2200);
+  assert.doesNotThrow(()=>buildApplicationMaterial({title:"Empty",summary:"",deliverable_preview:null}));
+});
+test("Opportunity project links require named skills rather than substring coincidences", () => {
+  assert.deepEqual(requirementSkillMatches(["Experience in market research and business planning."],["Market research","Business planning","UX design"]),["Market research","Business planning"]);
+  assert.deepEqual(requirementSkillMatches(["Experience training staff"],["AI"]),[]);
+  assert.deepEqual(requirementSkillMatches([], ["UX design"]),[]);
+});
+test("Each starter project has three actionable examples and a free tool option", () => {
+  assert.equal(Object.keys(starterGuidance).length,6);
+  for(const guide of Object.values(starterGuidance)) {
+    assert.equal(guide.milestones.length,3);
+    assert.ok(guide.tools.length>20);
+    assert.ok(guide.output.length>20);
+    for(const milestone of guide.milestones){assert.ok(milestone.minutes>0);assert.ok(milestone.guidance.length>50);assert.ok(milestone.example.length>50);}
+  }
+});
