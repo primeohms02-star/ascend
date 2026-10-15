@@ -501,7 +501,7 @@ import { requirementSkillMatches } from "../lib/projects/opportunity-projects";
 import { starterGuidance } from "../lib/projects/starter-guidance";
 test("Application drafts preserve learning context and source excerpts without inventing results", () => {
   const result=buildApplicationMaterial({title:"Campus concept",summary:"Untrusted claimed revenue",deliverable_preview:{Research:"A fictional audience and untested hypothesis",Ignored:42}});
-  assert.match(result.cv,/Independent ASCEND learning project/);
+  assert.match(result.cv,/independent ASCEND learning project/i);
   assert.match(result.portfolio,/fictional audience/);
   assert.doesNotMatch(result.cv,/Untrusted claimed revenue|Ignored/);
   assert.match(result.interview,/Do not invent impact/);
@@ -537,4 +537,13 @@ test("Atlas evidence references reject malformed values and preserve review boun
  assert.equal(isProjectEvidenceId("aa202610-0200-4000-8000-000000000001"),true);
  for(const value of [null,{},"../other-user","",123])assert.equal(isProjectEvidenceId(value),false);
  assert.match(buildEvidenceContext({title:"Test",evidence_status:"verified",verified_by:null,deliverable_preview:null}),/not human reviewed/);
+});
+
+
+test("Application starters avoid copying task instructions into CV achievement claims", () => {
+ const drafts=buildApplicationMaterial({title:"Career exploration",summary:"",deliverable_preview:{"Compare two roles and cite sources":"A simulated product concept, with no external research."}});
+ assert.doesNotMatch(drafts.cv,/Completed a project covering|Compare two roles|Experiment Lead/);
+ assert.match(drafts.cv,/independent ASCEND learning project/);
+ assert.match(drafts.portfolio,/not employment/);
+ assert.match(drafts.interview,/State if the work was simulated/);
 });
