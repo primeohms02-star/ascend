@@ -522,3 +522,19 @@ test("Each starter project has three actionable examples and a free tool option"
     for(const milestone of guide.milestones){assert.ok(milestone.minutes>0);assert.ok(milestone.guidance.length>50);assert.ok(milestone.example.length>50);}
   }
 });
+
+
+import { buildEvidenceContext, isProjectEvidenceId } from "../lib/projects/evidence-context";
+test("Atlas evidence context retains each milestone despite a long first answer", () => {
+ const context=JSON.parse(buildEvidenceContext({title:"Career experiment",evidence_status:"completed",verified_by:null,deliverable_preview:{First:"x".repeat(5000),Second:"A fictional prototype",Third:"A planned future test"}}));
+ assert.equal(context.title,"Career experiment");
+ assert.equal(context.milestones.length,3);
+ assert.equal(context.milestones[0].truncated,true);
+ assert.equal(context.milestones[2].text,"A planned future test");
+ assert.match(context.review,/not human reviewed/);
+});
+test("Atlas evidence references reject malformed values and preserve review boundaries", () => {
+ assert.equal(isProjectEvidenceId("aa202610-0200-4000-8000-000000000001"),true);
+ for(const value of [null,{},"../other-user","",123])assert.equal(isProjectEvidenceId(value),false);
+ assert.match(buildEvidenceContext({title:"Test",evidence_status:"verified",verified_by:null,deliverable_preview:null}),/not human reviewed/);
+});

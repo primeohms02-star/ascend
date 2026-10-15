@@ -1,3 +1,5 @@
+import { supabaseAdmin } from "@/lib/supabase-admin";
+import { isProjectEvidenceId, buildEvidenceContext } from "@/lib/projects/evidence-context";
 import {
   NextRequest,
   NextResponse,
@@ -69,6 +71,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    let projectEvidenceContext: string | undefined;
+    if (body.projectEvidence !== undefined && body.projectEvidence !== null) {
+      if (!isProjectEvidenceId(body.projectEvidence)) return NextResponse.json({error:"Invalid project evidence reference."},{status:400});
+      const signal = AbortSignal.timeout(5000);
+      const evidence = await supabaseAdmin.from("ascend_project_evidence")
+        .select("project_id,title,deliverable_preview,evidence_status,verified_by")
+        .eq("id",body.projectEvidence).eq("user_id",userId).abortSignal(signal).maybeSingle();
+      if (evidence.error) return NextResponse.json({error:"Your saved project could not load. Please try again."},{status:503});
+      if (!evidence.data) return NextResponse.json({error:"This project evidence is unavailable for your account."},{status:404});
+      const project = await supabaseAdmin.from("ascend_projects").select("project_type")
+        .eq("id",evidence.data.project_id).abortSignal(signal).maybeSingle();
+      if (project.error) return NextResponse.json({error:"Your saved project could not load. Please try again."},{status:503});
+      if (project.data?.project_type !== "practice") return NextResponse.json({error:"This feature is for completed learning projects."},{status:409});
+      projectEvidenceContext = buildEvidenceContext(evidence.data);
+    }
+
     const cleanMessage = message || "Please analyze this image.";
     const pageContext =
       typeof body.context === "string" ? body.context.trim().slice(0, 2200) : "";
@@ -137,6 +155,7 @@ export async function POST(request: NextRequest) {
         clerkId: userId,
         message: cleanMessage,
         surfaceContext: surfaceContext || undefined,
+        projectEvidenceContext,
       }),
       factPromise,
     ]);

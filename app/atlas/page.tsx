@@ -507,6 +507,7 @@ export default function AtlasPage() {
         body: JSON.stringify({
           message: prompt,
           context: surfaceContext || undefined,
+          projectEvidence: new URLSearchParams(window.location.search).get("projectEvidence") || undefined,
           image: imageForRequest || undefined,
         }),
       });
