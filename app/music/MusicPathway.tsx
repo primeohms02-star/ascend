@@ -231,7 +231,7 @@ export default function MusicPathway({ initialProfile }: Props) {
               <Target className="text-cyan-300" size={24} />
               <p className="mt-5 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Current goal</p>
               <h2 className="mt-2 text-xl font-semibold">{profile.goal}</h2>
-              <p className="mt-4 text-sm leading-6 text-slate-400">Atlas will use this as supporting context without replacing your active ASCEND mission.</p>
+              <p className="mt-4 text-sm leading-6 text-slate-400">Atlas will use this as supporting context without replacing your active ASCEND step.</p>
             </section>
 
             <section className="rounded-3xl border border-white/10 bg-white/[0.035] p-6">
@@ -286,7 +286,7 @@ export default function MusicPathway({ initialProfile }: Props) {
         <header className="mt-10">
           <p className="text-xs font-semibold uppercase tracking-[0.28em] text-fuchsia-300">ASCEND Music</p>
           <h1 className="mt-3 text-4xl font-black tracking-tight sm:text-6xl">Build your Music Pathway</h1>
-          <p className="mt-5 max-w-2xl text-base leading-7 text-slate-400">Define your music identity, direction and opportunity focus. This adds context to ASCEND without changing your active mission or XP.</p>
+          <p className="mt-5 max-w-2xl text-base leading-7 text-slate-400">Define your music identity, direction and opportunity focus. This adds context to ASCEND without changing your active step or XP.</p>
         </header>
 
         <div className="mt-10 space-y-9 rounded-[2rem] border border-white/10 bg-white/[0.03] p-6 sm:p-9">

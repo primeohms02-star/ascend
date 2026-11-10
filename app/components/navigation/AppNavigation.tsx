@@ -8,7 +8,6 @@ import { useClerk } from "@clerk/nextjs";
 
 import {
   ChartNoAxesCombined,
-  BriefcaseBusiness,
   CircleHelp,
   Compass,
   Globe2,
@@ -19,7 +18,6 @@ import {
   Music2,
   Orbit,
   Search,
-  Target,
   X,
 } from "lucide-react";
 
@@ -48,19 +46,13 @@ const primaryItems: NavigationItem[] = [
 ];
 
 const journeyItems: NavigationItem[] = [
+
   {
     label: "Direction",
     href: "/direction",
     icon: Compass,
     prefetchFullRoute: true,
     isActive: (pathname) => pathname === "/direction" || pathname.startsWith("/compass"),
-  },
-  {
-    label: "Action",
-    href: "/action",
-    icon: Target,
-    prefetchFullRoute: true,
-    isActive: (pathname) => pathname === "/action",
   },
   {
     label: "Progress",
@@ -72,12 +64,6 @@ const journeyItems: NavigationItem[] = [
 ];
 
 const discoverItems: NavigationItem[] = [
-  {
-    label: "Projects",
-    href: "/projects",
-    icon: BriefcaseBusiness,
-    isActive: (pathname) => pathname.startsWith("/projects") && !pathname.startsWith("/projects/admin"),
-  },
   {
     label: "Explore",
     href: "/opportunities",
@@ -118,7 +104,7 @@ const mobilePrimaryItems = [
   primaryItems[0],
   primaryItems[1],
   discoverItems[0],
-  journeyItems[2],
+  journeyItems[1],
 ];
 
 function NavigationLink({
@@ -283,7 +269,7 @@ export default function AppNavigation() {
             </div>
 
             <div className="grid gap-1 sm:grid-cols-2">
-              {[journeyItems[0], journeyItems[1], discoverItems[1], discoverItems[2], discoverItems[3]].map((item) => (
+              {[journeyItems[0], discoverItems[1], discoverItems[2], discoverItems[3]].map((item) => (
                 <NavigationLink
                   key={item.label}
                   item={item}

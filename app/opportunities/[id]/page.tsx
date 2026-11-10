@@ -1,5 +1,3 @@
-import { Suspense } from "react";
-import RelatedProjects from "./components/RelatedProjects";
 import { notFound } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
 
@@ -103,7 +101,6 @@ export default async function OpportunityDetailsPage({
           <AtlasDecisionEngine insight={insight} actionPlanHref={actionPlanHref} />
 
           <OpportunityDescription opportunity={opportunity} />
-          <Suspense fallback={null}><RelatedProjects userId={userId} requirements={opportunity.requirements ?? []}/></Suspense>
         </div>
       </main>
     </AppShell>

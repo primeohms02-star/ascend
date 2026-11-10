@@ -19,7 +19,7 @@ const capabilities = [
   {
     title: "Remembers your journey",
     description:
-      "Previous conversations, reflections, missions and decisions contribute to more relevant strategic perspective.",
+      "Previous conversations, reflections, steps and decisions contribute to more relevant strategic perspective.",
   },
   {
     title: "Supports difficult decisions",
@@ -34,7 +34,7 @@ const capabilities = [
   {
     title: "Recommends meaningful action",
     description:
-      "Atlas generates missions only when appropriate instead of changing your direction after every conversation.",
+      "Atlas helps you compare options, research ideas and choose a useful next step. You decide what to do.",
   },
   {
     title: "Preserves your judgment",
@@ -62,10 +62,10 @@ export default function AtlasOverviewPage() {
 
           <p className="mt-6 leading-8 text-slate-400">
             Ordinary conversations should not
-            replace your mission or artificially
+            replace your step or artificially
             increase your progress. Atlas keeps
             your active direction stable until a
-            genuine mission lifecycle event or
+            user-confirmed update or
             deliberate request requires change.
           </p>
         </article>

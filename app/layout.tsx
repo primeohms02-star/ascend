@@ -30,7 +30,7 @@ export const metadata: Metadata = {
   },
 
   description:
-    "ASCEND helps you decide what to do next, receive a clear mission, find opportunities aligned with your goals and build visible evidence of progress.",
+    "ASCEND helps you decide what to do next, choose a relevant step, find opportunities aligned with your goals and build visible evidence of progress.",
 
   applicationName: "ASCEND",
 
@@ -75,7 +75,7 @@ export const metadata: Metadata = {
       "ASCEND | An Operating System for Human Potential",
 
     description:
-      "Tell ASCEND what you want to achieve. Receive one clear next mission, find aligned opportunities and build visible evidence of progress.",
+      "Tell ASCEND what you want to achieve. Choose a useful next step, find aligned opportunities and build visible evidence of progress.",
 
     images: [
       {

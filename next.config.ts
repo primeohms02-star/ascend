@@ -5,7 +5,7 @@ import type {
 const privateRoutes = [
   "/api/:path*",
   "/dashboard/:path*",
-  "/projects/:path*",
+  "/progress/:path*",
   "/onboarding/:path*",
   "/compass/:path*",
   "/atlas/:path*",
@@ -30,13 +30,13 @@ const privateSearchHeaders = [
 
 const nextConfig: NextConfig = {
   async headers() {
-    return [{source:"/projects/share/:path*",headers:[{key:"Cache-Control",value:"private, no-store, max-age=0"},{key:"Referrer-Policy",value:"no-referrer"}]}, ...privateRoutes.map(
+    return privateRoutes.map(
       (source) => ({
         source,
         headers:
           privateSearchHeaders,
       })
-    )];
+    );
   },
 };
 

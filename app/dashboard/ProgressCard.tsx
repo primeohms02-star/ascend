@@ -46,7 +46,7 @@ export default function ProgressCard({
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-300">
-              Journey Progress
+              Preserved Level Progress
             </p>
 
             <h2 className="mt-1.5 text-xl font-bold text-white">
@@ -64,7 +64,7 @@ export default function ProgressCard({
         <div className="mt-4">
           <div className="flex items-center justify-between gap-4">
             <span className="text-sm text-slate-400">
-              Current level progress
+              Previously earned level progress
             </span>
 
             <span className="text-sm font-semibold text-cyan-300">
@@ -87,7 +87,7 @@ export default function ProgressCard({
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-4">
           <div>
             <p className="text-xs uppercase tracking-[0.16em] text-slate-500">
-              Momentum
+              Previous momentum
             </p>
 
             <p className="mt-1 font-semibold text-cyan-300">

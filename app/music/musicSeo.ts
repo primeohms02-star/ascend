@@ -39,6 +39,6 @@ export const musicFaqs = [
   {
     question: "Does ASCEND Music replace my main ASCEND journey?",
     answer:
-      "No. Your main North Star, active mission, Ascension XP and progress remain intact. The Music Pathway adds a specialist context layer within the same ASCEND system.",
+      "No. Your main North Star, chosen next step, previously earned XP and progress remain intact. The Music Pathway adds a specialist context layer within the same ASCEND system.",
   },
 ] as const;

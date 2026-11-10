@@ -1,5 +1,5 @@
 import Link from "next/link";
-import ProjectBriefing from "./ProjectBriefing";
+
 import { ArrowRight } from "lucide-react";
 
 type Props = {
@@ -70,10 +70,10 @@ export default function DailyBriefingCard({
             </p>
 
             <Link
-              href="/action#why-mission-matters"
+              href="/dashboard"
               className="group mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-blue-300 transition hover:text-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-400/50"
             >
-              Why this mission matters
+              Continue your guidance
               <ArrowRight
                 size={15}
                 aria-hidden="true"
@@ -92,7 +92,7 @@ export default function DailyBriefingCard({
             </p>
           </article>
         </div>
-        <ProjectBriefing />
+
       </div>
     </section>
   );

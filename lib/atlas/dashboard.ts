@@ -1,14 +1,13 @@
 import { calculateAscension } from "./ascension";
-import { buildDailyBriefing } from "./dailyBriefing";
+import { getGreeting } from "@/lib/utils/greeting";
+
 import { buildPathIdentity } from "./pathIdentity";
 import { resolveStreak } from "./streak";
 import { buildTimeline } from "./timeline";
 import { loadAtlasMemories } from "./memory";
-import { getActiveMission } from "./missionService";
 
 import { getProfile } from "@/lib/supabase/profiles";
 import { getProgress } from "@/lib/supabase/atlasProgress";
-import { getMomentum } from "@/lib/supabase/atlasMomentum";
 import { getStreak } from "@/lib/supabase/atlasStreaks";
 
 import type { Recommendation } from "@/lib/engine/recommendations";
@@ -43,27 +42,6 @@ export async function getDirectionSnapshot(clerkId: string) {
   };
 }
 
-export async function getActionSnapshot(clerkId: string) {
-  const [storedProfile, currentMission] = await Promise.all([
-    getProfile(clerkId),
-    getActiveMission(clerkId),
-  ]);
-
-  const profile = storedProfile ?? fallbackProfile(clerkId);
-
-  return {
-    northStar: profile.north_star || "Discover your purpose",
-    mission: {
-      title: currentMission?.mission ?? "No Active Mission",
-      description:
-        currentMission?.reason ??
-        "Start or update your journey so Atlas can prepare a mission aligned with your current direction.",
-      missionId: currentMission?.id ?? "",
-      available: Boolean(currentMission),
-    },
-  };
-}
-
 export async function getProgressSnapshot(clerkId: string) {
   const [storedProfile, progressRecord, streakRecord, atlasMemories] = await Promise.all([
     getProfile(clerkId),
@@ -93,8 +71,8 @@ export async function getProgressSnapshot(clerkId: string) {
     },
     progress: {
       progress: ascension.progressPercent,
-      momentum: streak.label,
-      message: streak.message,
+      momentum: `${streak.longest} day best streak`,
+      message: "Historical streak retained. Your latest updates appear on Home.",
       streak,
     },
     timeline: completeTimeline.slice(0, 3),
@@ -111,13 +89,11 @@ export async function getAtlasDashboard(clerkId: string) {
    */
   const results = await Promise.allSettled([
       getProfile(clerkId),
-      getActiveMission(clerkId),
       getProgress(clerkId),
-      getMomentum(clerkId),
       getStreak(clerkId),
     ]);
 
-  const labels = ["profile", "mission", "progress", "momentum", "streak"];
+  const labels = ["profile", "progress", "streak"];
   results.forEach((result, index) => {
     if (result.status === "rejected") {
       console.error(`Dashboard ${labels[index]} read failed:`, result.reason);
@@ -125,90 +101,31 @@ export async function getAtlasDashboard(clerkId: string) {
   });
 
   const storedProfile = results[0].status === "fulfilled" ? results[0].value : null;
-  const currentMission = results[1].status === "fulfilled" ? results[1].value : null;
-  const progressRecord = results[2].status === "fulfilled" ? results[2].value : null;
-  const momentum = results[3].status === "fulfilled" ? results[3].value : null;
-  const streakRecord = results[4].status === "fulfilled" ? results[4].value : null;
+
+  const progressRecord = results[1].status === "fulfilled" ? results[1].value : null;
+  const streakRecord = results[2].status === "fulfilled" ? results[2].value : null;
 
   const profile = storedProfile ?? fallbackProfile(clerkId);
 
   const ascensionScore = Number(progressRecord?.ascension_score ?? 0);
   const ascension = calculateAscension(ascensionScore);
 
-  let recommendedNext: Recommendation;
-
-  if (currentMission) {
-    recommendedNext = {
-      id: `mission-${currentMission.id}`,
-      title: "Continue Your Current Mission",
-      description: currentMission.mission,
-      priority: "high",
-      category: "Current Mission",
-      action: "Go to Mission",
-      href: "#mission",
-    };
-  } else if (!profile.north_star) {
-    recommendedNext = {
-      id: "start-journey",
-      title: "Define Your North Star",
-      description:
-        "Complete ASCEND onboarding so Atlas can understand your identity, immediate goal, challenges and long-term direction.",
-      priority: "high",
-      category: "Direction",
-      action: "Start Your Journey",
-      href: "/onboarding",
-    };
-  } else {
-    recommendedNext = {
-      id: "recalibrate-direction",
-      title: "Prepare Your Next Mission",
-      description:
-        "Start the journey process again to confirm or update your direction and allow Atlas to prepare a newly aligned mission.",
-      priority: "high",
-      category: "Direction",
-      action: "Update Your Journey",
-      href: "/onboarding",
-    };
-  }
-
+  const recommendedNext:Recommendation={id:"atlas-guidance",title:"Choose your next step",description:"Atlas helps you act on your direction.",priority:"high",category:"Direction",action:"Open guidance",href:"/dashboard"};
   const journey = profile.journey ?? "Purpose Discovery";
   const northStar = profile.north_star ?? "";
   const identity = buildPathIdentity(journey, northStar);
   const streak = resolveStreak(streakRecord);
-  const dailyBriefing = buildDailyBriefing({
-    journey,
-    northStar,
-    missionTitle: currentMission?.mission ?? "No active mission",
-    missionReason: currentMission?.reason ?? "",
-    missionCreatedAt: currentMission?.created_at ?? null,
-    currentStreak: Number(streakRecord?.current_streak ?? 0),
-    progress: ascension.score,
-  });
-
   return {
-    dailyBriefing: {
-      ...dailyBriefing,
-      focus: currentMission?.mission ?? recommendedNext.title,
-    },
-
+    dailyBriefing:{greeting:getGreeting(),summary:northStar,focus:"Your next step",focusDetail:"Choose a useful action with Atlas.",oracle:"Use your latest update to decide what comes next."},
     compass: {
       northStar: northStar || "Discover your purpose",
       alignment: ascension.progressPercent,
     },
 
-    mission: {
-      title: currentMission?.mission ?? "No Active Mission",
-      description:
-        currentMission?.reason ??
-        "Start or update your journey so Atlas can prepare a mission aligned with your current direction.",
-      missionId: currentMission?.id ?? "",
-      available: Boolean(currentMission),
-    },
-
     progress: {
       progress: ascension.progressPercent,
-      momentum: streak.label,
-      message: streak.message,
+      momentum: `${streak.longest} day best streak`,
+      message: "Historical streak retained. Your latest updates appear on Home.",
       streak,
     },
 
@@ -232,6 +149,5 @@ export async function getAtlasDashboard(clerkId: string) {
 
     profile,
     recommendations: [recommendedNext],
-    completedMissionCount: Number(momentum?.completed_missions ?? 0),
   };
 }

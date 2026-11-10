@@ -4,7 +4,7 @@ import { createPublicPageMetadata } from "@/lib/seo";
 export const metadata = createPublicPageMetadata({
   title: "How It Works",
   description:
-    "See how ASCEND transforms identity, goals and challenges into a North Star, strategic missions, relevant opportunities and measurable growth.",
+    "See how ASCEND transforms identity, goals and challenges into a North Star, personal guidance, relevant opportunities and measurable growth.",
   path: "/how-it-works",
 });
 
@@ -37,7 +37,7 @@ const steps = [
     number: "04",
     title: "Execute",
     description:
-      "ASCEND recommends one specific and meaningful mission suited to your current stage.",
+      "ASCEND recommends one specific and meaningful step suited to your current stage.",
     outcome:
       "Strategy becomes focused action.",
   },
@@ -61,7 +61,7 @@ const steps = [
     number: "07",
     title: "Reflect",
     description:
-      "Your completed missions, reflections, decisions and conversations contribute to long-term personal memory.",
+      "Your completed steps, reflections, decisions and conversations contribute to long-term personal memory.",
     outcome:
       "ASCEND learns from your journey.",
   },
@@ -69,7 +69,7 @@ const steps = [
     number: "08",
     title: "Ascend",
     description:
-      "Momentum, XP, identity, streaks and milestones make your development visible over time.",
+      "Your check-ins, learning and reflections make your development visible. Previously earned XP and mission history remain preserved.",
     outcome:
       "Action becomes evidence of meaningful growth.",
   },
@@ -125,7 +125,7 @@ export default function HowItWorksPage() {
         </p>
 
         <p className="mx-auto mt-6 max-w-4xl text-2xl font-bold leading-relaxed text-white sm:text-3xl">
-          Purpose → North Star → Mission → Tasks
+          Purpose → North Star → Step → Tasks
           → Momentum → Memory → Growth → Legacy
         </p>
       </section>

@@ -4,7 +4,7 @@ import { createPublicPageMetadata } from "@/lib/seo";
 export const metadata = createPublicPageMetadata({
   title: "Features",
   description:
-    "Explore ASCEND's Compass, Atlas intelligence, strategic missions, opportunity discovery, momentum tracking and long-term personal memory.",
+    "Explore ASCEND's Compass, Atlas intelligence, personal guidance, opportunity discovery, momentum tracking and long-term personal memory.",
   path: "/features",
 });
 
@@ -27,9 +27,9 @@ const features = [
   },
   {
     number: "03",
-    title: "Strategic Missions",
+    title: "Personal Guidance",
     description:
-      "Receive specific, relevant and actionable missions that connect your current reality to the future you are building.",
+      "Choose practical steps connected to your direction and build useful work, one step at a time.",
     accent:
       "border-indigo-400/20 bg-indigo-400/[0.05]",
   },
@@ -53,7 +53,7 @@ const features = [
     number: "06",
     title: "Momentum",
     description:
-      "See progress, streaks, milestones and completed missions as calm evidence that your direction is becoming real.",
+      "See completed work, reflections and clearly labelled review records as evidence of your progress.",
     accent:
       "border-blue-400/20 bg-blue-400/[0.05]",
   },
@@ -61,7 +61,7 @@ const features = [
     number: "07",
     title: "Growth and Identity",
     description:
-      "Build Ascension XP and evolve your identity through meaningful action rather than noisy or disconnected gamification.",
+      "Keep previously earned XP and see how your actions and reflections add up over time.",
     accent:
       "border-indigo-400/20 bg-indigo-400/[0.05]",
   },

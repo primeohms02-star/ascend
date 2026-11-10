@@ -15,22 +15,22 @@ const sections = [
     title: "1. Information We Collect",
     paragraphs: [
       "We may collect account information such as your name, email address, user identifier and authentication details when you create or access an ASCEND account.",
-      "We collect information you voluntarily provide through onboarding, Compass answers, North Star statements, goals, challenges, reflections, Atlas conversations, missions, opportunity activity and support requests.",
+      "We collect information you voluntarily provide through onboarding, Compass answers, North Star statements, goals, challenges, reflections, Atlas conversations, chosen steps, updates, historical work, opportunity activity and support requests.",
       "We may collect technical information such as device type, browser, approximate location derived from network information, application activity, error information and pages used.",
     ],
   },
   {
     title: "2. How We Use Information",
     paragraphs: [
-      "We use information to authenticate users, provide ASCEND features, personalize strategic guidance, generate relevant missions, recommend opportunities, track progress and maintain long-term journey context.",
+      "We use information to authenticate users, provide ASCEND features, personalize strategic guidance, suggest relevant next steps, recommend opportunities, track progress and maintain long-term journey context.",
       "We also use information to provide support, investigate technical problems, prevent abuse, protect the platform, understand product performance and improve ASCEND.",
-      "Support AI operates separately from Atlas strategy and does not intentionally modify your North Star, missions, XP, identity or strategic memory.",
+      "Support AI operates separately from Atlas strategy and does not intentionally modify your North Star, chosen steps, XP, identity or strategic memory.",
     ],
   },
   {
     title: "3. Artificial Intelligence",
     paragraphs: [
-      "ASCEND uses artificial intelligence to provide Atlas conversations, mission generation, opportunity intelligence and Support AI responses.",
+      "ASCEND uses artificial intelligence to provide Atlas conversations, next-step guidance, opportunity intelligence and Support AI responses.",
       "Information submitted to AI features may be processed by ASCEND's configured AI service providers to generate requested responses.",
       "AI-generated information may be incomplete or incorrect. ASCEND is designed to support your judgment, not replace professional advice or make important decisions on your behalf.",
     ],
@@ -38,7 +38,7 @@ const sections = [
   {
     title: "4. Service Providers",
     paragraphs: [
-      "ASCEND relies on service providers that help operate the platform. These currently include Clerk for authentication, Supabase for database services, Groq for AI processing, Vercel for hosting and Resend for support notification emails.",
+      "ASCEND relies on service providers that help operate the platform. These currently include Clerk for authentication, Supabase for database services, Groq for AI processing, Vercel for hosting and Resend for support notification emails. When web research is enabled, Tavily receives the public search topic you enter or general subject words derived from a research request. ASCEND does not send your full chat, private progress notes or profile to the search provider.",
       "These providers may process information only as necessary to deliver their respective services and are governed by their own contractual and privacy obligations.",
       "ASCEND does not sell your personal information.",
     ],

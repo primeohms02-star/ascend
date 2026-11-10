@@ -18,7 +18,7 @@ const path = [
     icon: Compass,
   },
   {
-    name: "Mission",
+    name: "Step",
     detail: "Receive one clear action suited to you.",
     icon: Target,
   },
@@ -29,7 +29,7 @@ const path = [
   },
   {
     name: "Progress",
-    detail: "Complete missions and build visible evidence.",
+    detail: "Complete steps and build visible evidence.",
     icon: TrendingUp,
   },
 ];
@@ -65,7 +65,7 @@ export default function AscendPath() {
 
           <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-slate-400">
             ASCEND keeps the experience focused. Your
-            goal guides a mission, your mission connects
+            goal guides a step, your step connects
             to opportunities, and every completed step
             becomes evidence of progress.
           </p>

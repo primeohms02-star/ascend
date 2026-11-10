@@ -15,7 +15,7 @@ const roadmap = [
     items: [
       "Live web platform and secure authentication",
       "Compass and North Star creation",
-      "Strategic daily missions",
+      "Atlas next-step guidance",
       "Atlas conversations and decisions",
       "Global opportunity discovery",
       "Atlas Decision intelligence",
@@ -32,7 +32,7 @@ const roadmap = [
       "Purpose-built React Native experience",
       "Android and iOS application foundations",
       "Mobile Compass and onboarding",
-      "Missions, progress and Atlas on the move",
+      "Guidance, progress and Atlas on the move",
       "Native opportunity discovery and decisions",
       "ASCEND Music and Support AI",
     ],
@@ -59,7 +59,7 @@ const roadmap = [
     items: [
       "More accurate onboarding analysis",
       "Stronger permanent personal memory",
-      "Better mission completion evidence",
+      "Clearer records of meaningful progress",
       "Deeper opportunity recommendations",
       "Expanded Nigerian, African and global sources",
       "Improved conversation and action separation",

@@ -101,7 +101,7 @@ export default function MusicPage() {
             Atlas uses that context to support better decisions and
             surface relevant music grants, showcases, residencies,
             competitions, training and industry programmes. Your main
-            North Star, active mission and progress remain intact.
+            North Star, active step and progress remain intact.
           </p>
 
         <MusicLandingActions />

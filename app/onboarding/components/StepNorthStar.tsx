@@ -48,7 +48,7 @@ export default function StepNorthStar({
           Describe the work you are doing, the impact
           you are creating and the person you have
           become. Atlas will use your own words to
-          shape your direction and first mission.
+          shape your direction and first step.
         </p>
       </div>
 

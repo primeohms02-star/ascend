@@ -66,6 +66,7 @@ const memorySnapshots = new Map<string, MemorySnapshot>();
 const snapshotRequests = new Map<string, Promise<OpportunitySnapshot>>();
 
 export type OpportunityPageOptions = {
+  trackImpressions?: boolean;
   page?: number;
 
   limit?: number;
@@ -531,7 +532,7 @@ export async function getPersonalizedOpportunityPage(
       snapshotId,
     }));
 
-  recordDisplayedInBackground(profile.clerkId, opportunities);
+  if(options.trackImpressions !== false)recordDisplayedInBackground(profile.clerkId, opportunities);
 
   return {
     opportunities,

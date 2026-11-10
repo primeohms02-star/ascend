@@ -27,7 +27,7 @@ const messages = [
   "Understanding your current stage...",
   "Analyzing your goals and challenges...",
   "Connecting your vision to relevant opportunities...",
-  "Designing your first strategic mission...",
+  "Preparing your guidance...",
   "Preparing your ASCEND dashboard...",
 ];
 
@@ -96,12 +96,12 @@ export default function StepBuilding({
           );
         }
 
-        if (!data.mission?.id || !data.mission?.mission) {
-          throw new Error("Atlas completed onboarding without returning your first mission.");
+        if (!data.directionReady) {
+          throw new Error("Your direction was not confirmed. Please retry.");
         }
 
         onComplete({
-          mission: data.mission,
+          directionReady: true,
         });
       } catch (error) {
         submitted.current =
@@ -196,7 +196,7 @@ export default function StepBuilding({
       <p className="mt-5 text-lg text-slate-400">
         Atlas is turning your
         answers into a direction
-        and first mission.
+        and starting point.
       </p>
 
       {!error && (

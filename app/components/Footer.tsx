@@ -26,8 +26,8 @@ const productLinks = [
   },
 
   {
-    label: "Missions",
-    href: "/dashboard#mission",
+    label: "Your guidance",
+    href: "/dashboard",
   },
 
   {

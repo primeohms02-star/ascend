@@ -143,8 +143,8 @@ export default function CTA() {
 
             <p className="mt-6 text-sm text-slate-500">
               {isSignedIn
-                ? "Return to your live direction, mission and evidence of growth."
-                : "Create your profile and receive your first tailored mission."}
+                ? "Return to your live direction, step and evidence of growth."
+                : "Create your profile and explore a next step connected to your goal."}
             </p>
           </>
         )}

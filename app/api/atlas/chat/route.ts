@@ -1,5 +1,7 @@
-import { supabaseAdmin } from "@/lib/supabase-admin";
-import { isProjectEvidenceId, buildEvidenceContext } from "@/lib/projects/evidence-context";
+import {buyerInquiryReply} from "@/lib/guidance/outcomes";
+import {brandResearchPlan,askForBrand,noBrandEvidence} from "@/lib/guidance/brand-research";
+import {researchForReply} from "@/lib/guidance/research";
+import {getAtlasPicks} from "@/lib/guidance/opportunities";
 import {
   NextRequest,
   NextResponse,
@@ -71,22 +73,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    let projectEvidenceContext: string | undefined;
-    if (body.projectEvidence !== undefined && body.projectEvidence !== null) {
-      if (!isProjectEvidenceId(body.projectEvidence)) return NextResponse.json({error:"Invalid project evidence reference."},{status:400});
-      const signal = AbortSignal.timeout(5000);
-      const evidence = await supabaseAdmin.from("ascend_project_evidence")
-        .select("project_id,title,deliverable_preview,evidence_status,verified_by")
-        .eq("id",body.projectEvidence).eq("user_id",userId).abortSignal(signal).maybeSingle();
-      if (evidence.error) return NextResponse.json({error:"Your saved project could not load. Please try again."},{status:503});
-      if (!evidence.data) return NextResponse.json({error:"This project evidence is unavailable for your account."},{status:404});
-      const project = await supabaseAdmin.from("ascend_projects").select("project_type")
-        .eq("id",evidence.data.project_id).abortSignal(signal).maybeSingle();
-      if (project.error) return NextResponse.json({error:"Your saved project could not load. Please try again."},{status:503});
-      if (project.data?.project_type !== "practice") return NextResponse.json({error:"This feature is for completed learning projects."},{status:409});
-      projectEvidenceContext = buildEvidenceContext(evidence.data);
-    }
-
+    const topic=body.researchTopic??"";
+    if(typeof topic!=="string"||topic.length>240||/https?:|@|\b\d{7,}\b/.test(topic))return NextResponse.json({error:"Use a short public search topic without contact details."},{status:400});
     const cleanMessage = message || "Please analyze this image.";
     const pageContext =
       typeof body.context === "string" ? body.context.trim().slice(0, 2200) : "";
@@ -116,6 +104,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const brand=topic.trim()||hasImage?{kind:"chat" as const}:brandResearchPlan(cleanMessage,body.awaitingBrand===true);
+    async function directReply(reply:string,awaitingBrand:boolean){
+      try{await persistAtlasResponse({clerkId:userId!,userMessage:cleanMessage,reply,fact:"NONE"});}catch{ /* The answer still reaches the user. */ }
+      return NextResponse.json({reply,awaitingBrand,sources:[]});
+    }
+    if(brand.kind==="ask")return directReply(askForBrand,true);
+    const inquiry = brand.kind==="chat" && !topic.trim() && !hasImage && !pageContext ? buyerInquiryReply(cleanMessage) : null;
+    if(inquiry)return directReply(inquiry,false);
     const factPromise = shouldExtractPermanentMemory(cleanMessage)
       ? extractPermanentMemory(cleanMessage).catch((error) => {
           console.error("Atlas Permanent Memory Extraction Error:", error);
@@ -150,21 +146,32 @@ export async function POST(request: NextRequest) {
       .filter(Boolean)
       .join("\n\n");
 
+    const [research,picks]=await Promise.all([researchForReply(userId,cleanMessage,brand.kind==="search"?brand.query:topic.trim()),
+      /opportunit|internship|fellowship|scholarship|grant|vacanc|job opening/i.test(cleanMessage)?getAtlasPicks(userId).catch(()=>null):Promise.resolve(undefined)]);
+    if(brand.kind==="search"){
+      const unavailable=noBrandEvidence(research.status,brand.subject);
+      if(unavailable)return directReply(unavailable,research.status==="no_results");
+    }
     const [atlasResult, fact] = await Promise.all([
       runAtlasBrain({
         clerkId: userId,
         message: cleanMessage,
         surfaceContext: surfaceContext || undefined,
-        projectEvidenceContext,
+        research,picks,brandSubject:brand.kind==="search"?brand.subject:undefined,
       }),
       factPromise,
     ]);
 
+    const cited=new Set(Array.from(atlasResult.reply.matchAll(/(?:\[(\d+)\]|【(\d+)】)/g),m=>Number(m[1]??m[2])));
+    const links=research.sources.map((source,i)=>({source,n:i+1})).filter(({n})=>brand.kind!=="search"||!cited.size||cited.has(n));
+    const summary=research.status==='ready'?`\n\nSources retrieved ${research.checked.slice(0,10)}:\n${links.map(({source:x,n})=>`[${n}] ${x.title}${x.published?' (published '+x.published+')':''}: ${x.url}`).join('\n')}`:
+      research.status==='needs_topic'?'\n\nFor a live search, enter a public topic in Research a web topic with Atlas.':research.status==='not_requested'?'':'\n\nLive research did not return usable sources for this reply.';
+    const reply=atlasResult.reply+summary;
     try {
       await persistAtlasResponse({
         clerkId: userId,
         userMessage: cleanMessage,
-        reply: atlasResult.reply,
+        reply,
         fact,
       });
     } catch (persistenceError) {
@@ -176,7 +183,7 @@ export async function POST(request: NextRequest) {
       console.error("Atlas Conversation Persistence Error:", persistenceError);
     }
 
-    return NextResponse.json({ reply: atlasResult.reply });
+    return NextResponse.json({reply:research.status==='ready'?atlasResult.reply:reply,sources:links.map(({source,n})=>({title:source.title,url:source.url,n}))});
   } catch (error) {
     console.error("Atlas Chat Error:", error);
 

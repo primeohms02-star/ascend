@@ -21,6 +21,7 @@ type ConversationItem = {
   role: "user" | "atlas";
   message: string;
   attachmentName?: string;
+  sources?: {title:string;url:string;n?:number}[];
 };
 
 type BriefingState = {
@@ -249,6 +250,8 @@ export default function AtlasPage() {
   const [showHistory, setShowHistory] = useState(false);
   const [currentConversation, setCurrentConversation] = useState<ConversationItem[]>([]);
 
+  const [pendingBrandFor,setPendingBrandFor]=useState<string|null>(null);
+  const [researchTopic,setResearchTopic]=useState("");
   const conversationEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -338,7 +341,7 @@ export default function AtlasPage() {
     }
 
     const controller = new AbortController();
-    const cacheKey = `ascend:atlas-briefing:v1:${userId}`;
+    const cacheKey = `ascend:atlas-journey-briefing-v2:v1:${userId}`;
 
     try {
       const stored = window.sessionStorage.getItem(cacheKey);
@@ -372,15 +375,8 @@ export default function AtlasPage() {
 
         const nextBriefing = {
           summary: data.summary ?? "Atlas has prepared today's briefing.",
-          focus:
-            typeof data.mission === "string"
-              ? data.mission
-              : data.mission?.mission ?? "No active mission is available.",
-          oracle:
-            data.oracle ??
-            (data.isNew
-              ? "A new mission has been prepared for today."
-              : "Continue executing your current mission."),
+          focus:data.focus??"Choose your next step",
+          oracle:data.oracle??"Atlas can help you choose a useful next step.",
         };
 
         setBriefing(nextBriefing);
@@ -507,7 +503,8 @@ export default function AtlasPage() {
         body: JSON.stringify({
           message: prompt,
           context: surfaceContext || undefined,
-          projectEvidence: new URLSearchParams(window.location.search).get("projectEvidence") || undefined,
+          researchTopic: researchTopic.trim() || undefined,
+          awaitingBrand: Boolean(userId && pendingBrandFor===userId),
           image: imageForRequest || undefined,
         }),
       });
@@ -522,6 +519,7 @@ export default function AtlasPage() {
         const updated = [...current];
         updated[updated.length - 1] = {
           role: "atlas",
+          sources: data.sources,
           message: data.reply ?? "I couldn't form a response. Please ask again.",
         };
         return updated;
@@ -529,6 +527,8 @@ export default function AtlasPage() {
 
       setAttachment(null);
       setAttachmentError("");
+      setPendingBrandFor(data.awaitingBrand===true && userId?userId:null);
+      setResearchTopic("");
       setSurfaceContext("");
     } catch (error) {
       console.error("Atlas Conversation Error:", error);
@@ -600,6 +600,7 @@ export default function AtlasPage() {
             </div>
           </div>
 
+          <details className="mt-4 rounded-xl border border-white/10 p-3 text-sm text-slate-300"><summary className="cursor-pointer">Research a web topic with Atlas</summary><label className="mt-3 block">Public search topic<input className="mt-2 w-full rounded-lg bg-slate-900 p-2" value={researchTopic} maxLength={240} onChange={e=>setResearchTopic(e.target.value)} placeholder="Example: fashion portfolio mentorship Nigeria" /></label><p className="mt-2 text-xs text-slate-400">Only this topic is sent to search with your next message. Leave personal details out.</p></details>
           <ConversationCard
             greeting={getGreeting()}
             summary={briefing.summary}
@@ -650,7 +651,7 @@ export default function AtlasPage() {
                             <p className="text-sm font-semibold text-white">Atlas</p>
                           </div>
                           <div className="px-1 pb-2 sm:px-2">
-                            <AtlasMessageContent content={item.message} />
+                            <AtlasMessageContent content={item.message} />{item.sources?.map((source,index)=><a className="mt-2 block text-sm text-cyan-300 underline" key={source.url} href={source.url} target="_blank" rel="noopener noreferrer">[{source.n??index+1}] {source.title} ↗</a>)}
                           </div>
                         </div>
                       )}
@@ -691,7 +692,7 @@ export default function AtlasPage() {
                       <p className="text-sm font-semibold text-white">Atlas</p>
                     </div>
                     <div className="px-1 pb-2 sm:px-2">
-                      <AtlasMessageContent content={item.message} />
+                      <AtlasMessageContent content={item.message} />{item.sources?.map((source,index)=><a className="mt-2 block text-sm text-cyan-300 underline" key={source.url} href={source.url} target="_blank" rel="noopener noreferrer">[{source.n??index+1}] {source.title} ↗</a>)}
                     </div>
                   </div>
                 )}

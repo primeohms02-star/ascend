@@ -1,9 +1,5 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { coachingFingerprint, parseCoachingFeedback } from "../lib/projects/coaching";
-import { evidenceLabel, milestoneProgress } from "../lib/projects/presentation";
-import { directionMatches } from "../lib/projects/recommendations";
-
 import { assessApplicationReadiness } from "../lib/atlas/opportunities/application-readiness";
 import { analyzeOpportunityDeadline, isOpportunityExpired } from "../lib/atlas/opportunities/deadline";
 import { filterOpportunities } from "../lib/atlas/opportunities/filter";
@@ -20,23 +16,6 @@ import {
   resolveOpportunityMatchScore,
 } from "../lib/atlas/opportunities/match-score";
 import { isOnboardingContextComplete } from "../lib/atlas/onboardingCompletion";
-import {
-  canTransitionProjectParticipation,
-  canTransitionProjectStatus,
-  validateProjectPublication,
-  validateProjectReward,
-} from "../lib/projects/lifecycle";
-import {
-  parseProjectListInput,
-  parseProjectSubmissionInput,
-  requireProjectId,
-} from "../lib/projects/input";
-import {
-  formatProjectDuration,
-  participationStatusLabel,
-  projectTypeLabel,
-} from "../lib/projects/presentation";
-
 const beginnerProfile: OpportunityProfile = {
   clerkId: "test-user",
   careerGoal: "Build a finance career",
@@ -273,277 +252,136 @@ test("only personalized snapshot scores can bypass detail reranking", () => {
   );
 });
 
-test("Project lifecycle rejects skipped review and result stages", () => {
-  assert.equal(canTransitionProjectStatus("draft", "review"), true);
-  assert.equal(canTransitionProjectStatus("draft", "published"), false);
-  assert.equal(canTransitionProjectStatus("reviewing", "results_ready"), true);
-  assert.equal(canTransitionProjectStatus("reviewing", "completed"), false);
-  assert.equal(canTransitionProjectStatus("completed", "published"), false);
+
+import {activeStep,safePublicLink,type JourneyEntry} from '../lib/guidance/types';
+import {publicTopic,readResults} from '../lib/guidance/sources';
+import {pickForDirection} from '../lib/guidance/picks';
+const testEntry:JourneyEntry={id:"one",direction:"Build a fashion career",event:"accept",step:"Sketch one garment",note:"",recorded_at:"2026-11-09"};
+test("check-ins keep the agreed step; completion closes it",()=>{
+ assert.equal(activeStep([]),null);assert.equal(activeStep([{...testEntry,event:'stuck'},testEntry]),testEntry.step);assert.equal(activeStep([{...testEntry,event:'done'},testEntry]),null);assert.equal(activeStep([{...testEntry,event:'achieved'},testEntry]),null);
+});
+test("automatic research sends topic words, not a private message",()=>{
+ const topic=publicTopic("My name is Jane Example. Search the web for fashion training in Nigeria. Email jane@example.com.");
+ assert.match(topic,/fashion/);assert.match(topic,/Nigeria/);assert.doesNotMatch(topic,/jane|example|@|email/i);assert.equal(publicTopic("private details only"),"");
+});
+test("source links reject unsafe schemes and deduplicate results",()=>{
+ assert.equal(safePublicLink("javascript:alert(1)"),null);assert.equal(safePublicLink("https://u:p@host.example/path"),null);
+ const row={title:"Training",url:"https://provider.example/training",content:"Applications open in March",published_date:"2026-01-01"};
+ const sources=readResults({results:[row,row,{...row,url:'file:///private'},{...row,content:'',url:'https://other.example/'}]});assert.equal(sources.length,1);assert.equal(sources[0].published,"2026-01-01");
+});
+test("dashboard matches need a real topic, valid source and an undecided listing",()=>{
+ const base={id:'f1',title:'Fashion design fellowship',company:'Example',category:'fashion',source:'provider',url:'https://provider.example/listing',tags:['design'],score:75};
+ const page={profile:{...beginnerProfile,careerGoal:'fashion designer',skills:['design'],interests:['fashion'],industries:[]},snapshotId:'123',opportunities:[base,{...base,id:'f2',deadline:'2001-01-01'},{...base,id:'f3',title:'Unrelated role',category:'legal',tags:[]},{...base,id:'f4',url:'javascript:void(0)'},{...base,id:'f5'}]};
+ const picks=pickForDirection(page,['f5']);assert.deepEqual(picks.map(p=>p.id),['f1']);assert.match(picks[0].href,/123/);assert.match(picks[0].reason,/design|fashion/);
 });
 
-test("Project participation preserves review and revision boundaries", () => {
-  assert.equal(canTransitionProjectParticipation("joined", "submitted"), true);
-  assert.equal(canTransitionProjectParticipation("submitted", "revision_requested"), true);
-  assert.equal(canTransitionProjectParticipation("revision_requested", "submitted"), true);
-  assert.equal(canTransitionProjectParticipation("joined", "awarded"), false);
-  assert.equal(canTransitionProjectParticipation("withdrawn", "submitted"), false);
+import {searchPublicTopic} from '../lib/guidance/tavily';
+test('research transport sends only a public query and retains linked, dated evidence',async()=>{
+ let sent='';const mock:typeof fetch=async(url,options)=>{assert.equal(url,'https://api.tavily.com/search');sent=String(options?.body);return Response.json({results:[{title:'Design programme',url:'https://school.example/design',content:'Requirements include a portfolio.',published_date:'2026-10-15'}]});};
+ const r=await searchPublicTopic('fashion training Nigeria','fixture',mock);assert.equal(r.status,'ready');assert.equal(JSON.parse(sent).query,'fashion training Nigeria');assert.equal(r.sources[0].published,'2026-10-15');assert.equal(JSON.parse(sent).include_raw_content,false);
+});
+test('unavailable search and successful empty search stay distinct',async()=>{
+ assert.equal((await searchPublicTopic('design','fixture',async()=>new Response(null,{status:429}))).status,'unavailable');
+ assert.equal((await searchPublicTopic('design','fixture',async()=>Response.json({results:[]}))).status,'no_results');
+ assert.equal((await searchPublicTopic('design','fixture',async()=>Response.json({bad:true}))).status,'unavailable');
 });
 
-test("Practice Projects cannot silently promise rewards", () => {
-  assert.deepEqual(validateProjectReward({
-    projectType: "practice",
-    rewardModel: null,
-    recipientCount: null,
-    amountMinor: null,
-    currency: null,
-    nonCashDescription: null,
-    fundingStatus: null,
-  }), []);
-
-  assert.equal(validateProjectReward({
-    projectType: "practice",
-    rewardModel: "winner",
-    recipientCount: 1,
-    amountMinor: 50_000_00,
-    currency: "NGN",
-    nonCashDescription: null,
-    fundingStatus: "secured",
-  }).length, 1);
+test('a generic transferable skill does not override a specific ambition',()=>{
+ const unrelated={id:'office',company:'Example',title:'Office assistant',category:'administration',source:'provider',url:'https://provider.example/office',tags:['communication'],score:80};
+ assert.deepEqual(pickForDirection({profile:{...beginnerProfile,careerGoal:'Fashion design',skills:['communication']},opportunities:[unrelated],snapshotId:'123'},[]),[]);
 });
 
-test("Reward Projects are retired even when funding is secured", () => {
-  const errors = validateProjectReward({
-    projectType: "reward",
-    rewardModel: "winner",
-    recipientCount: 3,
-    amountMinor: 30_000_00,
-    currency: "NGN",
-    nonCashDescription: null,
-    fundingStatus: "secured",
-  });
-  assert.ok(errors.some((error) => /retired/i.test(error)));
+import {readStepDraft,draftKey} from '../lib/guidance/draft';
+test('refresh restores an editable draft only for the same direction and journey revision',()=>{
+ const state={direction:'Build a strong reliable business.',history:[]};
+ const raw=JSON.stringify({direction:state.direction,previous:null,step:'Study one fashion brand',why:'Understand its customers'});
+ assert.deepEqual(readStepDraft(raw,state),{step:'Study one fashion brand',why:'Understand its customers'});
+ assert.notEqual(draftKey('user-A'),draftKey('user-B'));
+ assert.equal(readStepDraft(raw,{...state,direction:'New direction'}),null);
+ assert.equal(readStepDraft(raw,{...state,history:[testEntry]}),null);
+ assert.equal(readStepDraft('{',state),null);assert.equal(readStepDraft(null,state),null);
+});
+test('a broad business goal cannot justify unrelated climate or marketing picks',()=>{
+ const profile={...beginnerProfile,careerGoal:'Build a strong reliable business',skills:['Fashion Design','digital marketing'],industries:['Business'],interests:['business','FASHION DESIGN']};
+ const item={id:'climate',title:'Climate leadership programme',company:'Example',tags:['Business','Leadership'],score:81,source:'example',url:'https://provider.example/info',requirements:['fashion design']};
+ const picks=pickForDirection({profile,opportunities:[item,{...item,id:'manager',title:'Marketing Manager at Agrocom'}, {...item,id:'fashion',title:'Fashion Design mentorship'}],snapshotId:'123'},[]);
+ assert.deepEqual(picks.map(x=>x.id),['fashion']);assert.equal(picks[0].reason,'The listing mentions fashion design, which connects to your saved profile.');
 });
 
-test("Project publication requires complete criteria, rights, and deadlines", () => {
-  const valid = validateProjectPublication({
-    title: "Create a Student Launch Plan",
-    summary: "Build a practical launch plan for a fictional student-focused application.",
-    brief: "Create a concise launch plan that identifies the audience, channels, weekly actions and success measures.",
-    deliverables: ["One launch-plan document"],
-    criteriaWeights: [30, 30, 25, 15],
-    submissionDeadline: "2026-10-20T12:00:00.000Z",
-    rightsModel: "portfolio",
-    usageTerms: "The submission remains the user's portfolio work and will not be used commercially.",
-    reward: {
-      projectType: "practice",
-      rewardModel: null,
-      recipientCount: null,
-      amountMinor: null,
-      currency: null,
-      nonCashDescription: null,
-      fundingStatus: null,
-    },
-  }, new Date("2026-09-22T12:00:00.000Z"));
-  assert.deepEqual(valid, []);
-
-  const invalid = validateProjectPublication({
-    title: "Test",
-    summary: "Too short",
-    brief: "Too short",
-    deliverables: [],
-    criteriaWeights: [80, 30],
-    submissionDeadline: "2026-01-01T00:00:00.000Z",
-    rightsModel: "portfolio",
-    usageTerms: "",
-    reward: {
-      projectType: "practice",
-      rewardModel: null,
-      recipientCount: null,
-      amountMinor: null,
-      currency: null,
-      nonCashDescription: null,
-      fundingStatus: null,
-    },
-  }, new Date("2026-09-22T12:00:00.000Z"));
-  assert.ok(invalid.length >= 5);
+test('a matching skill does not make a senior vacancy a beginner recommendation',()=>{
+ const profile={...beginnerProfile,careerGoal:'Start a business',skills:['Digital Marketing']};
+ const item={id:'senior',title:'Digital Marketing Manager',company:'Example',tags:['business'],score:80,source:'provider',url:'https://provider.example/listing'};
+ const picks=pickForDirection({profile,snapshotId:'123',opportunities:[item,{...item,id:'junior',title:'Digital Marketing Internship'}]},[]);
+ assert.deepEqual(picks.map(x=>x.id),['junior']);
 });
 
-test("Project list input is bounded and unknown filters are ignored", () => {
-  const input = parseProjectListInput(new URLSearchParams({
-    page: "3",
-    pageSize: "500",
-    type: "unknown",
-    difficulty: "beginner",
-    search: "  Portfolio project  ",
-  }));
-
-  assert.equal(input.page, 3);
-  assert.equal(input.pageSize, 24);
-  assert.equal(input.projectType, undefined);
-  assert.equal(input.difficulty, "beginner");
-  assert.equal(input.search, "Portfolio project");
+import {followUpMessages,wantsSingleStep} from '../lib/guidance/follow-up';
+test('a next-step follow-up uses the current obstacle rather than unrelated older advice',()=>{
+ const note="I found two fashion brands, but I can't tell how they make money from their websites.";
+ const state={direction:'Build a reliable business',history:[{...testEntry,event:'stuck' as const,note},{...testEntry,step:'Build a landing page',note:'Old plan'}]};
+ const messages=followUpMessages('What should I do next?',state)?.messages;
+ assert.ok(messages);assert.ok(messages[1].content.includes(note));assert.ok(!messages[1].content.includes('landing page'));
+ assert.ok(followUpMessages('Given what I just told you, what could I try next?',state)?.messages);
+ assert.equal(followUpMessages('What should I do next?',null)?.unavailable,true);
+ assert.equal(followUpMessages('What should I do next?',{direction:state.direction,history:[]}),null);
+ assert.equal(followUpMessages('Help me write a headline for a new landing page',state),null);
 });
 
-test("Project IDs reject malformed route values", () => {
-  assert.equal(
-    requireProjectId("123e4567-e89b-42d3-a456-426614174000"),
-    "123e4567-e89b-42d3-a456-426614174000",
-  );
-  assert.throws(() => requireProjectId("not-a-project"), /valid Project ID/i);
+import {brandResearchPlan,noBrandEvidence} from '../lib/guidance/brand-research';
+test('ambiguous brand research asks once, then searches a public name or hostname',()=>{
+ assert.equal(brandResearchPlan('“Can you research one of these brands with me?”',false).kind,'ask');
+ assert.deepEqual(brandResearchPlan('Everlane',true),{kind:'search',subject:'Everlane',query:'Everlane official website products sales channels'});
+ assert.deepEqual(brandResearchPlan('https://brand.example/shop?token=private',true),{kind:'search',subject:'brand.example',query:'brand.example official website products sales channels'});
+ assert.equal(brandResearchPlan('Everlane',false).kind,'chat');
+ assert.equal(brandResearchPlan('Look up fashion scholarships in Nigeria',false).kind,'chat');
+ assert.equal(brandResearchPlan('Research the brand Everlane',false).kind,'search');
+ assert.equal(brandResearchPlan('What should I do next?',true).kind,'chat');
+ assert.equal(brandResearchPlan('How do I research a brand?',false).kind,'chat');
+ assert.equal(brandResearchPlan('name@example.com',true).kind,'ask');
+});
+test('a failed lookup does not imply verified brand findings',()=>{
+ assert.match(noBrandEvidence('unavailable','Example')??'',/couldn’t verify/);
+ assert.match(noBrandEvidence('no_results','Example')??'',/couldn’t find usable sources/);
+ assert.equal(noBrandEvidence('ready','Example'),null);
 });
 
-test("Project submission input drops empty and excessive unsafe values", () => {
-  const entries = Object.fromEntries(
-    Array.from({ length: 35 }, (_, index) => [` deliverable-${index} `, ` response-${index} `]),
-  );
-  entries.empty = "   ";
-
-  const input = parseProjectSubmissionInput({
-    deliverableResponses: entries,
-    participantNote: "  My submission note  ",
-  });
-
-  assert.equal(Object.keys(input.deliverableResponses).length, 30);
-  assert.equal(input.deliverableResponses["deliverable-0"], "response-0");
-  assert.equal(input.participantNote, "My submission note");
+test('brand supplied at the end of the original question is used immediately',()=>{
+ assert.deepEqual(brandResearchPlan('“Can you research one of these brands with me? fendi',false),{kind:'search',subject:'fendi',query:'fendi official website products sales channels'});
+ assert.equal(brandResearchPlan('Can you research one of these brands with me?',false).kind,'ask');
+ assert.equal(brandResearchPlan('Can you research one of these brands with me? name@example.com',false).kind,'ask');
 });
 
-test("Project presentation keeps Practice and Reward Projects distinct", () => {
-  assert.equal(projectTypeLabel("practice"), "Project");
-  assert.equal(projectTypeLabel("reward"), "Historical Project");
+test("Brand followed by source instructions is recognised on the first turn",()=>{
+ const plan=brandResearchPlan("Can you research one of these brands with me? Fendi. Find one clue on Fendi’s official website that shows how it sells its products. Include the source link.",false);
+ assert.equal(plan.kind==="search"&&plan.subject,"Fendi");
 });
 
-test("Project duration remains understandable across minutes and hours", () => {
-  assert.equal(formatProjectDuration(45), "45 min");
-  assert.equal(formatProjectDuration(90), "1.5 hrs");
+test("a request for one practical experiment uses concise guidance without taking over detailed planning",()=>{
+ assert.equal(wantsSingleStep("I’m starting a small fashion business and don’t have a website or boutique yet. Based on what we learned, what’s one way I can test how to reach my first customer this week?"),true);
+ assert.equal(wantsSingleStep("Compare multiple options and recommend one way forward"),false);
+ assert.equal(wantsSingleStep("How does Fendi sell its products?"),false);
 });
 
-test("Project participation states use clear user-facing language", () => {
-  assert.equal(participationStatusLabel("revision_requested"), "Revision requested");
-  assert.equal(participationStatusLabel("pending"), "Awaiting review");
+import {refineFirstCustomer} from "../lib/guidance/outcomes";
+test("a first-customer test does not require a quota or unsolicited checkout",()=>{
+ const q="I’m starting a small fashion business. What’s one way to reach my first customer?";
+ for(const reply of ["If you get at least three solid inquiries, follow up.","Send a payment link.","Ask for pre-order interest."]) assert.notEqual(refineFirstCustomer(q,reply),reply);
+ const grounded="Answer their sizing question.";assert.equal(refineFirstCustomer(q,grounded),grounded);
+ assert.equal(refineFirstCustomer(q+" How do I handle payment?","Send a payment link."),"Send a payment link.");
+});
+test("different reported outcomes reach check-in guidance without upgrading or replacing the evidence",()=>{
+ for(const note of ["Nobody replied.","Someone liked it.","One person asked about sizing.","One liked it; another said no.","One buyer ordered but hasn't paid.","My first buyer paid."]){
+ const ctx=followUpMessages("What should I do next?",{direction:testEntry.direction,history:[{...testEntry,event:"tried",note}]});
+ assert.equal(JSON.parse(ctx!.messages![1].content).latestSavedUpdate.note,note);
+ }
 });
 
-
-test("Atlas coaching cache follows content and brief changes, not object order", () => {
-  const a=coachingFingerprint("brief",{b:"second",a:"first"},"reflection");
-  assert.equal(a,coachingFingerprint("brief",{a:"first",b:"second"},"reflection"));
-  assert.notEqual(a,coachingFingerprint("changed brief",{a:"first",b:"second"},"reflection"));
-  assert.notEqual(a,coachingFingerprint("brief",{a:"edited",b:"second"},"reflection"));
-  assert.notEqual(a,coachingFingerprint("brief",{a:"first",b:"second"},"edited reflection"));
-});
-test("Atlas feedback cannot introduce authority fields and rejects malformed output", () => {
-  assert.deepEqual(parseCoachingFeedback({strengths:["Clear scope"],improvements:[],nextStep:"Explain one choice.",verified:true,score:100}),{strengths:["Clear scope"],improvements:[],nextStep:"Explain one choice."});
-  assert.throws(()=>parseCoachingFeedback({strengths:"excellent",improvements:[],nextStep:"next"}));
-  assert.throws(()=>parseCoachingFeedback({strengths:[],improvements:[],nextStep:"x".repeat(1001)}));
-});
-test("Milestone draft progress ignores unknown fields and blank responses", () => {
-  assert.deepEqual(milestoneProgress(["First","Second"],{First:"A detailed response to the first milestone",Second:" ",Extra:"Not a milestone"}),{drafted:1,total:2,next:"Second"});
-});
-test("Completion never implies human review without the review record", () => {
-  assert.equal(evidenceLabel("completed",null),"Completed");
-  assert.equal(evidenceLabel("verified",null),"Completed");
-  assert.equal(evidenceLabel("verified","reviewer"),"Human reviewed");
-  assert.equal(canTransitionProjectParticipation("completed","awarded"),false);
-});
-test("Direction recommendations need a relevant shared topic", () => {
-  const p={category:"Music",title:"Plan an original release",skills:["Creative strategy"]};
-  assert.deepEqual(directionMatches("I want to build skills",p),[]);
-  assert.deepEqual(directionMatches("Build a finance career",p),[]);
-  assert.deepEqual(directionMatches("Create music",p),["music"]);
-});
-
-// Dashboard project suggestions must respect availability and participation history.
-import { selectProjectBriefing, type BriefingProject } from "../lib/projects/briefing";
-const briefingNow = Date.parse("2026-10-07T10:00:00Z");
-const briefingProject: BriefingProject = {
-  id: "project-one", title: "Design a campus app", category: "Technology", skills: ["product management"],
-  project_type: "practice", status: "published", starts_at: null, join_deadline: null,
-  submission_deadline: "2027-01-01T00:00:00Z", deliverables: ["Identify the problem", "Design the solution"],
-};
-test("Briefing suggests relevant projects and excludes previous participation", () => {
-  assert.equal(selectProjectBriefing("product management", [briefingProject], [], [], briefingNow)?.action, "View project");
-  assert.equal(selectProjectBriefing("music production", [briefingProject], [], [], briefingNow), null);
-  assert.equal(selectProjectBriefing("", [briefingProject], [], [], briefingNow), null);
-  for (const status of ["completed", "submitted", "withdrawn", "disqualified"]) {
-    assert.equal(selectProjectBriefing("product management", [briefingProject], [{project_id:briefingProject.id,status,updated_at:"2026-10-06"}], [], briefingNow), null);
-  }
-});
-test("Briefing resumes unfinished milestones and respects reviewer revisions", () => {
-  const participation = {project_id:briefingProject.id,status:"in_progress",updated_at:"2026-10-06"};
-  const result = selectProjectBriefing("", [briefingProject], [participation], [{project_id:briefingProject.id,deliverable_responses:{"Identify the problem":"A sufficiently detailed saved milestone response."}}], briefingNow);
-  assert.equal(result?.action, "Continue your project");
-  assert.equal(result?.nextStep, "Next milestone: Design the solution");
-  assert.match(selectProjectBriefing("", [briefingProject], [{...participation,status:"revision_requested"}], [], briefingNow)?.nextStep ?? "", /reviewer/);
-});
-test("Briefing hides closed, future, retired and expired projects", () => {
-  for (const change of [{status:"draft"},{status:"paused"},{project_type:"reward"},{starts_at:"2027-01-01"},{submission_deadline:"2026-01-01"},{submission_deadline:"invalid"},{join_deadline:"2026-01-01"}]) {
-    assert.equal(selectProjectBriefing("product management", [{...briefingProject,...change}], [], [], briefingNow), null);
-  }
-  assert.equal(selectProjectBriefing("", [{...briefingProject,join_deadline:"2026-01-01"}], [{project_id:briefingProject.id,status:"joined",updated_at:"2026-10-06"}], [], briefingNow)?.action,"Continue your project");
-});
-
-
-test("Briefing uses saved pathway when North Star is broad without repeating completed work", () => {
-  const business = {...briefingProject, id: "business", title: "Build a fictional business plan", category: "Business", skills: ["planning"]};
-  const profile = {northStar:"A star working in a nice company", identity:"Business Professional", goal:"", skills:[]};
-  assert.match(selectProjectBriefing(profile, [business], [], [], briefingNow)?.reason ?? "", /chosen pathway/);
-  assert.equal(selectProjectBriefing(profile, [business], [{project_id:"business",status:"completed",updated_at:"2026-10-06"}], [], briefingNow),null);
-  assert.equal(selectProjectBriefing({...profile,identity:"Music creator"}, [business], [], [], briefingNow),null);
-});
-test("Briefing explains goal and declared skill matches without verification claims", () => {
-  const profile = {northStar:"",identity:"",goal:"product management",skills:[]};
-  assert.match(selectProjectBriefing(profile,[briefingProject],[],[],briefingNow)?.reason ?? "", /saved goal/);
-  assert.match(selectProjectBriefing({...profile,goal:"",skills:["product management"]},[briefingProject],[],[],briefingNow)?.reason ?? "", /declared skills/);
-});
-
-import { buildApplicationMaterial } from "../lib/projects/application-material";
-import { requirementSkillMatches } from "../lib/projects/opportunity-projects";
-import { starterGuidance } from "../lib/projects/starter-guidance";
-test("Application drafts preserve learning context and source excerpts without inventing results", () => {
-  const result=buildApplicationMaterial({title:"Campus concept",summary:"Untrusted claimed revenue",deliverable_preview:{Research:"A fictional audience and untested hypothesis",Ignored:42}});
-  assert.match(result.cv,/independent ASCEND learning project/i);
-  assert.match(result.portfolio,/fictional audience/);
-  assert.doesNotMatch(result.cv,/Untrusted claimed revenue|Ignored/);
-  assert.match(result.interview,/Do not invent impact/);
-  assert.ok(result.atlasContext.length<=2200);
-  assert.doesNotThrow(()=>buildApplicationMaterial({title:"Empty",summary:"",deliverable_preview:null}));
-});
-test("Opportunity project links require named skills rather than substring coincidences", () => {
-  assert.deepEqual(requirementSkillMatches(["Experience in market research and business planning."],["Market research","Business planning","UX design"]),["Market research","Business planning"]);
-  assert.deepEqual(requirementSkillMatches(["Experience training staff"],["AI"]),[]);
-  assert.deepEqual(requirementSkillMatches([], ["UX design"]),[]);
-});
-test("Each starter project has three actionable examples and a free tool option", () => {
-  assert.equal(Object.keys(starterGuidance).length,6);
-  for(const guide of Object.values(starterGuidance)) {
-    assert.equal(guide.milestones.length,3);
-    assert.ok(guide.tools.length>20);
-    assert.ok(guide.output.length>20);
-    for(const milestone of guide.milestones){assert.ok(milestone.minutes>0);assert.ok(milestone.guidance.length>50);assert.ok(milestone.example.length>50);}
-  }
-});
-
-
-import { buildEvidenceContext, isProjectEvidenceId } from "../lib/projects/evidence-context";
-test("Atlas evidence context retains each milestone despite a long first answer", () => {
- const context=JSON.parse(buildEvidenceContext({title:"Career experiment",evidence_status:"completed",verified_by:null,deliverable_preview:{First:"x".repeat(5000),Second:"A fictional prototype",Third:"A planned future test"}}));
- assert.equal(context.title,"Career experiment");
- assert.equal(context.milestones.length,3);
- assert.equal(context.milestones[0].truncated,true);
- assert.equal(context.milestones[2].text,"A planned future test");
- assert.match(context.review,/not human reviewed/);
-});
-test("Atlas evidence references reject malformed values and preserve review boundaries", () => {
- assert.equal(isProjectEvidenceId("aa202610-0200-4000-8000-000000000001"),true);
- for(const value of [null,{},"../other-user","",123])assert.equal(isProjectEvidenceId(value),false);
- assert.match(buildEvidenceContext({title:"Test",evidence_status:"verified",verified_by:null,deliverable_preview:null}),/not human reviewed/);
-});
-
-
-test("Application starters avoid copying task instructions into CV achievement claims", () => {
- const drafts=buildApplicationMaterial({title:"Career exploration",summary:"",deliverable_preview:{"Compare two roles and cite sources":"A simulated product concept, with no external research."}});
- assert.doesNotMatch(drafts.cv,/Completed a project covering|Compare two roles|Experiment Lead/);
- assert.match(drafts.cv,/independent ASCEND learning project/);
- assert.match(drafts.portfolio,/not employment/);
- assert.match(drafts.interview,/State if the work was simulated/);
+import {buyerInquiryReply} from "../lib/guidance/outcomes";
+test("one sizing inquiry gets a direct answer without invented sizes, order or quota",()=>{
+ const reply=buyerInquiryReply("“One person asked what sizes I’ll offer, but nobody ordered. What should I do next?”");
+ assert.match(reply??"",/Which size were you looking for/);
+ assert.doesNotMatch(reply??"",/votes?|poll|pre-order|XS|inventory/i);
+ assert.match(buyerInquiryReply("Someone asked about price, but no orders yet. How should I respond?")??"",/if you’ve set it/);
+ assert.equal(buyerInquiryReply("Nobody ordered. What should I do next?"),null);
+ assert.equal(buyerInquiryReply("Someone asked about sizes, but nobody ordered. I already replied. What should I do next?"),null);
 });

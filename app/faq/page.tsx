@@ -9,7 +9,7 @@ import {
 export const metadata = createPublicPageMetadata({
   title: "Frequently Asked Questions",
   description:
-    "Get clear answers about ASCEND, Atlas strategic intelligence, Compass, missions, opportunities, momentum and ASCEND Music.",
+    "Get clear answers about ASCEND, Atlas strategic intelligence, Compass, steps, opportunities, momentum and ASCEND Music.",
   path: "/faq",
 });
 
@@ -17,7 +17,7 @@ const questions = [
   {
     question: "What is ASCEND?",
     answer:
-      "ASCEND is an operating system for human potential. It turns your identity, goals and challenges into a North Star, strategic missions, relevant opportunity guidance, reflection and measurable momentum.",
+      "ASCEND is an operating system for human potential. It turns your identity, goals and challenges into a North Star, personal guidance, relevant opportunity guidance, reflection and measurable momentum.",
   },
   {
     question: "Who is ASCEND for?",
@@ -27,12 +27,12 @@ const questions = [
   {
     question: "What is Atlas?",
     answer:
-      "Atlas is ASCEND's strategic intelligence. It uses your live North Star, active mission, progress, reflections and relevant journey context to help you compare choices, identify tradeoffs and choose useful next steps. Atlas is not a generic chatbot and does not replace your judgment.",
+      "Atlas is ASCEND's strategic intelligence. It uses your live North Star, active step, progress, reflections and relevant journey context to help you compare choices, identify tradeoffs and choose useful next steps. Atlas is not a generic chatbot and does not replace your judgment.",
   },
   {
-    question: "Does talking to Atlas change my mission or XP?",
+    question: "Does talking to Atlas change my step or XP?",
     answer:
-      "No. An ordinary Atlas conversation can provide guidance and remember useful context, but it cannot create, replace, progress or complete a mission and it cannot award XP. Those changes happen only through the appropriate mission actions.",
+      "No. Chat helps you think through your options. You choose your next step and record what happened on Home. Previously earned XP stays preserved.",
   },
   {
     question: "How is Compass different from Atlas?",
@@ -40,9 +40,9 @@ const questions = [
       "Compass helps reveal your identity, goals, challenges and future direction, then turns that understanding into a North Star. Atlas uses that live direction and your current ASCEND state to support decisions and strategic action.",
   },
   {
-    question: "What are strategic missions?",
+    question: "How does Atlas guide my next step?",
     answer:
-      "Strategic missions are focused actions connected to your current reality and North Star. A mission is meant to produce useful evidence of progress rather than add another disconnected task to your day.",
+      "Atlas uses your ambition, skills, challenges and recent updates to suggest one action. You can adjust it, explain what happened and change direction when needed.",
   },
   {
     question: "How does ASCEND help with opportunities?",
@@ -88,7 +88,7 @@ export default function FaqPage() {
     <PublicPageShell
       eyebrow="ASCEND FAQ"
       title="Clear answers about ASCEND"
-      description="Understand what ASCEND does, how Atlas and Compass differ, and which actions can change your missions or progress."
+      description="Understand what ASCEND does, how Atlas and Compass differ, and which actions can change your steps or progress."
     >
       <script
         type="application/ld+json"
@@ -115,7 +115,7 @@ export default function FaqPage() {
 
           <p className="mt-5 text-base leading-8 text-slate-400">
             ASCEND helps turn uncertainty into a personal North Star,
-            focused missions, better-informed decisions and visible
+            focused steps, better-informed decisions and visible
             momentum. It supports your judgment instead of trying to
             replace it.
           </p>

@@ -78,7 +78,7 @@ export default function CompassCard({
 
           <p className="mt-2.5 max-w-2xl text-sm leading-6 text-slate-400">
             The future you are intentionally building through
-            your missions, decisions, and opportunities.
+            your actions, decisions, and opportunities.
           </p>
 
           {/* Mobile compass */}
@@ -114,7 +114,7 @@ export default function CompassCard({
 
               <p>
                 Atlas can help you research, plan, solve
-                obstacles, and make progress on your mission.
+                obstacles, and make progress on your step.
               </p>
             </div>
           </div>

@@ -48,7 +48,7 @@ export default function AscensionProgress({
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-blue-300">
-              Ascension
+              Earned Ascension
             </p>
 
             <div className="mt-1.5 flex flex-wrap items-baseline gap-3">

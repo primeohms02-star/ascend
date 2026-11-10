@@ -26,7 +26,7 @@ export default function Hero() {
 
           <p className="mt-6 max-w-xl text-base leading-7 text-slate-300 sm:text-lg sm:leading-8">
             Tell ASCEND what you want to achieve. It
-            gives you one clear next mission and finds
+            helps you choose a step and finds
             opportunities that can move you closer to
             your goal.
           </p>

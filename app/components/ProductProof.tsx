@@ -24,7 +24,7 @@ export default function ProductProof() {
             id="product-proof-heading"
             className="mt-5 text-3xl font-black leading-tight tracking-tight text-white sm:text-4xl lg:text-5xl"
           >
-            Your direction, next mission and progress
+            Your direction, work and progress
             <span className="block text-blue-300">
               in one clear command centre.
             </span>
@@ -60,8 +60,8 @@ export default function ProductProof() {
           />
 
           <figcaption className="border-t border-white/[0.08] px-5 py-4 text-center text-sm leading-6 text-slate-400 sm:px-8">
-            A real view of how ASCEND turns a goal into a focused mission,
-            explains the reasoning and makes progress visible.
+            An earlier ASCEND dashboard showing direction, guidance and progress.
+            Today, Atlas guides your next step and brings relevant opportunities to Home.
           </figcaption>
         </figure>
       </div>

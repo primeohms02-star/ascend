@@ -21,7 +21,7 @@ const sections = [
   {
     title: "2. What ASCEND Provides",
     paragraphs: [
-      "ASCEND is an Operating System for Human Potential. It provides purpose discovery, North Star direction, strategic missions, opportunity discovery, progress tracking, Atlas intelligence and product support.",
+      "ASCEND is an Operating System for Human Potential. It provides purpose discovery, North Star direction, next-step guidance, opportunity discovery, progress tracking, Atlas intelligence and product support.",
       "ASCEND is designed to support reflection, judgment and meaningful action. It does not guarantee a particular career, financial, academic, personal or professional outcome.",
     ],
   },
@@ -42,9 +42,9 @@ const sections = [
     ],
   },
   {
-    title: "5. Missions, Opportunities and External Information",
+    title: "5. Guidance, Opportunities and External Information",
     paragraphs: [
-      "ASCEND may recommend missions or display third-party jobs, internships, scholarships, grants, fellowships, courses, competitions and other opportunities.",
+      "ASCEND may suggest next steps or display third-party jobs, internships, scholarships, grants, fellowships, courses, competitions and other opportunities.",
       "Opportunity information may change, expire or contain errors. Verify deadlines, eligibility, costs, requirements and legitimacy directly with the original provider before applying or making commitments.",
       "ASCEND does not guarantee selection, acceptance, employment, funding, admission or any other outcome from an external opportunity.",
     ],

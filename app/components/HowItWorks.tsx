@@ -27,15 +27,15 @@ const steps = [
     label: "Direction",
     title: "Define your North Star",
     description:
-      "ASCEND turns your answers into a living direction that guides missions, decisions and opportunities.",
+      "ASCEND turns your answers into a living direction that guides steps, decisions and opportunities.",
   },
   {
     number: "03",
     icon: Target,
     label: "Action",
-    title: "Receive one strategic mission",
+    title: "Choose a useful next step",
     description:
-      "Atlas chooses a concrete next action based on your direction, progress and completed mission history.",
+      "Your saved direction helps suggest a step. You choose what to start, and Atlas helps with the steps.",
   },
   {
     number: "04",
@@ -51,7 +51,7 @@ const steps = [
     label: "Evidence",
     title: "Build measurable momentum",
     description:
-      "Complete missions, preserve milestones and watch consistent evidence move you through Ascension levels.",
+      "Complete steps, reflect on your learning and build a portfolio of work you can show.",
   },
 ];
 
@@ -191,7 +191,7 @@ export default function HowItWorks() {
           className="mx-auto mt-10 max-w-4xl rounded-2xl border border-cyan-400/15 bg-gradient-to-r from-cyan-400/[0.07] via-blue-500/[0.08] to-cyan-400/[0.07] p-5 text-center"
         >
           <p className="text-base font-semibold text-white">
-            Every completed mission creates new
+            Every completed step creates new
             evidence.
           </p>
 

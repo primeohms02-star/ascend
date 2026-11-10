@@ -16,7 +16,7 @@ const tools = [
   },
   {
     icon: Compass,
-    title: "Missions",
+    title: "Atlas guidance",
     description: "Turn your direction into a clear next action and build momentum through meaningful completion.",
     accent: "text-emerald-300 border-emerald-400/20 bg-emerald-400/[0.06]",
   },
@@ -29,7 +29,7 @@ const tools = [
   {
     icon: ChartNoAxesCombined,
     title: "Progress",
-    description: "Build visible evidence of momentum from missions, milestones and completed actions.",
+    description: "Build visible evidence of momentum from your actions, milestones and reflections.",
     accent: "text-blue-300 border-blue-400/20 bg-blue-400/[0.06]",
   },
 ];

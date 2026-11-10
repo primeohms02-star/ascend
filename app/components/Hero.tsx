@@ -14,7 +14,7 @@ import {
 
 const signals = [
   "Discover your direction",
-  "Receive strategic missions",
+  "Build through purposeful steps",
   "Evaluate real opportunities",
 ];
 
@@ -87,7 +87,7 @@ export default function Hero() {
           <p className="mt-7 max-w-2xl text-lg leading-8 text-slate-300 sm:text-xl sm:leading-9">
             ASCEND understands where you are,
             helps you define where you are going,
-            and turns that direction into missions,
+            and turns that direction into steps,
             opportunities and measurable progress.
           </p>
 
@@ -152,7 +152,7 @@ export default function Hero() {
               Your direction can evolve. Revisit
               onboarding anytime to redefine your
               goal, update your North Star, and
-              receive a new mission from Atlas.
+              choose a step with Atlas’s guidance.
             </p>
           ) : (
             <p className="mt-5 text-sm text-slate-500">

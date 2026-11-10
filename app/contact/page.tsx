@@ -22,7 +22,7 @@ const contactOptions = [
   {
     title: "Product Support",
     description:
-      "Get help with accounts, Atlas, missions, opportunities or technical problems.",
+      "Get help with accounts, Atlas, guidance, opportunities or technical problems.",
     href: "/support",
     action: "Open Support AI",
     icon: LifeBuoy,

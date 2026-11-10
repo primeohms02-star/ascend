@@ -37,7 +37,7 @@ export default function HeroJourneyActions() {
           Your direction can evolve. Start your
           journey again anytime to redefine your
           goal, update your North Star, and receive
-          a newly aligned mission from Atlas.
+          step suggestions connected to your direction.
         </p>
       ) : (
         <p className="mt-5 text-sm text-slate-500">

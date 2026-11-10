@@ -30,7 +30,7 @@ const systems = [
     name: "Take Your Next Step",
     label: "02",
     description:
-      "Atlas turns your direction into one practical mission and explains why that action matters to your journey now.",
+      "Use your direction to choose a practical step, then work through its steps with Atlas guidance.",
     outcome:
       "Know what to do next.",
     accent:
@@ -56,7 +56,7 @@ const systems = [
     name: "Build Proof of Progress",
     label: "04",
     description:
-      "Completed missions, milestones and reflections become visible evidence that you are moving toward your North Star.",
+      "Completed steps, milestones and reflections become visible evidence that you are moving toward your North Star.",
     outcome:
       "See your growth becoming real.",
     accent:
@@ -100,7 +100,7 @@ export default function Features() {
           </h2>
 
           <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-slate-400">
-            Compass, Atlas, Missions, Opportunities,
+            Compass, Atlas, Next steps, Opportunities,
             Momentum and Memory work behind one simple
             journey instead of competing for your attention.
           </p>
@@ -172,7 +172,7 @@ export default function Features() {
         <div className="mt-8 rounded-2xl border border-blue-400/15 bg-gradient-to-r from-blue-500/[0.08] via-cyan-500/[0.05] to-transparent px-5 py-5 text-center">
           <p className="text-sm leading-7 text-slate-300 sm:text-base">
             Every outcome uses the same understanding
-            of your goal—so guidance, missions,
+            of your goal—so guidance, steps,
             opportunities and progress stay aligned.
           </p>
         </div>

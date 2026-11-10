@@ -32,7 +32,7 @@ const principles = [
       "Direction before action",
 
     description:
-      "Every mission should connect to a meaningful North Star and move your life in a deliberate direction.",
+      "Every next step should connect to a meaningful North Star and move your life in a deliberate direction.",
   },
 
   {
@@ -55,7 +55,7 @@ const principles = [
 const journey = [
   "Purpose",
   "North Star",
-  "Mission",
+  "Next step",
   "Tasks",
   "Momentum",
   "Memory",
